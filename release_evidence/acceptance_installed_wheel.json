@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-11-18T09:37:02.673937+00:00",
+  "version": "0.2.1",
+  "os": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "python": "3.12.14",
+  "installed_package": "/workspace/scratch/35b77c06faa6/acceptance_wheel_install/gazespace/__init__.py",
+  "noneditable_wheel_import": true,
+  "wheel_sha256": "762cc2a1c4086f63cea13f08e7627bfea5ff7d35662c094b75503acb7478bf60",
+  "synthetic_end_to_end": "passed",
+  "native_qt_pages_receipt": "acceptance_wheel_studio.json",
+  "windows_executable_tested": false,
+  "physical_hardware_tested": false,
+  "human_gaze_accuracy_measured": false
+}

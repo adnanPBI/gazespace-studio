@@ -1,0 +1,141 @@
+name: GazeSpace software verification and Windows packaging
+
+# This file is a runnable workflow definition. Its presence is not evidence of
+# a Windows build; attach the receipts/artifacts from an actual successful run.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Software / ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.11', '3.12']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_API: pyside6
+      MPLBACKEND: Agg
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install Linux native runtime libraries
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0
+      - name: Install full application and test dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[full,test]'
+          python -m pip check
+      - name: Run algorithms, acquisition, API, session and Qt tests
+        run: python -m pytest -q --junitxml=release_evidence/ci_pytest.xml
+      - name: Check dependency readiness
+        run: python -m gazespace doctor
+      - name: Run detector-to-calibration-to-recording-to-report simulation
+        run: python -m gazespace simulate --output release_evidence/ci_simulation --seconds 2 --record-video
+      - name: Retain software test receipts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gazespace-tests-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            release_evidence/ci_pytest.xml
+            release_evidence/ci_simulation/
+          if-no-files-found: warn
+          retention-days: 14
+
+  build-windows:
+    name: Windows Studio and CLI / Python 3.12
+    needs: test
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_API: pyside6
+      MPLBACKEND: Agg
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          architecture: x64
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Parse all Windows scripts with the native PowerShell parser
+        shell: pwsh
+        run: |
+          foreach ($file in Get-ChildItem scripts -Filter *.ps1) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count) {
+              $parseErrors | Format-List | Out-String | Write-Host
+              throw "PowerShell syntax errors in $($file.Name)"
+            }
+          }
+      - name: Build, run real SDK emulator and smoke-test frozen applications
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path release_evidence -Force | Out-Null
+          Start-Transcript -Path release_evidence/windows_build_console.log -Force
+          try {
+            ./scripts/build_windows.ps1 -PythonVersion 3.12 -Basler -Depth
+          } finally {
+            Stop-Transcript
+          }
+      - name: Retain Windows diagnostics even when a gate fails
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gazespace-windows-build-diagnostics
+          path: |
+            release_evidence/windows*
+            release_evidence/pypylon_sdk_emulator_windows.json
+            build/**/*.spec
+            build/**/warn-*.txt
+            build/**/xref-*.html
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Retain Windows distributables
+        uses: actions/upload-artifact@v7
+        with:
+          name: gazespace-windows-studio-cli-unsigned
+          path: |
+            dist/GazeSpace-Windows-*-unsigned.zip
+            dist/python_packages/
+            release_evidence/windows_build.json
+            release_evidence/windows_verification.json
+            release_evidence/windows_packaged_verification.json
+            release_evidence/windows_studio_smoke.json
+            release_evidence/windows_studio_smoke.png
+            release_evidence/windows_packaged_environment.json
+            release_evidence/windows_source_environment.json
+            release_evidence/windows_packaged_sdk_emulator*
+            release_evidence/windows_pytest.xml
+            release_evidence/pypylon_sdk_emulator_windows.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14

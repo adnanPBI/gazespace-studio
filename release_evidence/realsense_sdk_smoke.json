@@ -1,0 +1,38 @@
+{
+  "status": "context_initialization_failed",
+  "verified_at_utc": "2026-11-18T08:50:29.919487+00:00",
+  "environment": "Isolated .release-venv with system site packages disabled",
+  "install_command": [
+    "/workspace/scratch/35b77c06faa6/.release-venv/bin/python",
+    "-m",
+    "pip",
+    "install",
+    "gazespace[depth]==0.2.0"
+  ],
+  "install_exit_code": 0,
+  "install_duration_s": 17.78,
+  "install_log": "realsense_sdk_install.log",
+  "physical_hardware_tested": false,
+  "camera_acquisition_attempted": false,
+  "source_or_dependency_specs_modified": false,
+  "probe_exit_code": 1,
+  "probe_stdout": "",
+  "probe_stderr": "Traceback (most recent call last):\n  File \"<string>\", line 4, in <module>\nRuntimeError: could not initialize udev monitor\n",
+  "limitation": "The declared depth extra installs and pyrealsense2 imports successfully. Creating rs.context() fails while initializing the udev monitor in this Linux container, so query_devices() was not reached. No camera acquisition or physical hardware validation occurred. Windows SDK/device discovery remains to be verified on the target computer.",
+  "pip_check": {
+    "exit_code": 0,
+    "output": "No broken requirements found.\n"
+  },
+  "python": "3.12.14",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "pyrealsense2_distribution_version": "2.59.2.11152",
+  "declared_depth_requirement": [
+    "pyrealsense2<3,>=2.55; extra == \"depth\""
+  ],
+  "sdk_import_succeeded": true,
+  "context_creation_succeeded": false,
+  "query_devices_reached": false,
+  "device_count": null,
+  "device_count_note": "Unavailable: SDK context creation failed before device enumeration.",
+  "exact_blocker": "RuntimeError: could not initialize udev monitor"
+}

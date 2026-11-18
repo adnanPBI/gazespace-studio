@@ -1,0 +1,45 @@
+{
+  "status": "software_helpers_verified_windows_execution_pending",
+  "verified_at_utc": "2026-11-18T09:26:14.912719+00:00",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "focused_tests": {
+    "passed": 6,
+    "receipt": "acceptance_helpers_pytest.xml"
+  },
+  "sdk_emulator_helper": {
+    "status": "software_fixture_passed",
+    "frames_received": 60,
+    "capture_duration_s": 2.0169441480002206,
+    "observed_delivery_fps": 30.01879112725583,
+    "clean_shutdown": true,
+    "physical_hardware_tested": false,
+    "simulated": true
+  },
+  "sdk_emulator_receipt": "acceptance_camera_soak_SDK_EMULATOR_fixture.json",
+  "environment_helper": {
+    "status": "collected",
+    "required_imports_ok": true,
+    "qt_platform": "offscreen",
+    "native_windows_display_context": false
+  },
+  "powershell_executed": false,
+  "windows_binaries_built_or_run_by_this_check": false,
+  "physical_hardware_tested": false,
+  "remote_connections_attempted_by_this_check": false,
+  "source_sha256": {
+    "scripts/collect_windows_acceptance.ps1": "80939f5169cd55e62c72e9884f3ad186d3ae095b3cf58a4ad79bb65245737586",
+    "scripts/camera_acceptance.py": "7cc02f419c80a4393dfad436c5b51718eeb5fd944c265b31e9fb8b1dc3b195b7",
+    "scripts/environment_acceptance.py": "7a610496b7cd410f5a27cf622b54e9c5c895135c3759a4caca0a56a0fc84b050",
+    "scripts/gazespace_entry.py": "90f1f8718bf52dd1d3873d1c7bf1dc0ecce386464877407f677cda97fe8821c8",
+    "scripts/build_windows.ps1": "21ecf92f1525559702d661ca04c29950ec856156375819a5d479b9a3c7ae874d",
+    "scripts/verify_windows.ps1": "732c62411aa087f2478d9e4858e0ec8148510a210a3b45f8b1aa181c14500ddb",
+    ".github/workflows/ci.yml": "a65959355dbba2e85195ce4a8324ba2838b854a05d4ead91477ba95f08bbf864",
+    "tests/test_acceptance_helpers.py": "945ec5052cac17d22208ba0b45e16eb7e7c75a80bc4670d82f7332cf794b69b3",
+    "docs/WINDOWS_ACCEPTANCE_RUNNER.md": "a4bbcfa8f399205605b41c8857272cdbfe56168a15983c8f9190f6b42f689190"
+  },
+  "limitations": [
+    "The SDK-emulator timing is only a software/SDK fixture and does not establish physical camera performance.",
+    "PowerShell source was reviewed but cannot be executed in this Linux environment.",
+    "Windows CI now defines full Basler/RealSense SDK packaging and frozen-runtime checks; execution evidence must come from an actual run."
+  ]
+}

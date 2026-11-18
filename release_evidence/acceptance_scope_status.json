@@ -1,0 +1,402 @@
+{
+  "schema_version": 1,
+  "release_candidate_version": "0.2.1",
+  "as_of_utc": "2026-11-18T09:43:16.614264+00:00",
+  "overall_status": "acceptance_incomplete",
+  "overall_acceptance_passed": null,
+  "software_regression": {
+    "tests": 207,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 207,
+    "duration_s": 18.425,
+    "receipt": "release_evidence/acceptance_revision_pytest.xml"
+  },
+  "windows_ci": {
+    "status": "authorized_pending_run",
+    "repository": "https://github.com/adnanPBI/gazespace-studio",
+    "repository_contents": "initial README only",
+    "repository_initial_head": "7fb34ffed7d0743983f76998ad170fd82b0400b9",
+    "source_commit_sha": null,
+    "run_started": false,
+    "run_url": null,
+    "commit_sha": null,
+    "windows_artifact_verified": false,
+    "approval_review_outcome": "historical_rejection_resolved_by_explicit_user_authorization",
+    "reason": "The user explicitly authorized the prepared GazeSpace Studio 0.2.1 source-tree upload to private adnanPBI/gazespace-studio and Windows CI execution. Upload/run evidence is not yet available.",
+    "next_required_permission": null,
+    "resume_rule": "Proceed within the explicitly authorized payload/destination and execution scope; claim no Windows pass before observing its result.",
+    "source_tree_committed": false,
+    "binary_fixture_blobs_staged": 3,
+    "staged_fixture_scope": "Public NASA reference photograph and two generated visual test fixtures; no source tree or workflow committed.",
+    "source_uploaded": false,
+    "authorization": {
+      "status": "granted",
+      "source": "explicit_user_authorization_in_current_turn",
+      "scope": [
+        "prepared GazeSpace Studio 0.2.1 source-tree upload to https://github.com/adnanPBI/gazespace-studio",
+        "Windows CI execution"
+      ],
+      "historical_rejection": {
+        "outcome": "rejected",
+        "reason": "Automatic approval review requires explicit user authorization for both the full source-tree upload payload and the private GitHub destination.",
+        "resolution": "Resolved by the user explicitly authorizing the prepared source-tree upload to the named private repository and Windows CI execution."
+      }
+    },
+    "next_action": "Upload the authorized source snapshot and start Windows CI; record actual source commit, run URL and observed results."
+  },
+  "physical_devices_available_for_this_session": false,
+  "human_gaze_accuracy_measured": false,
+  "client_application_integration_measured": false,
+  "evidence_scope_rules": [
+    "A software or SDK-emulator pass applies only to its stated scope.",
+    "Missing acceptance criteria or measurements leave acceptance null, not passed.",
+    "Host delivery timing and processing time do not establish exposure-to-display latency.",
+    "Accepted calibration samples do not provide all-attempt invalid/drop denominators.",
+    "Runtime pending-buffer replacement counts are not sensor/transport frame loss.",
+    "Earlier 0.2.0 reports remain historical snapshots; the current source regression receipt is the 207-test acceptance revision."
+  ],
+  "evidence_sha256": {
+    "release_evidence/acceptance_revision_pytest.xml": "6892d58a936eb25104a0bac56e6f1d6f0e174036103a16dc86eee38c3a8d5d08",
+    "release_evidence/acceptance_revision_pytest.log": "7c23f2b9b7b0d60eb839334aeeb6000d79da183ee873b79dda4bf50118a42296",
+    "release_evidence/acceptance_runner_verification.json": "411fb670af2651a671922836b6817025587191590989c8d027a048677a254185",
+    "release_evidence/acceptance_camera_soak_SDK_EMULATOR_fixture.json": "896bf784e6665bdad17d07f6409f748fa449fb4ec28748ad8290c7ef66aac95a",
+    "release_evidence/acceptance_installed_wheel.json": "b8ca17587a989566a662afc3c461f5336d48eccd19b6ab0fd682e6294eb39731",
+    "release_evidence/acceptance_wheel_studio.json": "d25d2d758ee854dc691dda8e5a299d063f1c6db39771a8c2688d271b32fa39b5"
+  },
+  "matrix": [
+    {
+      "id": "software_regression",
+      "requirement": "Core, desktop, runtime, SDK/API and acceptance-helper regression checks",
+      "status": "verified_software",
+      "software_scope_passed": true,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "207 tests passed; zero failures, errors or skips."
+      ],
+      "evidence": [
+        "release_evidence/acceptance_revision_pytest.xml",
+        "release_evidence/acceptance_revision_pytest.log"
+      ],
+      "remaining": [
+        "Run the same gate against the exact final packaged revision."
+      ]
+    },
+    {
+      "id": "native_operator_workflows",
+      "requirement": "Preview, ROI selection, calibration controls, recording, replay and reports",
+      "status": "verified_software",
+      "software_scope_passed": true,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Actual Qt worker/UI paths exercised on Linux; prior release contains seven native-page captures.",
+        "Write errors preserve failed-session status; stale and stopped displays clear active coordinates."
+      ],
+      "evidence": [
+        "release_evidence/desktop_verification.json",
+        "release_evidence/acceptance_revision_pytest.xml",
+        "tests/test_release_review.py"
+      ],
+      "remaining": [
+        "Exercise the intended Windows display, DPI, monitor and operator workflow."
+      ]
+    },
+    {
+      "id": "validation_integrity",
+      "requirement": "Calibration and validation evidence integrity",
+      "status": "verified_software",
+      "software_scope_passed": true,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Exact training-array reuse, conflicting record context/session and invalid timestamps are rejected.",
+        "Insufficient coverage retains diagnostic metrics with no acceptance pass.",
+        "Desktop/CLI use the shared validator; drift includes baseline target error and elapsed time."
+      ],
+      "evidence": [
+        "release_evidence/acceptance_revision_pytest.xml",
+        "tests/test_validation_evidence.py",
+        "tests/test_acceptance_controls.py"
+      ],
+      "remaining": [
+        "Supply fresh acquired target sessions and explicit acceptance criteria."
+      ]
+    },
+    {
+      "id": "basler_adapter",
+      "requirement": "Basler resolution, FPS, pixel formats, controls and buffer lifecycle",
+      "status": "verified_sdk_emulator",
+      "software_scope_passed": true,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Real SDK emulator exercised Mono8, Mono12 and BGR8Packed.",
+        "Requested size/FPS, legacy rate nodes and rejected readbacks are regression-tested; actual emulator frames matched the requested dimensions."
+      ],
+      "evidence": [
+        "release_evidence/pypylon_sdk_emulator.json",
+        "release_evidence/acceptance_revision_pytest.xml",
+        "tests/test_acceptance_controls.py"
+      ],
+      "remaining": [
+        "Repeat on the selected physical serial, lens, driver and trigger mode."
+      ]
+    },
+    {
+      "id": "acceptance_collector",
+      "requirement": "Bounded Windows inventory/camera evidence collection tools",
+      "status": "verified_helpers_windows_pending",
+      "software_scope_passed": true,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Helper suite: 6 passed; SDK-emulator soak received 60 frames and closed cleanly.",
+        "Recorded host timing and control readbacks retain simulated provenance; unsupported physical quantities remain null."
+      ],
+      "evidence": [
+        "release_evidence/acceptance_runner_verification.json",
+        "release_evidence/acceptance_camera_soak_SDK_EMULATOR_fixture.json",
+        "release_evidence/acceptance_environment_probe_LINUX_fixture.json"
+      ],
+      "remaining": [
+        "Execute the PowerShell collector on Windows and preserve the exact artifact hashes."
+      ],
+      "windows_ci_execution_status": "authorized_pending_run"
+    },
+    {
+      "id": "windows_build",
+      "requirement": "Windows CI, frozen CLI/Studio and optional SDK packaging",
+      "status": "authorized_pending_run",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Last observed repository state: initial README only at HEAD 7fb34ffed7d0743983f76998ad170fd82b0400b9.",
+        "Historical automatic approval rejection was resolved by explicit user authorization for the named private repository upload and Windows CI.",
+        "No application source upload or Windows CI run has yet been confirmed in this status snapshot."
+      ],
+      "evidence": [
+        ".github/workflows/ci.yml",
+        "scripts/build_windows.ps1",
+        "scripts/verify_windows.ps1"
+      ],
+      "remaining": [
+        "Upload the authorized source snapshot and start Windows CI.",
+        "After observed execution, retain the actual source commit, Windows run URL, job logs, artifact hashes and frozen-runtime receipts."
+      ]
+    },
+    {
+      "id": "target_windows",
+      "requirement": "Target Windows lifecycle, display/DPI and deployment behavior",
+      "status": "pending_target_windows",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [],
+      "evidence": [
+        "docs/WINDOWS_HARDWARE_ACCEPTANCE.md",
+        "docs/WINDOWS_ACCEPTANCE_RUNNER.md"
+      ],
+      "remaining": [
+        "Run the exact build on the client PC; observe startup/shutdown, camera exclusivity, unplug/replug, sleep/wake and intended monitors."
+      ]
+    },
+    {
+      "id": "physical_cameras",
+      "requirement": "UVC, infrared, global-shutter and RealSense physical acquisition",
+      "status": "pending_hardware",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Physical devices were last observed offline; a current connectivity recheck is pending.",
+        "The prior Linux RealSense SDK import succeeded; SDK context creation failed before enumeration."
+      ],
+      "evidence": [
+        "release_evidence/realsense_sdk_smoke.json",
+        "docs/WINDOWS_ACCEPTANCE_RUNNER.md"
+      ],
+      "remaining": [
+        "Connect identified cameras and provide exact serials, firmware, optics, illumination, pixel formats and operating settings.",
+        "Measure sustained delivery and verify physical shutter/trigger behavior; USB or SDK connectivity alone does not establish it."
+      ]
+    },
+    {
+      "id": "measured_geometry",
+      "requirement": "Camera intrinsics, camera/world transform and measured workspace surfaces",
+      "status": "pending_measured_geometry",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Calibration and held-out reprojection algorithms are software-tested."
+      ],
+      "evidence": [
+        "release_evidence/acceptance_revision_pytest.xml",
+        "tests/test_calibration_images.py",
+        "tests/test_validation_evidence.py"
+      ],
+      "remaining": [
+        "Supply measured board dimensions, fresh held-out images, final focus/resolution, world landmarks and measured surfaces."
+      ]
+    },
+    {
+      "id": "pupil_head_pose",
+      "requirement": "Pupil localization and head-pose accuracy under operating conditions",
+      "status": "pending_reference_measurement",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Reference-photo inference produced 478 landmarks and finite observations; no gaze or head-angle ground truth was supplied."
+      ],
+      "evidence": [
+        "release_evidence/mediapipe_inference_photo.json",
+        "docs/WINDOWS_HARDWARE_ACCEPTANCE.md"
+      ],
+      "remaining": [
+        "Collect labeled pupil centers and an independent pose reference across intended users, eyewear, lighting, distance and head motion."
+      ]
+    },
+    {
+      "id": "human_gaze",
+      "requirement": "Person-specific screen and spatial gaze accuracy",
+      "status": "pending_human_measurement",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Synthetic image-to-coordinate and bounded-surface paths are exercised.",
+        "Spatial ray miss uses an explicitly identified eye-origin estimate; unconstrained fixation depth is not measured."
+      ],
+      "evidence": [
+        "release_evidence/desktop_verification.json",
+        "release_evidence/simulation/simulation_summary.json",
+        "tests/test_validation_evidence.py"
+      ],
+      "remaining": [
+        "Acquire fresh person-specific screen targets and measured nonplanar workspace targets; retain model/profile identity, coverage, eye-origin source and errors."
+      ]
+    },
+    {
+      "id": "precision_drift",
+      "requirement": "Stationary precision and drift over the required use interval",
+      "status": "pending_human_measurement",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Correct radial RMS, known-target baseline error and elapsed-time reporting are regression-tested.",
+        "A small repeated offset is not treated as a human accuracy or duration pass."
+      ],
+      "evidence": [
+        "release_evidence/acceptance_revision_pytest.xml",
+        "tests/test_drift.py",
+        "tests/test_acceptance_controls.py"
+      ],
+      "remaining": [
+        "Measure instructed stationary fixations before/after the agreed duration and operating changes; evaluate baseline error, jitter and drift separately."
+      ]
+    },
+    {
+      "id": "depth_stereo",
+      "requirement": "Depth eye-surface origin and synchronized multi-camera geometry",
+      "status": "pending_hardware_geometry",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Known-depth, correspondence, triangulation and invalid-geometry fixtures pass."
+      ],
+      "evidence": [
+        "release_evidence/acceptance_revision_pytest.xml",
+        "tests/test_hardware_v2.py",
+        "tests/test_core_v2_regressions.py"
+      ],
+      "remaining": [
+        "Use calibrated aligned depth or a measured stereo rig; verify correspondence and exposure synchronization independently."
+      ]
+    },
+    {
+      "id": "end_to_end_latency",
+      "requirement": "Sensor exposure/host receipt to consumer/display latency",
+      "status": "pending_instrumented_measurement",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "Processing time and host receive/delivery observations are available with explicit scopes.",
+        "Sensor-frame loss and exposure-to-display latency remain unmeasured."
+      ],
+      "evidence": [
+        "release_evidence/desktop_verification.json",
+        "release_evidence/acceptance_camera_soak_SDK_EMULATOR_fixture.json",
+        "docs/WINDOWS_ACCEPTANCE_RUNNER.md"
+      ],
+      "remaining": [
+        "Instrument named timestamp boundaries and clock synchronization, include queue/API/render delay, and collect p50/p95 over the agreed load and duration."
+      ]
+    },
+    {
+      "id": "client_integration",
+      "requirement": "Integration into the existing client Windows application",
+      "status": "pending_client_repository",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "SDK, queue-worker and authenticated localhost API examples are supplied and software-tested."
+      ],
+      "evidence": [
+        "release_evidence/acceptance_revision_pytest.xml",
+        "examples/integrate_existing_windows_app.py",
+        "examples/consume_local_api.py",
+        "docs/INTEGRATION.md"
+      ],
+      "remaining": [
+        "Provide the actual client repository/interface, dependency lock, deployment requirements and baseline; integrate and verify the exact client build."
+      ]
+    },
+    {
+      "id": "acceptance_criteria",
+      "requirement": "Agreed pass/fail limits and optional publisher signing",
+      "status": "pending_client_criteria",
+      "software_scope_passed": false,
+      "physical_or_client_acceptance_passed": null,
+      "observed": [
+        "No customer-specific accuracy, precision, drift, latency or throughput limits were supplied.",
+        "No authorized publisher signing identity or requirement has been supplied."
+      ],
+      "evidence": [
+        "docs/WINDOWS_HARDWARE_ACCEPTANCE.md",
+        "docs/WINDOWS_ACCEPTANCE_RUNNER.md"
+      ],
+      "remaining": [
+        "Record metric units, percentiles, duration, users/conditions, target coverage and permitted invalid rates.",
+        "Supply signing policy/identity if required; attach the resulting signature and exact artifact hashes."
+      ]
+    }
+  ],
+  "next_evidence_order": [
+    "windows_build",
+    "acceptance_criteria",
+    "target_windows",
+    "physical_cameras",
+    "measured_geometry",
+    "pupil_head_pose",
+    "human_gaze",
+    "precision_drift",
+    "depth_stereo",
+    "end_to_end_latency",
+    "client_integration"
+  ],
+  "status_update_rule": "Update only the relevant scope after observing its actual result; retain run/build/configuration identity and measurement provenance.",
+  "next_required_permission": null,
+  "python_distribution": {
+    "status": "passed",
+    "verified_at_utc": "2026-11-18T09:37:02.673937+00:00",
+    "version": "0.2.1",
+    "os": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "python": "3.12.14",
+    "installed_package": "/workspace/scratch/35b77c06faa6/acceptance_wheel_install/gazespace/__init__.py",
+    "noneditable_wheel_import": true,
+    "wheel_sha256": "762cc2a1c4086f63cea13f08e7627bfea5ff7d35662c094b75503acb7478bf60",
+    "synthetic_end_to_end": "passed",
+    "native_qt_pages_receipt": "acceptance_wheel_studio.json",
+    "windows_executable_tested": false,
+    "physical_hardware_tested": false,
+    "human_gaze_accuracy_measured": false
+  },
+  "physical_device_connectivity": {
+    "status": "last_observed_offline_recheck_pending",
+    "current_recheck_completed": false
+  }
+}

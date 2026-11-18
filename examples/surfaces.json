@@ -1,0 +1,20 @@
+[
+  {
+    "name": "workspace_screen_A",
+    "origin_world_m": [0.15, 0.0, 0.0],
+    "u_vector": [1.0, 0.0, 0.0],
+    "v_vector": [0.0, 1.0, 0.0],
+    "width_m": 0.53,
+    "height_m": 0.30,
+    "pixel_size": [1920, 1080]
+  },
+  {
+    "name": "inspection_bench",
+    "origin_world_m": [0.10, 0.20, 0.35],
+    "u_vector": [1.0, 0.0, 0.0],
+    "v_vector": [0.0, 0.0, 1.0],
+    "width_m": 0.65,
+    "height_m": 0.40,
+    "pixel_size": null
+  }
+]

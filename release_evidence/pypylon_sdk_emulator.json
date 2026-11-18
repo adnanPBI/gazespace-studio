@@ -1,0 +1,248 @@
+{
+  "status": "passed",
+  "verification": "Real pypylon binding with official Basler camera emulator",
+  "verified_at_utc": "2026-11-18T08:48:05.406872+00:00",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "pypylon": "26.5.0",
+    "PYLON_CAMEMU": "1"
+  },
+  "device": {
+    "serial": "0815-0000",
+    "device_class": "BaslerCamEmu",
+    "model": "Emulation"
+  },
+  "physical_hardware_tested": false,
+  "real_eyes_or_gaze_accuracy_tested": false,
+  "sdk_emulator_only": true,
+  "runs": [
+    {
+      "requested_pixel_format": "Mono8",
+      "ir_bit_depth": null,
+      "capabilities": {
+        "serial": "0815-0000",
+        "model": "Emulation",
+        "device_class": "BaslerCamEmu",
+        "sdk_emulator": true,
+        "simulated": true,
+        "synthetic": true,
+        "camera_id": "basler:0815-0000",
+        "identity_strength": "serial",
+        "backend": "pylon",
+        "is_live": true,
+        "global_shutter_verified": false,
+        "timestamp_kind": "host_receive; hardware ticks reported separately",
+        "controls": {
+          "ExposureAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off"
+          },
+          "ExposureTime": {
+            "requested": 3000,
+            "applied": true,
+            "actual": 3000.0
+          },
+          "GainAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off"
+          },
+          "Gain": {
+            "requested": 0,
+            "applied": true,
+            "actual": 0.0
+          },
+          "PixelFormat": {
+            "requested": "Mono8",
+            "applied": true,
+            "actual": "Mono8"
+          }
+        },
+        "width": 1024,
+        "height": 1040,
+        "fps_reported": null,
+        "pixel_format": "Mono8"
+      },
+      "frames_checked": 5,
+      "extra_buffer_reuse_frame": 1,
+      "array_shape": [
+        1040,
+        1024,
+        3
+      ],
+      "array_dtype": "uint8",
+      "min_pixel": 0,
+      "max_pixel": 255,
+      "serial_preserved_as_string": true,
+      "timestamps_strictly_increasing": true,
+      "buffers_owned_and_stable": true,
+      "first_frame_metadata": {
+        "hardware_ticks": 0,
+        "simulated": true,
+        "synthetic": true,
+        "sdk_emulator": true,
+        "hardware_clock_synchronized": false
+      },
+      "closed_and_not_grabbing": true,
+      "idempotent_close": true,
+      "status": "passed"
+    },
+    {
+      "requested_pixel_format": "Mono12",
+      "ir_bit_depth": 12,
+      "capabilities": {
+        "serial": "0815-0000",
+        "model": "Emulation",
+        "device_class": "BaslerCamEmu",
+        "sdk_emulator": true,
+        "simulated": true,
+        "synthetic": true,
+        "camera_id": "basler:0815-0000",
+        "identity_strength": "serial",
+        "backend": "pylon",
+        "is_live": true,
+        "global_shutter_verified": false,
+        "timestamp_kind": "host_receive; hardware ticks reported separately",
+        "controls": {
+          "ExposureAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off"
+          },
+          "ExposureTime": {
+            "requested": 3000,
+            "applied": true,
+            "actual": 3000.0
+          },
+          "GainAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off"
+          },
+          "Gain": {
+            "requested": 0,
+            "applied": true,
+            "actual": 0.0
+          },
+          "PixelFormat": {
+            "requested": "Mono12",
+            "applied": true,
+            "actual": "Mono12"
+          }
+        },
+        "width": 1024,
+        "height": 1040,
+        "fps_reported": null,
+        "pixel_format": "Mono12"
+      },
+      "frames_checked": 5,
+      "extra_buffer_reuse_frame": 1,
+      "array_shape": [
+        1040,
+        1024,
+        3
+      ],
+      "array_dtype": "uint8",
+      "min_pixel": 0,
+      "max_pixel": 254,
+      "serial_preserved_as_string": true,
+      "timestamps_strictly_increasing": true,
+      "buffers_owned_and_stable": true,
+      "first_frame_metadata": {
+        "hardware_ticks": 0,
+        "simulated": true,
+        "synthetic": true,
+        "sdk_emulator": true,
+        "hardware_clock_synchronized": false
+      },
+      "closed_and_not_grabbing": true,
+      "idempotent_close": true,
+      "status": "passed"
+    },
+    {
+      "requested_pixel_format": "BGR8Packed",
+      "ir_bit_depth": null,
+      "capabilities": {
+        "serial": "0815-0000",
+        "model": "Emulation",
+        "device_class": "BaslerCamEmu",
+        "sdk_emulator": true,
+        "simulated": true,
+        "synthetic": true,
+        "camera_id": "basler:0815-0000",
+        "identity_strength": "serial",
+        "backend": "pylon",
+        "is_live": true,
+        "global_shutter_verified": false,
+        "timestamp_kind": "host_receive; hardware ticks reported separately",
+        "controls": {
+          "ExposureAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off"
+          },
+          "ExposureTime": {
+            "requested": 3000,
+            "applied": true,
+            "actual": 3000.0
+          },
+          "GainAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off"
+          },
+          "Gain": {
+            "requested": 0,
+            "applied": true,
+            "actual": 0.0
+          },
+          "PixelFormat": {
+            "requested": "BGR8Packed",
+            "applied": true,
+            "actual": "BGR8Packed"
+          }
+        },
+        "width": 1024,
+        "height": 1040,
+        "fps_reported": null,
+        "pixel_format": "BGR8Packed"
+      },
+      "frames_checked": 5,
+      "extra_buffer_reuse_frame": 1,
+      "array_shape": [
+        1040,
+        1024,
+        3
+      ],
+      "array_dtype": "uint8",
+      "min_pixel": 0,
+      "max_pixel": 255,
+      "serial_preserved_as_string": true,
+      "timestamps_strictly_increasing": true,
+      "buffers_owned_and_stable": true,
+      "first_frame_metadata": {
+        "hardware_ticks": 0,
+        "simulated": true,
+        "synthetic": true,
+        "sdk_emulator": true,
+        "hardware_clock_synchronized": false
+      },
+      "closed_and_not_grabbing": true,
+      "idempotent_close": true,
+      "status": "passed"
+    }
+  ],
+  "official_reference": "https://docs.baslerweb.com/camera-emulation",
+  "limitations": [
+    "Camera emulator does not validate USB transport, optics, IR illumination, shutter characteristics or physical camera timing.",
+    "Host receive timestamps are monotonic; raw hardware ticks are preserved and not assumed to be synchronized.",
+    "Control availability and value ranges depend on the real camera model."
+  ],
+  "reproduce_powershell": [
+    "$env:PYLON_CAMEMU=\"1\"",
+    "python scripts/verify_pypylon_emulator.py --output release_evidence/pypylon_sdk_emulator.json"
+  ],
+  "reproduce_bash": "PYLON_CAMEMU=1 python scripts/verify_pypylon_emulator.py --output release_evidence/pypylon_sdk_emulator.json"
+}

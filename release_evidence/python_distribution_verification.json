@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "distribution": "gazespace-0.2.0-py3-none-any.whl",
+  "sha256": "7a5ac73db9b2a55fbadfbde70021a39077de2e8c4f4e7099b156ffb311ba240d",
+  "installation": "Non-editable wheel into isolated target; imported module path verified",
+  "steps": [
+    {
+      "name": "install",
+      "exit_code": 0,
+      "duration_s": 5.54
+    },
+    {
+      "name": "import",
+      "exit_code": 0,
+      "duration_s": 0.03
+    },
+    {
+      "name": "simulate",
+      "exit_code": 0,
+      "duration_s": 1.73
+    },
+    {
+      "name": "studio",
+      "exit_code": 0,
+      "duration_s": 0.58
+    }
+  ],
+  "windows_binary_tested": false
+}

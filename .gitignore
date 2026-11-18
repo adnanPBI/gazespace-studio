@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.spec
+profiles/
+capture/
+*.jsonl
+*.csv
+.env
+
+# Generated verification artifacts and local releases
+release_evidence/
+release_dist/
+*.log

@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-11-18T08:43:58.393658+00:00",
+  "command": [
+    "/workspace/scratch/35b77c06faa6/.release-venv/bin/python",
+    "-m",
+    "pip",
+    "install",
+    "-e",
+    ".[full,test,basler,packaging]"
+  ],
+  "exit_code": 0,
+  "duration_s": 65.89,
+  "environment": "/workspace/scratch/35b77c06faa6/.release-venv",
+  "include_system_site_packages": false,
+  "pyvenv_cfg": "home = /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin\ninclude-system-site-packages = false\nversion = 3.12.14\nexecutable = /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12\ncommand = /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m venv /workspace/scratch/35b77c06faa6/.release-venv\n",
+  "install_log": "isolated_install.log",
+  "pip_check": {
+    "exit_code": 0,
+    "output": "No broken requirements found.\n"
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "prefix": "/workspace/scratch/35b77c06faa6/.release-venv",
+    "base_prefix": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python",
+    "user_site_enabled": false,
+    "sys_path": [
+      "",
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python312.zip",
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12",
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/lib-dynload",
+      "/workspace/scratch/35b77c06faa6/.release-venv/lib/python3.12/site-packages",
+      "/workspace/scratch/35b77c06faa6/gazespace/src"
+    ]
+  }
+}

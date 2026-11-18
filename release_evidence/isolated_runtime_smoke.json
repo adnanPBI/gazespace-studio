@@ -1,0 +1,49 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-11-18T08:44:44.188507+00:00",
+  "environment": "Fresh venv, no system site packages, editable install with full/test/basler/packaging extras",
+  "python": "3.12.14",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "executable": "/workspace/scratch/35b77c06faa6/.release-venv/bin/python",
+  "commands": [
+    {
+      "command": "python -m gazespace doctor",
+      "exit_code": 0,
+      "receipt": "isolated_smoke_doctor.log"
+    },
+    {
+      "command": "python -m gazespace simulate --output release_evidence/isolated_simulation --seconds 1 --record-video",
+      "exit_code": 0,
+      "receipt": "isolated_simulation/simulation_summary.json"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen python scripts/gazespace_studio_entry.py --smoke-test release_evidence/isolated_studio_smoke.json",
+      "exit_code": 0,
+      "receipt": "isolated_studio_smoke.json"
+    }
+  ],
+  "studio_pages_painted": 7,
+  "synthetic_simulation_only": true,
+  "windows_executables_built_or_run": false,
+  "physical_hardware_tested_by_this_check": false,
+  "frozen_executable_verified": false,
+  "notes": [
+    "PowerShell is unavailable in this Linux environment; Windows scripts were source-reviewed, not executed.",
+    "Windows CI definition has not been executed because no remote repository is supplied.",
+    "The native Studio smoke paints and closes the actual UI but does not establish physical monitor/camera acceptance."
+  ],
+  "core_versions": {
+    "gazespace": "0.2.0",
+    "numpy": "1.26.4",
+    "opencv-contrib-python": "4.11.0.86",
+    "mediapipe": "0.10.21",
+    "jax": "0.7.1",
+    "jaxlib": "0.7.1",
+    "PySide6": "6.12.0",
+    "fastapi": "0.163.2",
+    "starlette": "1.10.0",
+    "pypylon": "26.5.0",
+    "pyinstaller": "6.22.3",
+    "pytest": "9.2.0"
+  }
+}

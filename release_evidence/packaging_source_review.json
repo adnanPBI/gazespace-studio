@@ -1,0 +1,39 @@
+{
+  "status": "source_reviewed_windows_execution_pending",
+  "reviewed_at_utc": "2026-11-18T08:45:51.652177+00:00",
+  "windows_or_powershell_available": false,
+  "workflow_yaml_parsed": true,
+  "python_entrypoints_executed_in_isolated_linux_environment": true,
+  "ci_actions_primary_sources": [
+    {
+      "action": "actions/checkout@v7",
+      "source": "https://github.com/actions/checkout",
+      "observed": "Official README identifies Checkout v7"
+    },
+    {
+      "action": "actions/setup-python@v7",
+      "source": "https://github.com/actions/setup-python",
+      "observed": "Official README usage specifies setup-python@v7"
+    },
+    {
+      "action": "actions/upload-artifact@v7",
+      "source": "https://github.com/actions/upload-artifact",
+      "observed": "Official README usage specifies upload-artifact@v7",
+      "tag_action_file": "https://raw.githubusercontent.com/actions/upload-artifact/v7/action.yml"
+    }
+  ],
+  "frozen_guide_resolution": {
+    "module_layout": "APP/_internal/gazespace/ui/main_window.py",
+    "parents_3": "APP",
+    "build_copies": "APP/README.md and APP/docs/",
+    "primary_source": "https://pyinstaller.org/en/stable/runtime-information.html",
+    "runtime_packaging_gate": "Studio --smoke-test fails if README.md or docs/USER_GUIDE.md is missing beside the executable"
+  },
+  "third_party_notices": {
+    "all_dependency_license_files_verified_in_final_binary": false,
+    "note": "PyInstaller collect_all copies metadata of explicitly requested packages; transitive license completeness is not implied. Inspect the actual Windows distribution and retain required dependency notices before redistribution.",
+    "build_script_explicitly_copies_project_license_and_docs": true
+  },
+  "manual_windows_acceptance_pending": true,
+  "windows_binaries_built_or_run_here": false
+}

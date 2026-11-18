@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-11-18T08:48:00.966025+00:00",
+  "source": "NASA astronaut photograph distributed by scikit-image; still photo without gaze ground truth",
+  "source_reference": "https://scikit-image.org/docs/stable/api/skimage.data.html#skimage.data.astronaut",
+  "image_sha256": "8828e3f97f7a12f2b08a24840dae2636c818e2a5745fc676fc03715b6c8b653f",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "mediapipe": "0.10.21"
+  },
+  "face_detected": true,
+  "iris_count": 2,
+  "landmark_count": 478,
+  "features_finite": true,
+  "quality": 0.6774050250281419,
+  "message": "ok",
+  "head_pose_estimate": {
+    "yaw_deg": -4.031949325642106,
+    "pitch_deg": 32.13971917390022,
+    "roll_deg": 2.7126598231410584,
+    "reprojection_px": 4.175883220680835
+  },
+  "hardware_validated": false,
+  "gaze_accuracy_validated": false,
+  "head_angle_accuracy_validated": false
+}

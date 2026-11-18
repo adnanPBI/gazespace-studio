@@ -1,0 +1,218 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-11-18T08:48:02.302887+00:00",
+  "rendering": "Actual PySide6 widgets, native offscreen rendering; screenshots captured with QWidget.grab",
+  "source": "Generated pupil camera fixture processed by the actual detector, screen fit and spatial fit",
+  "synthetic": true,
+  "physical_hardware_validated": false,
+  "human_gaze_accuracy_validated": false,
+  "window_size": [
+    1440,
+    1000
+  ],
+  "pages_captured": 7,
+  "screenshots": [
+    "desktop_live.png",
+    "desktop_cameras.png",
+    "desktop_calibration.png",
+    "desktop_workspace.png",
+    "desktop_sessions.png",
+    "desktop_diagnostics.png",
+    "desktop_integration.png"
+  ],
+  "gif": {
+    "path": "desktop_live.gif",
+    "frame_count": 36,
+    "interval_ms": 167
+  },
+  "session_records": 284,
+  "recorded_video_frames": 284,
+  "session_path": "/workspace/scratch/35b77c06faa6/gui_test_workspace/final_capture/sessions/20261118T084746_b9ff6ca9b8",
+  "native_ui_errors": [],
+  "real_loopback_http_status": 200,
+  "real_loopback_gaze_response": {
+    "state": "running",
+    "running": true,
+    "alive": true,
+    "last_error": null,
+    "latest": {
+      "timestamp_s": 2111.0657205636667,
+      "valid": true,
+      "reason": "spatial_surface_hit",
+      "source": "ir_manual_roi",
+      "quality": 0.8807275983346565,
+      "gaze_screen_px": [
+        911.670123518681,
+        478.9489902073479
+      ],
+      "gaze_screen_normalized": [
+        0.47507562455376806,
+        0.4438822893487932
+      ],
+      "ray_origin_world_m": [
+        0.0,
+        0.0,
+        0.65
+      ],
+      "ray_direction_world": [
+        -0.021866984015478673,
+        -0.02826005478770342,
+        -0.9993613982506343
+      ],
+      "surface_name": "Virtual display",
+      "surface_xy_m": [
+        0.2857773777985204,
+        0.15161922639381317
+      ],
+      "surface_xy_px": [
+        914.0113133256011,
+        481.16807434977767
+      ],
+      "yaw_pitch_roll_deg": null,
+      "pupils_px": {
+        "right": [
+          216.0,
+          181.0
+        ],
+        "left": [
+          420.0,
+          181.0
+        ]
+      },
+      "processing_ms": 9.9641540000448,
+      "capture_timestamp_s": 2111.0657205636667,
+      "warnings": [
+        "static_eye_rois_require_stable_head_position",
+        "synthetic_origin_and_surfaces_are_known_virtual_geometry"
+      ],
+      "raw_gaze_screen_px": [
+        911.6701235186807,
+        478.94899020734783
+      ],
+      "screen_valid": true,
+      "spatial_valid": true,
+      "eye_origin_source": "synthetic_fixture",
+      "model_fingerprint": "92a71b2055fcaf04d82e3b739c508f68c1ca60e3e115cc79a1e90ec20f27ba70",
+      "tracking_context": {
+        "camera_id": "synthetic-v2",
+        "backend": "synthetic",
+        "subject_id": "synthetic-fixture",
+        "exposure_native": null,
+        "exposure_us": null,
+        "gain": null,
+        "ir_bit_depth": 8,
+        "feature_version": 2,
+        "tracking_mode": "ir-roi",
+        "pupil_polarity": "dark",
+        "head_model": "generic-camera-facing-v2",
+        "roi_normalized": {
+          "right": [
+            0.23,
+            0.39,
+            0.22,
+            0.24
+          ],
+          "left": [
+            0.55,
+            0.39,
+            0.22,
+            0.24
+          ]
+        },
+        "feature_method": "ir_manual_roi",
+        "intrinsics_fingerprint": "approximate",
+        "image_size": [
+          640,
+          360
+        ],
+        "eye_origin_source": "synthetic_fixture"
+      }
+    },
+    "metrics": {
+      "frames": 354,
+      "gaze_valid": 354,
+      "rejected": 0,
+      "blink_frames": 0,
+      "processing_median_ms": 3.6640189998706774,
+      "processing_p95_ms": 10.216387300010858,
+      "calibrated_screen": true,
+      "calibrated_spatial": true,
+      "physical_accuracy_verified": false,
+      "lighting": {
+        "p05": 40.0,
+        "median": 40.0,
+        "p95": 190.0,
+        "dark_fraction": 0.0,
+        "bright_fraction": 0.0001388888888888889,
+        "contrast": 150.0,
+        "sharpness_laplacian": 755.0661111111111,
+        "warnings": []
+      },
+      "received_frames": 361,
+      "processed_frames": 354,
+      "dropped_frames": 6,
+      "stale_frames": 0,
+      "reconnections": 0,
+      "capture_fps": 29.986788146209545,
+      "processing_fps": 29.429053503811897,
+      "capture_age_ms": 37.97216899965861,
+      "callback_error": null
+    },
+    "camera": {
+      "source": "synthetic",
+      "camera_id": "synthetic:eyes-v2",
+      "backend": "synthetic",
+      "width": 640,
+      "height": 360,
+      "fps_reported": 30.0,
+      "simulated": true,
+      "synthetic": true,
+      "is_live": false,
+      "roi_normalized": {
+        "right": [
+          0.23,
+          0.39,
+          0.22,
+          0.24
+        ],
+        "left": [
+          0.55,
+          0.39,
+          0.22,
+          0.24
+        ]
+      },
+      "global_shutter_verified": false
+    }
+  },
+  "runtime_metrics": {
+    "frames": 361,
+    "gaze_valid": 361,
+    "rejected": 0,
+    "blink_frames": 0,
+    "processing_median_ms": 3.6548934999700577,
+    "processing_p95_ms": 10.53252405019975,
+    "calibrated_screen": true,
+    "calibrated_spatial": true,
+    "physical_accuracy_verified": false,
+    "lighting": {
+      "p05": 40.0,
+      "median": 40.0,
+      "p95": 190.0,
+      "dark_fraction": 0.0,
+      "bright_fraction": 0.0001388888888888889,
+      "contrast": 150.0,
+      "sharpness_laplacian": 755.0661111111111,
+      "warnings": []
+    },
+    "received_frames": 367,
+    "processed_frames": 361,
+    "dropped_frames": 6,
+    "stale_frames": 0,
+    "reconnections": 0,
+    "capture_fps": 30.000349972993018,
+    "processing_fps": 29.510343929546366,
+    "capture_age_ms": 67.06971399989925,
+    "callback_error": null
+  }
+}

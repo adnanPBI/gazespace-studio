@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-11-18T09:37:02.666021+00:00",
+  "version": "0.2.1",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "frozen_executable": false,
+  "bundled_guides_present": null,
+  "qt_platform": "offscreen",
+  "native_ui_pages_painted": 7,
+  "screenshot": "acceptance_wheel_studio.png",
+  "camera_opened": false,
+  "interactive_windows_monitor_acceptance": false
+}
