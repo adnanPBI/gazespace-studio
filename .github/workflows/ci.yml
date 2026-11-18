@@ -96,7 +96,7 @@ jobs:
               throw "PowerShell syntax errors in $($file.Name)"
             }
           }
-      - name: Build, run real SDK emulator and smoke-test frozen applications
+      - name: Build, verify frozen applications and collect exact-release Windows evidence
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path release_evidence -Force | Out-Null
@@ -134,6 +134,8 @@ jobs:
             release_evidence/windows_packaged_environment.json
             release_evidence/windows_source_environment.json
             release_evidence/windows_packaged_sdk_emulator*
+            release_evidence/windows_release_acceptance_*/
+            release_evidence/windows_release_acceptance_*.zip
             release_evidence/windows_pytest.xml
             release_evidence/pypylon_sdk_emulator_windows.json
           if-no-files-found: error

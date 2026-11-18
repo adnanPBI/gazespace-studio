@@ -61,7 +61,7 @@ def test_navigation_resizes_after_enlarged_font_without_clipping(desktop):
         button.click();app.processEvents()
         assert w.pages.currentIndex()==i
         # Preserve both 14-pixel horizontal padding areas in the actual theme.
-        assert button.fontMetrics().horizontalAdvance(button.text())<button.width()-28
+        assert button.fontMetrics().horizontalAdvance(button.text())<=button.width()-28
         assert button.geometry().right()<button.parentWidget().width()
     assert errors==[]
 

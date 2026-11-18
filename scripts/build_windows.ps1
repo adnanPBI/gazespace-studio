@@ -129,6 +129,38 @@ if (-not $?) { throw 'Packaged CLI or Studio smoke verification failed' }
 $SigningLabel = if ($null -ne $SigningCertificate) { 'signed' } else { 'unsigned' }
 $Archive = Join-Path $DistributionDirectory "GazeSpace-Windows-$Version-$SigningLabel.zip"
 Compress-Archive -LiteralPath (Join-Path $DistributionDirectory 'GazeSpaceStudio'), (Join-Path $DistributionDirectory 'GazeSpaceCLI') -DestinationPath $Archive -CompressionLevel Optimal -Force
+$ReleaseSha256 = (Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash
+
+# Exercise the collector shipped in the actual application folder against the
+# finalized archive. No camera backend is selected and no physical-device
+# attestation is supplied; hosted CI establishes inventory/software behavior.
+$AcceptanceDirectory = Join-Path $EvidenceDirectory ('windows_release_acceptance_' + [DateTime]::UtcNow.ToString('yyyyMMdd_HHmmss_fff'))
+$PackagedCollector = Join-Path (Split-Path -Parent $Executables[1]) 'scripts\collect_windows_acceptance.ps1'
+$CollectorSdkInventory = if ($Basler -and $Depth) {'all'} elseif ($Basler) {'basler'} elseif ($Depth) {'realsense'} else {'none'}
+$CollectorSucceeded = $false
+try {
+    & $PackagedCollector -OutputDirectory $AcceptanceDirectory -PackagedCli $Executables[1] -PackagedStudio $Executables[0] -ReleaseArchive $Archive -CameraBackend none -SdkInventory $CollectorSdkInventory
+    $CollectorSucceeded = $?
+} finally { Set-Location -LiteralPath $ProjectRoot }
+if (-not $CollectorSucceeded) { throw 'The packaged Windows acceptance collector failed' }
+$AcceptanceSummary = Get-Content -LiteralPath (Join-Path $AcceptanceDirectory 'acceptance_summary.json') -Raw | ConvertFrom-Json
+if ($AcceptanceSummary.status -ne 'environment_collected_camera_not_requested' -or -not $AcceptanceSummary.windows_executed) {
+    throw 'The full Windows acceptance collector did not complete its inventory-only run'
+}
+if ($AcceptanceSummary.camera_acquisition_requested -or $AcceptanceSummary.physical_hardware_tested -or $AcceptanceSummary.real_person_gaze_accuracy_established) {
+    throw 'Hosted Windows inventory must not claim camera acquisition or physical/human gaze acceptance'
+}
+$HardwareInventory = Get-Content -LiteralPath (Join-Path $AcceptanceDirectory 'windows_hardware_inventory.json') -Raw | ConvertFrom-Json
+if ($HardwareInventory.operating_system.status -ne 'collected' -or @($HardwareInventory.operating_system.records).Count -lt 1) {
+    throw 'The collector did not obtain the Windows operating-system CIM baseline'
+}
+$ReleaseIdentity = Get-Content -LiteralPath (Join-Path $AcceptanceDirectory 'release_identity.json') -Raw | ConvertFrom-Json
+$ArchiveIdentity = @($ReleaseIdentity.artifacts | Where-Object { $_.full_path -eq $Archive })
+if (-not $ReleaseIdentity.complete_release_archive_hashed -or $ArchiveIdentity.Count -ne 1 -or $ArchiveIdentity[0].sha256 -ne $ReleaseSha256) {
+    throw 'The collector receipt does not identify the exact finalized Windows release archive'
+}
+$AcceptanceArchive = $AcceptanceDirectory + '.zip'
+if (-not (Test-Path -LiteralPath $AcceptanceArchive)) { throw 'The full collector did not produce its evidence ZIP' }
 $Receipt = [ordered]@{
     status='built_and_software_verified_on_windows'
     version=$Version
@@ -140,7 +172,13 @@ $Receipt = [ordered]@{
     realsense_sdk_included=[bool]$Depth
     signatures=$SignatureResults
     archive=(Split-Path -Leaf $Archive)
-    sha256=(Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash
+    sha256=$ReleaseSha256
+    full_windows_collector_executed=$true
+    full_windows_collector_mode='inventory_only_no_camera_selected'
+    full_windows_collector_status=$AcceptanceSummary.status
+    full_windows_collector_directory=(Split-Path -Leaf $AcceptanceDirectory)
+    full_windows_collector_evidence_archive=(Split-Path -Leaf $AcceptanceArchive)
+    full_windows_collector_evidence_sha256=(Get-FileHash -LiteralPath $AcceptanceArchive -Algorithm SHA256).Hash
     physical_camera_acceptance='Not established by this build'
     manual_desktop_acceptance='Launch Studio and verify actual Windows monitor/camera workflows with the operator'
 }
