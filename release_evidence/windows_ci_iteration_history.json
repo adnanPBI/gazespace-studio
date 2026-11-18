@@ -34,7 +34,18 @@
       "full_sdk_tests_skipped": 0,
       "physical_hardware_tested": false,
       "url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626"
+    },
+    {
+      "run_id": 44299541968,
+      "code_commit": "52429351784c4d2a317261cca66cad92fc5d6923",
+      "url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968",
+      "automated_result": "passed",
+      "visual_result": "passed_readable_bundled_fonts",
+      "accepted_for_windows_software_delivery": true,
+      "full_sdk_tests_passed": 225,
+      "full_sdk_tests_skipped": 0,
+      "independently_verified_downloaded_files": 7674,
+      "physical_hardware_tested": false
     }
-  ],
-  "next_candidate": "bundled licensed fonts, actual glyph raster gate, separate verified delivery archives"
+  ]
 }

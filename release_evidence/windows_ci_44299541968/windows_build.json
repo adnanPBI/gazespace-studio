@@ -1,0 +1,77 @@
+{
+  "status": "built_and_software_verified_on_windows",
+  "version": "0.2.1",
+  "built_at_utc": "2026-11-18T12:13:24.3543386Z",
+  "distribution": "Two independent onedir folders; keep each executable with its _internal folder",
+  "studio": "GazeSpaceStudio/GazeSpaceStudio.exe",
+  "cli": "GazeSpaceCLI/GazeSpaceCLI.exe",
+  "basler_sdk_included": true,
+  "realsense_sdk_included": true,
+  "signatures": [
+    {
+      "status": "Unsigned developer build",
+      "file": "GazeSpaceStudio.exe"
+    },
+    {
+      "status": "Unsigned developer build",
+      "file": "GazeSpaceCLI.exe"
+    }
+  ],
+  "archive": "GazeSpace-Windows-0.2.1-unsigned.zip",
+  "bytes": 838441207,
+  "sha256": "6d3549ea7af328b0a24a83e9b938784175974107ca436a02142c62d263b9eb4c",
+  "payload_verified": true,
+  "payload_inventory": "windows_archive_inventory_combined.json",
+  "delivery_archives": [
+    {
+      "application": "studio",
+      "archive": "GazeSpace-Studio-Windows-0.2.1-unsigned.zip",
+      "bytes": 419209852,
+      "sha256": "5d996562f5eaadd13e616c8be8c9e90e5112e41af9f26f6a384c4913cdc524b6",
+      "payload_verified": true,
+      "payload_file_count": 3837,
+      "payload_bytes": 1092405446,
+      "payload_inventory": "windows_archive_inventory_studio.json",
+      "full_windows_collector_executed": true,
+      "full_windows_collector_mode": "inventory_only_no_camera_selected",
+      "full_windows_collector_status": "environment_collected_camera_not_requested",
+      "full_windows_collector_directory": "windows_release_acceptance_studio_20261118_121212_568",
+      "full_windows_collector_evidence_archive": "windows_release_acceptance_studio_20261118_121212_568.zip",
+      "full_windows_collector_evidence_bytes": 129591,
+      "full_windows_collector_evidence_sha256": "D1D86A940EDB417CBCD2A39751F2F3582032337A69E453A5E027DEE7654A0A01",
+      "physical_hardware_tested": false,
+      "real_person_gaze_accuracy_established": false,
+      "max_bytes_exclusive": 524288000,
+      "matches_combined_payload": true
+    },
+    {
+      "application": "cli",
+      "archive": "GazeSpace-CLI-Windows-0.2.1-unsigned.zip",
+      "bytes": 419231377,
+      "sha256": "38f27670f181ebeef081f96a55028b69f7e9f4d450ca7e7b583333096b1fc064",
+      "payload_verified": true,
+      "payload_file_count": 3837,
+      "payload_bytes": 1092457830,
+      "payload_inventory": "windows_archive_inventory_cli.json",
+      "full_windows_collector_executed": true,
+      "full_windows_collector_mode": "inventory_only_no_camera_selected",
+      "full_windows_collector_status": "environment_collected_camera_not_requested",
+      "full_windows_collector_directory": "windows_release_acceptance_cli_20261118_121318_071",
+      "full_windows_collector_evidence_archive": "windows_release_acceptance_cli_20261118_121318_071.zip",
+      "full_windows_collector_evidence_bytes": 129519,
+      "full_windows_collector_evidence_sha256": "950E1E89AFE2626A9045DD86815F591EEE1C00CFF897FEBB10A0FF6F00D12C84",
+      "physical_hardware_tested": false,
+      "real_person_gaze_accuracy_established": false,
+      "max_bytes_exclusive": 524288000,
+      "matches_combined_payload": true
+    }
+  ],
+  "full_windows_collector_executed": true,
+  "full_windows_collector_mode": "inventory_only_no_camera_selected",
+  "full_windows_collector_status": "environment_collected_camera_not_requested",
+  "full_windows_collector_directory": "windows_release_acceptance_combined_20261118_121058_965",
+  "full_windows_collector_evidence_archive": "windows_release_acceptance_combined_20261118_121058_965.zip",
+  "full_windows_collector_evidence_sha256": "D1CE9F12FFE4B1C793A53BC882166061FF6A89A16E4B00048CB3FA6E9A62E1C8",
+  "physical_camera_acceptance": "Not established by this build",
+  "manual_desktop_acceptance": "Launch Studio and verify actual Windows monitor/camera workflows with the operator"
+}

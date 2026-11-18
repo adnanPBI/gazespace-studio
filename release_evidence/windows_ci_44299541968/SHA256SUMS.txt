@@ -1,0 +1,2 @@
+5d996562f5eaadd13e616c8be8c9e90e5112e41af9f26f6a384c4913cdc524b6  GazeSpace-Studio-Windows-0.2.1-unsigned.zip
+38f27670f181ebeef081f96a55028b69f7e9f4d450ca7e7b583333096b1fc064  GazeSpace-CLI-Windows-0.2.1-unsigned.zip

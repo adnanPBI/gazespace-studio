@@ -1,15 +1,51 @@
 {
-  "status": "font_corrected_candidate_windows_run_pending",
+  "status": "windows_software_release_verified",
   "repository": "https://github.com/adnanPBI/gazespace-studio",
+  "repository_private": true,
   "source_uploaded": true,
   "source_tree_committed": true,
-  "last_observed_source_commit_sha": "3d2d10035e755b4d3a18dedac6979a0210899cfe",
-  "last_completed_run_id": 44284381626,
-  "last_completed_run_url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626",
-  "last_completed_automated_result": "passed",
-  "last_completed_visual_result": "failed_missing_glyph_boxes",
-  "windows_artifact_accepted": false,
+  "tested_source_commit_sha": "52429351784c4d2a317261cca66cad92fc5d6923",
+  "run_id": 44299541968,
+  "run_url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968",
+  "run_started": true,
+  "run_conclusion": "success",
+  "windows_build_job_id": 134786705094,
+  "full_windows_tests": {
+    "passed": 225,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 30.963
+  },
+  "frozen_studio_pages": 7,
+  "font_rendering_verified": true,
+  "actual_windows_screenshot_review": "passed",
+  "downloaded_archives_verified": true,
+  "downloaded_payload_files_verified": 7674,
+  "archives": [
+    {
+      "application": "studio",
+      "archive": "GazeSpace-Studio-Windows-0.2.1-unsigned.zip",
+      "bytes": 419209852,
+      "sha256": "5d996562f5eaadd13e616c8be8c9e90e5112e41af9f26f6a384c4913cdc524b6",
+      "payload_file_count": 3837,
+      "payload_bytes": 1092405446,
+      "payload_inventory": "windows_archive_inventory_studio.json"
+    },
+    {
+      "application": "cli",
+      "archive": "GazeSpace-CLI-Windows-0.2.1-unsigned.zip",
+      "bytes": 419231377,
+      "sha256": "38f27670f181ebeef081f96a55028b69f7e9f4d450ca7e7b583333096b1fc064",
+      "payload_file_count": 3837,
+      "payload_bytes": 1092457830,
+      "payload_inventory": "windows_archive_inventory_cli.json"
+    }
+  ],
+  "signatures": "NotSigned",
   "authorization": "explicit_user_authorization_granted",
   "next_required_permission": null,
-  "next_action": "Upload font-corrected source snapshot and execute Windows build with glyph raster and separate-archive gates."
+  "physical_hardware_tested": false,
+  "human_gaze_accuracy_measured": false,
+  "client_integration_measured": false
 }

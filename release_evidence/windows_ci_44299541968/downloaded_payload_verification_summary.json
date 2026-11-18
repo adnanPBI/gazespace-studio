@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "started_at_utc": "2026-11-18T12:17:05.361199+00:00",
+  "verifier": {
+    "path": "/workspace/scratch/35b77c06faa6/verify_downloaded_windows_payloads.py",
+    "bytes": 14500,
+    "sha256": "c3d4c0e98b4d6e82b8d439b57df9351e19ff6c68a26feacf43ec3c9654a03c9a"
+  },
+  "provenance": {
+    "source_commit": "52429351784c4d2a317261cca66cad92fc5d6923",
+    "run_id": "44299541968",
+    "binding": "matches_downloaded_artifact_provenance_receipt",
+    "receipt": {
+      "path": "/workspace/scratch/35b77c06faa6/windows_ci_downloads/run_44299541968/gazespace-windows-build-diagnostics.download.json",
+      "bytes": 552,
+      "sha256": "996277cd6ca2931faa757004063946b89c3f13c120dbdcaba5eae1aa7bbdaf8a"
+    },
+    "artifact_id": 14425603088
+  },
+  "evidence_directory": "/workspace/scratch/35b77c06faa6/windows_ci_downloads/run_44299541968/gazespace-windows-build-diagnostics/release_evidence",
+  "evidence_files": {
+    "windows_build.json": {
+      "bytes": 3919,
+      "sha256": "b157124c2cabe31c3324e9dded9da243812f76311dd130632fc7884e9644893b"
+    },
+    "windows_archive_inventory_combined.json": {
+      "bytes": 1494199,
+      "sha256": "657de4eded5f17f7922513448574d80b3f74aa11ee968d6aa6909c07abb0cfb3"
+    },
+    "windows_archive_inventory_studio.json": {
+      "bytes": 754064,
+      "sha256": "7344b2295adace69ea35aff8147d5d4d567231dd358e11b2c40f638ee34810f3"
+    },
+    "windows_archive_inventory_cli.json": {
+      "bytes": 740909,
+      "sha256": "702c138c6131ef932cb4d45a32b08bc8e4461068c783d64a09b8fbe05d219e76"
+    },
+    "windows_release_acceptance_combined_20261118_121058_965/release_identity.json": {
+      "bytes": 1304,
+      "sha256": "be35ab6a27ab51caf9a47c315aa1646019c264b99148b81b8aa429604ef1d749"
+    },
+    "windows_release_acceptance_combined_20261118_121058_965/acceptance_summary.json": {
+      "bytes": 2755,
+      "sha256": "3e4450547f1539164f6fca2073a214d132a60d4dcc2c8bd2c4c108e3de7a6875"
+    },
+    "windows_release_acceptance_studio_20261118_121212_568/release_identity.json": {
+      "bytes": 1318,
+      "sha256": "da53e8866a4280cb26cf91b1ab5ae499224467fca02c14aff27b9b9bcb8a884c"
+    },
+    "windows_release_acceptance_studio_20261118_121212_568/acceptance_summary.json": {
+      "bytes": 2751,
+      "sha256": "dec6e0b79915c3e9993b5e7021b323fcebfb9fd92c96e7fee24205998cc835df"
+    },
+    "windows_release_acceptance_cli_20261118_121318_071/release_identity.json": {
+      "bytes": 1312,
+      "sha256": "b61b6e74e6a486502d5636a70b3fa41473b7f6f89c7ed43f51ebb13bbcccc5da"
+    },
+    "windows_release_acceptance_cli_20261118_121318_071/acceptance_summary.json": {
+      "bytes": 2745,
+      "sha256": "388dd126a727d947a47e0ba159b1102e0a5df6a8a1b6be24b5b6cd075a328e3e"
+    }
+  },
+  "collectors": {
+    "combined": {
+      "status": "passed",
+      "identity_receipt": "windows_release_acceptance_combined_20261118_121058_965/release_identity.json",
+      "verified_artifacts": {
+        "GazeSpace-Windows-0.2.1-unsigned.zip": {
+          "bytes": 838441207,
+          "sha256": "6d3549ea7af328b0a24a83e9b938784175974107ca436a02142c62d263b9eb4c",
+          "signature_status": null
+        },
+        "GazeSpaceStudio.exe": {
+          "bytes": 26949052,
+          "sha256": "4c9687b585d4eade9fde7ae634804489a53cd49e411945e463de7c7c10425837",
+          "signature_status": "NotSigned"
+        },
+        "GazeSpaceCLI.exe": {
+          "bytes": 27001436,
+          "sha256": "be9081000d8650d904def26b46a179d47faad5816c809ae15e26f3329d9af645",
+          "signature_status": "NotSigned"
+        }
+      },
+      "physical_hardware_tested": false
+    },
+    "studio": {
+      "status": "passed",
+      "identity_receipt": "windows_release_acceptance_studio_20261118_121212_568/release_identity.json",
+      "verified_artifacts": {
+        "GazeSpace-Studio-Windows-0.2.1-unsigned.zip": {
+          "bytes": 419209852,
+          "sha256": "5d996562f5eaadd13e616c8be8c9e90e5112e41af9f26f6a384c4913cdc524b6",
+          "signature_status": null
+        },
+        "GazeSpaceStudio.exe": {
+          "bytes": 26949052,
+          "sha256": "4c9687b585d4eade9fde7ae634804489a53cd49e411945e463de7c7c10425837",
+          "signature_status": "NotSigned"
+        },
+        "GazeSpaceCLI.exe": {
+          "bytes": 27001436,
+          "sha256": "be9081000d8650d904def26b46a179d47faad5816c809ae15e26f3329d9af645",
+          "signature_status": "NotSigned"
+        }
+      },
+      "physical_hardware_tested": false
+    },
+    "cli": {
+      "status": "passed",
+      "identity_receipt": "windows_release_acceptance_cli_20261118_121318_071/release_identity.json",
+      "verified_artifacts": {
+        "GazeSpace-CLI-Windows-0.2.1-unsigned.zip": {
+          "bytes": 419231377,
+          "sha256": "38f27670f181ebeef081f96a55028b69f7e9f4d450ca7e7b583333096b1fc064",
+          "signature_status": null
+        },
+        "GazeSpaceStudio.exe": {
+          "bytes": 26949052,
+          "sha256": "4c9687b585d4eade9fde7ae634804489a53cd49e411945e463de7c7c10425837",
+          "signature_status": "NotSigned"
+        },
+        "GazeSpaceCLI.exe": {
+          "bytes": 27001436,
+          "sha256": "be9081000d8650d904def26b46a179d47faad5816c809ae15e26f3329d9af645",
+          "signature_status": "NotSigned"
+        }
+      },
+      "physical_hardware_tested": false
+    }
+  },
+  "windows_binaries_executed_by_this_check": false,
+  "physical_hardware_tested": false,
+  "human_gaze_accuracy_measured": false,
+  "visual_ui_acceptance_established_by_this_check": false,
+  "application_version": "0.2.1",
+  "combined_archive": {
+    "archive": "GazeSpace-Windows-0.2.1-unsigned.zip",
+    "bytes": 838441207,
+    "sha256": "6d3549ea7af328b0a24a83e9b938784175974107ca436a02142c62d263b9eb4c",
+    "archive_bytes_locally_verified": false,
+    "note": "Combined manifest compared; combined ZIP not an input"
+  },
+  "combined_manifest_payload_covered_by_downloaded_splits": true,
+  "completed_at_utc": "2026-11-18T12:17:18.746477+00:00",
+  "archives": {
+    "studio": {
+      "status": "passed",
+      "path": "/workspace/scratch/35b77c06faa6/windows_ci_downloads/run_44299541968/gazespace-windows-studio-unsigned/GazeSpace-Studio-Windows-0.2.1-unsigned.zip",
+      "expected_archive": "GazeSpace-Studio-Windows-0.2.1-unsigned.zip",
+      "actual_archive_identity": {
+        "bytes": 419209852,
+        "sha256": "5d996562f5eaadd13e616c8be8c9e90e5112e41af9f26f6a384c4913cdc524b6"
+      },
+      "file_count": 3837,
+      "payload_bytes": 1092405446,
+      "executable": {
+        "member": "GazeSpaceStudio/GazeSpaceStudio.exe",
+        "bytes": 26949052,
+        "sha256": "4c9687b585d4eade9fde7ae634804489a53cd49e411945e463de7c7c10425837"
+      },
+      "font_assets": {
+        "DejaVuSans.ttf": {
+          "member": "GazeSpaceStudio/_internal/gazespace/assets/fonts/DejaVuSans.ttf",
+          "bytes": 756072,
+          "sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22"
+        },
+        "DejaVuSans-Bold.ttf": {
+          "member": "GazeSpaceStudio/_internal/gazespace/assets/fonts/DejaVuSans-Bold.ttf",
+          "bytes": 704128,
+          "sha256": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167"
+        },
+        "LICENSE-DejaVu.txt": {
+          "member": "GazeSpaceStudio/_internal/gazespace/assets/fonts/LICENSE-DejaVu.txt",
+          "bytes": 4915,
+          "sha256": "c61ba9e8668a511cbd0bcfdee8329e02ca6ca4048abda6ca7ee8ac68a059776a"
+        }
+      },
+      "exact_payload_verified": true,
+      "matches_combined_payload": true
+    },
+    "cli": {
+      "status": "passed",
+      "path": "/workspace/scratch/35b77c06faa6/windows_ci_downloads/run_44299541968/gazespace-windows-cli-unsigned/GazeSpace-CLI-Windows-0.2.1-unsigned.zip",
+      "expected_archive": "GazeSpace-CLI-Windows-0.2.1-unsigned.zip",
+      "actual_archive_identity": {
+        "bytes": 419231377,
+        "sha256": "38f27670f181ebeef081f96a55028b69f7e9f4d450ca7e7b583333096b1fc064"
+      },
+      "file_count": 3837,
+      "payload_bytes": 1092457830,
+      "executable": {
+        "member": "GazeSpaceCLI/GazeSpaceCLI.exe",
+        "bytes": 27001436,
+        "sha256": "be9081000d8650d904def26b46a179d47faad5816c809ae15e26f3329d9af645"
+      },
+      "font_assets": {
+        "DejaVuSans.ttf": {
+          "member": "GazeSpaceCLI/_internal/gazespace/assets/fonts/DejaVuSans.ttf",
+          "bytes": 756072,
+          "sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22"
+        },
+        "DejaVuSans-Bold.ttf": {
+          "member": "GazeSpaceCLI/_internal/gazespace/assets/fonts/DejaVuSans-Bold.ttf",
+          "bytes": 704128,
+          "sha256": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167"
+        },
+        "LICENSE-DejaVu.txt": {
+          "member": "GazeSpaceCLI/_internal/gazespace/assets/fonts/LICENSE-DejaVu.txt",
+          "bytes": 4915,
+          "sha256": "c61ba9e8668a511cbd0bcfdee8329e02ca6ca4048abda6ca7ee8ac68a059776a"
+        }
+      },
+      "exact_payload_verified": true,
+      "matches_combined_payload": true
+    }
+  },
+  "full_receipt": {
+    "file": "windows_downloaded_payload_verification.json",
+    "bytes": 1598263,
+    "sha256": "723d69874aa5e8d628babd170a7532c68ab719c4edccbd07148ba17cb2388028",
+    "location": "complete acceptance evidence ZIP"
+  }
+}

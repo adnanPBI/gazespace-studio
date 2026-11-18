@@ -1,0 +1,120 @@
+{
+  "status": "passed_bounded_visual_render_review",
+  "reviewed_at_utc": "2026-11-18T12:16:24.393467+00:00",
+  "reviewer": "independent_runtime_hardware_agent",
+  "version": "0.2.1",
+  "source_commit": "52429351784c4d2a317261cca66cad92fc5d6923",
+  "github_run_id": 44299541968,
+  "github_run_url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968",
+  "artifact_name": "gazespace-windows-build-diagnostics",
+  "input_directory": "/workspace/scratch/35b77c06faa6/windows_ci_downloads/run_44299541968/gazespace-windows-build-diagnostics/release_evidence",
+  "artifacts": [
+    {
+      "file": "windows_studio_smoke.png",
+      "bytes": 106135,
+      "sha256": "c87dcd2ea75bab38993d9462b3809ff24ee65f15083d31e8e9bfd23fa3f0eeee",
+      "dimensions_px": [
+        1440,
+        960
+      ]
+    },
+    {
+      "file": "windows_studio_smoke_font_probe.png",
+      "bytes": 22629,
+      "sha256": "36f482f655929e7b7633efc3b4192866405c531ac7aa258f58aba437676ecb4d",
+      "dimensions_px": [
+        768,
+        150
+      ]
+    },
+    {
+      "file": "windows_studio_smoke.json",
+      "bytes": 2688,
+      "sha256": "5bee10cb7e62b9001835a3368721564b1c341f59c2d75327fc6826cb7299d6a2"
+    },
+    {
+      "file": "windows_pytest.xml",
+      "bytes": 27704,
+      "sha256": "80fd64c3568e77c928fd867a5b007e7d3364be9117bb81afe17d49ff7880ba15"
+    },
+    {
+      "file": "windows_packaged_verification.json",
+      "bytes": 642,
+      "sha256": "d7b40849992b19e4f83c5e06bbda9d729efc2be81fdd4045682e05387bd964a9"
+    }
+  ],
+  "review_method": "Direct visual inspection of both actual Windows-produced PNGs plus read-only parsing of their existing JSON and JUnit XML receipts; no new application execution or tests.",
+  "visual_findings": {
+    "studio_screenshot": {
+      "viewed": true,
+      "visible_page": "Live workspace",
+      "readable_regions": [
+        "menu bar",
+        "all seven sidebar navigation labels",
+        "page title and subtitle",
+        "camera controls",
+        "camera preview placeholder text",
+        "tracking metric labels",
+        "screen gaze panel labels",
+        "3D workspace panel labels",
+        "recording controls",
+        "status bar"
+      ],
+      "missing_glyph_blocks_observed": false,
+      "observation": "Letter shapes, numerals and punctuation are readable. The earlier repeated replacement-box defect is absent in the inspected screenshot."
+    },
+    "font_probe": {
+      "viewed": true,
+      "observed_probe_characters": "ABGWim018?@×",
+      "all_twelve_probe_shapes_visibly_distinct": true,
+      "caption_and_alphabet_readable": true,
+      "missing_glyph_blocks_observed": false,
+      "observation": "The large glyph probes and the two smaller lines containing application text, Latin capitals, numerals and symbols render visibly with ink and distinct shapes."
+    }
+  },
+  "existing_font_receipt": {
+    "status": "passed",
+    "frozen_executable": true,
+    "platform": "Windows-2025Server-10.0.26100-SP0",
+    "qt_platform": "offscreen",
+    "native_ui_pages_painted": 7,
+    "requested_family": "DejaVu Sans",
+    "resolved_family": "DejaVu Sans",
+    "ascii_glyphs_checked": 95,
+    "unicode_glyphs_checked": 14,
+    "missing_glyphs": [],
+    "distinct_probe_rasters": 12,
+    "expected_probe_rasters": 12,
+    "all_probe_ink_counts_positive": true
+  },
+  "existing_windows_junit_receipt": {
+    "testcases": 225,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suite_attributes": [
+      {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "225",
+        "time": "30.963",
+        "timestamp": "2026-11-18T12:02:49.597603+00:00",
+        "hostname": "runnervmm7ud1"
+      }
+    ]
+  },
+  "limits": [
+    "This is a bounded review of hosted Windows offscreen rendered images; it does not establish interactive physical-monitor, display-scaling or multi-monitor acceptance.",
+    "Only the Live workspace screenshot and the font proof were independently visually reviewed. The receipt reports seven pages painted, but separate screenshots of those other pages were not reviewed here.",
+    "The review did not open or test a physical camera, infrared illumination, USB transport, global shutter, depth hardware or hardware synchronization.",
+    "The review did not test a human participant or establish gaze accuracy, calibration stability or drift on a physical workspace.",
+    "The review does not establish integration with an external client codebase."
+  ],
+  "physical_hardware_tested": false,
+  "interactive_windows_monitor_acceptance": false,
+  "real_person_gaze_accuracy_established": false,
+  "application_code_modified": false,
+  "new_tests_executed": false
+}

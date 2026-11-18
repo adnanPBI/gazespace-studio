@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "status": "environment_collected_camera_not_requested",
+  "started_at_utc": "2026-11-18T12:13:18.0823738Z",
+  "computer_name": "runnervmm7ud1",
+  "session_name": null,
+  "windows_executed": true,
+  "physical_hardware_tested": false,
+  "camera_acquisition_requested": false,
+  "camera_images_saved": false,
+  "real_person_gaze_accuracy_established": false,
+  "source_integration_acceptance_established": false,
+  "steps": {
+    "hardware_inventory": "collected_with_per_query_status",
+    "release_identity": "recorded",
+    "environment_probe": {
+      "executable": "D:\\a\\gazespace-studio\\gazespace-studio\\dist\\GazeSpaceCLI\\GazeSpaceCLI.exe",
+      "arguments": [
+        "environment-probe",
+        "--output",
+        "D:\\a\\gazespace-studio\\gazespace-studio\\release_evidence\\windows_release_acceptance_cli_20261118_121318_071\\environment_probe.json",
+        "--sdk-inventory",
+        "all"
+      ],
+      "started_at_utc": "2026-11-18T12:13:20.2865383Z",
+      "exit_code": 0,
+      "timed_out": false,
+      "status": "passed",
+      "duration_s": 2.2671087
+    },
+    "packaged_cli_doctor": {
+      "executable": "D:\\a\\gazespace-studio\\gazespace-studio\\dist\\GazeSpaceCLI\\GazeSpaceCLI.exe",
+      "arguments": [
+        "doctor"
+      ],
+      "started_at_utc": "2026-11-18T12:13:22.5543122Z",
+      "exit_code": 0,
+      "timed_out": false,
+      "status": "passed",
+      "duration_s": 0.7052962
+    },
+    "packaged_studio": {
+      "executable": "D:\\a\\gazespace-studio\\gazespace-studio\\dist\\GazeSpaceStudio\\GazeSpaceStudio.exe",
+      "arguments": [
+        "--smoke-test",
+        "D:\\a\\gazespace-studio\\gazespace-studio\\release_evidence\\windows_release_acceptance_cli_20261118_121318_071\\packaged_studio.json"
+      ],
+      "started_at_utc": "2026-11-18T12:13:23.2599529Z",
+      "exit_code": 0,
+      "timed_out": false,
+      "status": "passed",
+      "duration_s": 0.9962216
+    }
+  },
+  "limitations": [
+    "Camera capture statistics do not establish eye/pupil/gaze accuracy or calibration quality.",
+    "Physical-device confirmation is supplied by the operator; simulated/emulator metadata still prevents a physical-device claim.",
+    "Host arrival timing does not establish sensor frame loss, hardware synchronization or exposure-to-display latency.",
+    "Qt display/DPI values describe the active local/remote/virtual session; real-monitor target placement still requires operator validation.",
+    "Client-code integration, independent human fixation targets, measured workspace geometry and signing identity require their actual inputs."
+  ],
+  "completed_at_utc": "2026-11-18T12:13:24.2573935Z"
+}

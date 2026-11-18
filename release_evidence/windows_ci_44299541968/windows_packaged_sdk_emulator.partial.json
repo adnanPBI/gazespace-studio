@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "status": "software_fixture_passed",
+  "started_at_utc": "2026-11-18T12:08:06.658168+00:00",
+  "application_version": "0.2.1",
+  "python": "3.12.10",
+  "platform": "Windows-2025Server-10.0.26100-SP0",
+  "frozen_executable": true,
+  "executable_sha256": "be9081000d8650d904def26b46a179d47faad5816c809ae15e26f3329d9af645",
+  "configuration": {
+    "backend": "pylon",
+    "source": "0815-0000",
+    "seconds": 2.0,
+    "output": "D:\\a\\gazespace-studio\\gazespace-studio\\release_evidence\\windows_packaged_sdk_emulator.json",
+    "width": 640,
+    "height": 480,
+    "fps": 30,
+    "exposure_native": null,
+    "exposure_us": null,
+    "gain": null,
+    "ir_bit_depth": null,
+    "pixel_format": null,
+    "fourcc": null,
+    "minimum_fps": null,
+    "maximum_gap_ms": null,
+    "max_read_failures": 0,
+    "require_exact_size": false,
+    "required_control": [],
+    "allow_simulated": true,
+    "physical_device_confirmed": false,
+    "startup_grace_seconds": 20,
+    "shutdown_grace_seconds": 10,
+    "timing_csv": "D:\\a\\gazespace-studio\\gazespace-studio\\release_evidence\\windows_packaged_sdk_emulator.frames.csv"
+  },
+  "physical_hardware_tested": false,
+  "camera_opened": true,
+  "frames_received": 60,
+  "host_clock": {
+    "domain": "gazespace.perf_counter",
+    "implementation": "QueryPerformanceCounter()",
+    "resolution_s": 1e-07,
+    "monotonic": true,
+    "adjustable": false
+  },
+  "camera_acquisition_attempted": true,
+  "simulated": true,
+  "images_saved": false,
+  "clean_shutdown": true,
+  "real_person_gaze_accuracy_established": false,
+  "sensor_frames_dropped": null,
+  "exposure_to_display_latency_ms": null,
+  "global_shutter_verified": false,
+  "measurement_scope": "Camera delivery and software read timing; no gaze model or fixation ground truth",
+  "camera": {
+    "serial": "0815-0000",
+    "model": "Emulation",
+    "device_class": "BaslerCamEmu",
+    "sdk_emulator": true,
+    "simulated": true,
+    "synthetic": true,
+    "camera_id": "basler:0815-0000",
+    "identity_strength": "serial",
+    "backend": "pylon",
+    "is_live": true,
+    "global_shutter_verified": false,
+    "requested_width": 640,
+    "requested_height": 480,
+    "requested_fps": 30,
+    "host_clock_domain": "gazespace.perf_counter",
+    "timestamp_kind": "host_receive; hardware ticks reported separately",
+    "controls": {
+      "Width": {
+        "requested": 640,
+        "applied": true,
+        "actual": 640,
+        "readback_matches": true
+      },
+      "Height": {
+        "requested": 480,
+        "applied": true,
+        "actual": 480,
+        "readback_matches": true
+      },
+      "AcquisitionFrameRateEnable": {
+        "requested": true,
+        "applied": true,
+        "actual": true,
+        "readback_matches": true
+      },
+      "AcquisitionFrameRate": {
+        "requested": 30.0,
+        "applied": true,
+        "actual": 30.0,
+        "readback_matches": true
+      }
+    },
+    "width": 640,
+    "height": 480,
+    "pixel_format": "Mono8",
+    "fps_reported": 30.0,
+    "fps_reported_node": "ResultingFrameRateAbs",
+    "fps_reported_note": "Device rate readback; actual delivered FPS requires frame timestamps"
+  },
+  "camera_open_duration_ms": 286.12680000003365,
+  "non_simulated_source_frames_received": false,
+  "first_frame_metadata": {
+    "hardware_ticks": 0,
+    "simulated": true,
+    "host_clock_domain": "gazespace.perf_counter",
+    "synthetic": true,
+    "sdk_emulator": true,
+    "hardware_clock_synchronized": false
+  },
+  "first_frame_after_open_ms": 61.06289999991077,
+  "capture_elapsed_s": 1.7778487999999015,
+  "camera_after_capture": {
+    "serial": "0815-0000",
+    "model": "Emulation",
+    "device_class": "BaslerCamEmu",
+    "sdk_emulator": true,
+    "simulated": true,
+    "synthetic": true,
+    "camera_id": "basler:0815-0000",
+    "identity_strength": "serial",
+    "backend": "pylon",
+    "is_live": true,
+    "global_shutter_verified": false,
+    "requested_width": 640,
+    "requested_height": 480,
+    "requested_fps": 30,
+    "host_clock_domain": "gazespace.perf_counter",
+    "timestamp_kind": "host_receive; hardware ticks reported separately",
+    "controls": {
+      "Width": {
+        "requested": 640,
+        "applied": true,
+        "actual": 640,
+        "readback_matches": true
+      },
+      "Height": {
+        "requested": 480,
+        "applied": true,
+        "actual": 480,
+        "readback_matches": true
+      },
+      "AcquisitionFrameRateEnable": {
+        "requested": true,
+        "applied": true,
+        "actual": true,
+        "readback_matches": true
+      },
+      "AcquisitionFrameRate": {
+        "requested": 30.0,
+        "applied": true,
+        "actual": 30.0,
+        "readback_matches": true
+      }
+    },
+    "width": 640,
+    "height": 480,
+    "pixel_format": "Mono8",
+    "fps_reported": 30.0,
+    "fps_reported_node": "ResultingFrameRateAbs",
+    "fps_reported_note": "Device rate readback; actual delivered FPS requires frame timestamps"
+  },
+  "acquisition_error": null,
+  "close_duration_ms": 19.651400000043395,
+  "completed_at_utc": "2026-11-18T12:08:09.024013+00:00",
+  "capture_duration_s": 2.012210199999913,
+  "observed_delivery_fps": 30.263744946594546,
+  "actual_frame_shapes": {
+    "640x480": 60
+  },
+  "read_failures": 0,
+  "invalid_frames": 0,
+  "timestamp_errors": 0,
+  "host_clock_errors": 0,
+  "adapter_sequence_discontinuities": 0,
+  "blocking_read_ms": {
+    "count": 60,
+    "minimum": 16.74209999998766,
+    "median": 30.34250000001748,
+    "p95": 46.060429999960206,
+    "maximum": 60.85289999998622
+  },
+  "host_arrival_gap_ms": {
+    "count": 59,
+    "minimum": 17.8948999999875,
+    "median": 31.587800000011157,
+    "p95": 47.33441000004177,
+    "maximum": 47.67570000001342
+  },
+  "host_receive_to_script_ms": {
+    "count": 60,
+    "minimum": 0.01889999998638814,
+    "median": 0.026299999944967567,
+    "p95": 0.03565500004469868,
+    "maximum": 0.03790000005210459
+  },
+  "mean_luminance_u8": {
+    "count": 60,
+    "minimum": 127.28,
+    "median": 128.02666666666667,
+    "p95": 128.74333333333334,
+    "maximum": 128.74666666666667
+  },
+  "dark_clipped_fraction": {
+    "count": 60,
+    "minimum": 0.0077083333333333335,
+    "median": 0.011666666666666667,
+    "p95": 0.015833333333333335,
+    "maximum": 0.015833333333333335
+  },
+  "bright_clipped_fraction": {
+    "count": 60,
+    "minimum": 0.007721354166666666,
+    "median": 0.011673177083333333,
+    "p95": 0.015833333333333335,
+    "maximum": 0.015833333333333335
+  },
+  "valid_depth_fraction": {
+    "count": 0,
+    "minimum": null,
+    "median": null,
+    "p95": null,
+    "maximum": null
+  },
+  "requested_controls_unconfirmed": [],
+  "checks": {
+    "at_least_two_frames": true,
+    "no_capture_exception": true,
+    "valid_bgr_frames": true,
+    "finite_increasing_frame_timestamps": true,
+    "valid_host_receive_clock": true,
+    "clean_shutdown": true,
+    "read_failures_within_limit": true
+  },
+  "close_error": null,
+  "limitations": [
+    "Passing these checks establishes bounded capture behavior, not human gaze or pupil accuracy.",
+    "Arrival gaps and adapter sequences do not measure sensor or SDK frame loss.",
+    "Blocking read and receive-to-script timings do not measure exposure-to-display latency.",
+    "Global shutter, optical focus, infrared illumination and anatomical eye geometry require separate physical validation.",
+    "Only explicitly supplied throughput, gap, frame-size and control thresholds are enforced.",
+    "The physical-device flag is an operator attestation; a UVC index alone does not identify physical versus virtual camera hardware."
+  ]
+}

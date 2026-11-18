@@ -1,0 +1,1142 @@
+{
+  "status": "passed",
+  "phase": "complete",
+  "verification": "Real pypylon binding with official Basler camera emulator",
+  "started_at_utc": "2026-11-18T12:03:04.083351+00:00",
+  "environment": {
+    "python": "3.12.10",
+    "platform": "Windows-2025Server-10.0.26100-SP0",
+    "python_executable": "D:\\a\\gazespace-studio\\gazespace-studio\\.venv\\Scripts\\python.exe",
+    "architecture": "AMD64",
+    "PYLON_CAMEMU": "1",
+    "clocks": {
+      "monotonic": {
+        "implementation": "GetTickCount64()",
+        "resolution_s": 0.015625,
+        "monotonic": true,
+        "adjustable": false
+      },
+      "perf_counter": {
+        "implementation": "QueryPerformanceCounter()",
+        "resolution_s": 1e-07,
+        "monotonic": true,
+        "adjustable": false
+      }
+    },
+    "pypylon": "26.5.0",
+    "numpy": "1.26.4"
+  },
+  "physical_hardware_tested": false,
+  "real_eyes_or_gaze_accuracy_tested": false,
+  "sdk_emulator_only": true,
+  "runs": [
+    {
+      "requested_pixel_format": "Mono8",
+      "ir_bit_depth": null,
+      "status": "passed",
+      "frames": [
+        {
+          "index": 1,
+          "present": true,
+          "sequence": 1,
+          "source": "0815-0000",
+          "timestamp_s": 299.3366625,
+          "received_monotonic_s": 299.3366625,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 2,
+          "present": true,
+          "sequence": 2,
+          "source": "0815-0000",
+          "timestamp_s": 299.3585032,
+          "received_monotonic_s": 299.3585032,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 3,
+          "present": true,
+          "sequence": 3,
+          "source": "0815-0000",
+          "timestamp_s": 299.374538,
+          "received_monotonic_s": 299.374538,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 4,
+          "present": true,
+          "sequence": 4,
+          "source": "0815-0000",
+          "timestamp_s": 299.3900748,
+          "received_monotonic_s": 299.3900748,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 5,
+          "present": true,
+          "sequence": 5,
+          "source": "0815-0000",
+          "timestamp_s": 299.4060004,
+          "received_monotonic_s": 299.4060004,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        }
+      ],
+      "checks": {
+        "bgr8_frames": true,
+        "owned_buffers": true,
+        "emulator_source_identity": true,
+        "strict_frame_timestamps": true,
+        "frame_sequence": true,
+        "control_readback": true,
+        "stable_owned_buffers": true,
+        "closed_camera": true,
+        "idempotent_close": true
+      },
+      "read_duration_ms": [
+        19.35580000002801,
+        21.82990000000018,
+        16.031699999984994,
+        15.554400000041824,
+        15.9080999999901
+      ],
+      "phase": "Mono8/complete",
+      "capabilities": {
+        "serial": "0815-0000",
+        "model": "Emulation",
+        "device_class": "BaslerCamEmu",
+        "sdk_emulator": true,
+        "simulated": true,
+        "synthetic": true,
+        "camera_id": "basler:0815-0000",
+        "identity_strength": "serial",
+        "backend": "pylon",
+        "is_live": true,
+        "global_shutter_verified": false,
+        "requested_width": null,
+        "requested_height": null,
+        "requested_fps": null,
+        "host_clock_domain": "gazespace.perf_counter",
+        "timestamp_kind": "host_receive; hardware ticks reported separately",
+        "controls": {
+          "ExposureAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off",
+            "readback_matches": true
+          },
+          "ExposureTime": {
+            "requested": 3000,
+            "applied": true,
+            "actual": 3000.0,
+            "readback_matches": true
+          },
+          "GainAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off",
+            "readback_matches": true
+          },
+          "Gain": {
+            "requested": 0,
+            "applied": true,
+            "actual": 0.0,
+            "readback_matches": true
+          },
+          "PixelFormat": {
+            "requested": "Mono8",
+            "applied": true,
+            "actual": "Mono8",
+            "readback_matches": true
+          }
+        },
+        "width": 1024,
+        "height": 1040,
+        "pixel_format": "Mono8",
+        "fps_reported": 100.0,
+        "fps_reported_node": "ResultingFrameRateAbs",
+        "fps_reported_note": "Device rate readback; actual delivered FPS requires frame timestamps"
+      },
+      "timestamps_s": [
+        299.3366625,
+        299.3585032,
+        299.374538,
+        299.3900748,
+        299.4060004
+      ],
+      "timestamp_deltas_s": [
+        0.02184069999998428,
+        0.016034799999999905,
+        0.015536800000006679,
+        0.01592560000000276
+      ],
+      "sequences": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "control_readback": {
+        "ExposureAuto": {
+          "requested": "Off",
+          "applied": true,
+          "actual": "Off",
+          "readback_matches": true
+        },
+        "ExposureTime": {
+          "requested": 3000,
+          "applied": true,
+          "actual": 3000.0,
+          "readback_matches": true
+        },
+        "GainAuto": {
+          "requested": "Off",
+          "applied": true,
+          "actual": "Off",
+          "readback_matches": true
+        },
+        "Gain": {
+          "requested": 0,
+          "applied": true,
+          "actual": 0.0,
+          "readback_matches": true
+        },
+        "PixelFormat": {
+          "requested": "Mono8",
+          "applied": true,
+          "actual": "Mono8",
+          "readback_matches": true
+        }
+      },
+      "buffer_hashes_before_reuse": [
+        "f6b5c5154762f55852c11af3f9810e463ea07364a6f6f339f0d8b0979d2b6e1b",
+        "8bdceaaade8906abe9b61bdafddf906147a99d1eae34de9a7bc2d21736e30479",
+        "0729459842b68e4a7ee26a65f7ae1f9767588b17f5608aeb0fe4a19f7cd966d1",
+        "61dd1c5a212be6265d3193a12d7623782f5d773f36f93ef48e1f2f7424f174c5",
+        "deeb3d40d1282a33344c13b207bacb6f658f0e690f048fd760e517bb172bbbeb"
+      ],
+      "extra_frame": {
+        "index": 6,
+        "present": true,
+        "sequence": 6,
+        "source": "0815-0000",
+        "timestamp_s": 299.4508848,
+        "received_monotonic_s": 299.4508848,
+        "hardware_timestamp_s": null,
+        "metadata": {
+          "hardware_ticks": 0,
+          "simulated": true,
+          "host_clock_domain": "gazespace.perf_counter",
+          "synthetic": true,
+          "sdk_emulator": true,
+          "hardware_clock_synchronized": false
+        },
+        "image_type": "ndarray",
+        "array_shape": [
+          1040,
+          1024,
+          3
+        ],
+        "array_dtype": "uint8",
+        "array_strides": [
+          3072,
+          3,
+          1
+        ],
+        "owns_data": true,
+        "c_contiguous": true,
+        "array_base_type": "NoneType"
+      },
+      "buffer_hashes_after_reuse": [
+        "f6b5c5154762f55852c11af3f9810e463ea07364a6f6f339f0d8b0979d2b6e1b",
+        "8bdceaaade8906abe9b61bdafddf906147a99d1eae34de9a7bc2d21736e30479",
+        "0729459842b68e4a7ee26a65f7ae1f9767588b17f5608aeb0fe4a19f7cd966d1",
+        "61dd1c5a212be6265d3193a12d7623782f5d773f36f93ef48e1f2f7424f174c5",
+        "deeb3d40d1282a33344c13b207bacb6f658f0e690f048fd760e517bb172bbbeb"
+      ],
+      "frames_checked": 5,
+      "extra_buffer_reuse_frame": 1,
+      "array_shape": [
+        1040,
+        1024,
+        3
+      ],
+      "array_dtype": "uint8",
+      "min_pixel": 0,
+      "max_pixel": 255,
+      "serial_preserved_as_string": true,
+      "timestamps_strictly_increasing": true,
+      "buffers_owned_and_stable": true,
+      "first_frame_metadata": {
+        "hardware_ticks": 0,
+        "simulated": true,
+        "host_clock_domain": "gazespace.perf_counter",
+        "synthetic": true,
+        "sdk_emulator": true,
+        "hardware_clock_synchronized": false
+      },
+      "closed_and_not_grabbing": true,
+      "idempotent_close": true
+    },
+    {
+      "requested_pixel_format": "Mono12",
+      "ir_bit_depth": 12,
+      "status": "passed",
+      "frames": [
+        {
+          "index": 1,
+          "present": true,
+          "sequence": 1,
+          "source": "0815-0000",
+          "timestamp_s": 300.0149722,
+          "received_monotonic_s": 300.0149722,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 2,
+          "present": true,
+          "sequence": 2,
+          "source": "0815-0000",
+          "timestamp_s": 300.0260066,
+          "received_monotonic_s": 300.0260066,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 3,
+          "present": true,
+          "sequence": 3,
+          "source": "0815-0000",
+          "timestamp_s": 300.0418464,
+          "received_monotonic_s": 300.0418464,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 4,
+          "present": true,
+          "sequence": 4,
+          "source": "0815-0000",
+          "timestamp_s": 300.053436,
+          "received_monotonic_s": 300.053436,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 5,
+          "present": true,
+          "sequence": 5,
+          "source": "0815-0000",
+          "timestamp_s": 300.0653709,
+          "received_monotonic_s": 300.0653709,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        }
+      ],
+      "checks": {
+        "bgr8_frames": true,
+        "owned_buffers": true,
+        "emulator_source_identity": true,
+        "strict_frame_timestamps": true,
+        "frame_sequence": true,
+        "control_readback": true,
+        "stable_owned_buffers": true,
+        "closed_camera": true,
+        "idempotent_close": true
+      },
+      "read_duration_ms": [
+        5.9016000000156055,
+        11.033100000020113,
+        15.840700000012475,
+        11.60880000003317,
+        11.91710000000512
+      ],
+      "phase": "Mono12/complete",
+      "capabilities": {
+        "serial": "0815-0000",
+        "model": "Emulation",
+        "device_class": "BaslerCamEmu",
+        "sdk_emulator": true,
+        "simulated": true,
+        "synthetic": true,
+        "camera_id": "basler:0815-0000",
+        "identity_strength": "serial",
+        "backend": "pylon",
+        "is_live": true,
+        "global_shutter_verified": false,
+        "requested_width": null,
+        "requested_height": null,
+        "requested_fps": null,
+        "host_clock_domain": "gazespace.perf_counter",
+        "timestamp_kind": "host_receive; hardware ticks reported separately",
+        "controls": {
+          "ExposureAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off",
+            "readback_matches": true
+          },
+          "ExposureTime": {
+            "requested": 3000,
+            "applied": true,
+            "actual": 3000.0,
+            "readback_matches": true
+          },
+          "GainAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off",
+            "readback_matches": true
+          },
+          "Gain": {
+            "requested": 0,
+            "applied": true,
+            "actual": 0.0,
+            "readback_matches": true
+          },
+          "PixelFormat": {
+            "requested": "Mono12",
+            "applied": true,
+            "actual": "Mono12",
+            "readback_matches": true
+          }
+        },
+        "width": 1024,
+        "height": 1040,
+        "pixel_format": "Mono12",
+        "fps_reported": 100.0,
+        "fps_reported_node": "ResultingFrameRateAbs",
+        "fps_reported_note": "Device rate readback; actual delivered FPS requires frame timestamps"
+      },
+      "timestamps_s": [
+        300.0149722,
+        300.0260066,
+        300.0418464,
+        300.053436,
+        300.0653709
+      ],
+      "timestamp_deltas_s": [
+        0.0110344000000282,
+        0.01583979999998064,
+        0.011589599999979328,
+        0.011934900000028392
+      ],
+      "sequences": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "control_readback": {
+        "ExposureAuto": {
+          "requested": "Off",
+          "applied": true,
+          "actual": "Off",
+          "readback_matches": true
+        },
+        "ExposureTime": {
+          "requested": 3000,
+          "applied": true,
+          "actual": 3000.0,
+          "readback_matches": true
+        },
+        "GainAuto": {
+          "requested": "Off",
+          "applied": true,
+          "actual": "Off",
+          "readback_matches": true
+        },
+        "Gain": {
+          "requested": 0,
+          "applied": true,
+          "actual": 0.0,
+          "readback_matches": true
+        },
+        "PixelFormat": {
+          "requested": "Mono12",
+          "applied": true,
+          "actual": "Mono12",
+          "readback_matches": true
+        }
+      },
+      "buffer_hashes_before_reuse": [
+        "18bdc843f16c6b152989c8650cd1de4f329c288c993d7ee1f25f6404ddb6ee6a",
+        "ed8cf620ac02608cd472afe5aca2cceae041520d4815e55a947e83595150ae88",
+        "3d4fbbface457ffd73bf4bf6060a49725dc0a9049cd099f42aca1ac346cbda6d",
+        "1e5a18bba9c726c23cf46807bb7e3a9a1603e879f3d89530cad01428aca837f8",
+        "9340989440545c4981c0882a9da846b0f9a7330922770b4361737815508f8af6"
+      ],
+      "extra_frame": {
+        "index": 6,
+        "present": true,
+        "sequence": 6,
+        "source": "0815-0000",
+        "timestamp_s": 300.1255812,
+        "received_monotonic_s": 300.1255812,
+        "hardware_timestamp_s": null,
+        "metadata": {
+          "hardware_ticks": 0,
+          "simulated": true,
+          "host_clock_domain": "gazespace.perf_counter",
+          "synthetic": true,
+          "sdk_emulator": true,
+          "hardware_clock_synchronized": false
+        },
+        "image_type": "ndarray",
+        "array_shape": [
+          1040,
+          1024,
+          3
+        ],
+        "array_dtype": "uint8",
+        "array_strides": [
+          3072,
+          3,
+          1
+        ],
+        "owns_data": true,
+        "c_contiguous": true,
+        "array_base_type": "NoneType"
+      },
+      "buffer_hashes_after_reuse": [
+        "18bdc843f16c6b152989c8650cd1de4f329c288c993d7ee1f25f6404ddb6ee6a",
+        "ed8cf620ac02608cd472afe5aca2cceae041520d4815e55a947e83595150ae88",
+        "3d4fbbface457ffd73bf4bf6060a49725dc0a9049cd099f42aca1ac346cbda6d",
+        "1e5a18bba9c726c23cf46807bb7e3a9a1603e879f3d89530cad01428aca837f8",
+        "9340989440545c4981c0882a9da846b0f9a7330922770b4361737815508f8af6"
+      ],
+      "frames_checked": 5,
+      "extra_buffer_reuse_frame": 1,
+      "array_shape": [
+        1040,
+        1024,
+        3
+      ],
+      "array_dtype": "uint8",
+      "min_pixel": 0,
+      "max_pixel": 254,
+      "serial_preserved_as_string": true,
+      "timestamps_strictly_increasing": true,
+      "buffers_owned_and_stable": true,
+      "first_frame_metadata": {
+        "hardware_ticks": 0,
+        "simulated": true,
+        "host_clock_domain": "gazespace.perf_counter",
+        "synthetic": true,
+        "sdk_emulator": true,
+        "hardware_clock_synchronized": false
+      },
+      "closed_and_not_grabbing": true,
+      "idempotent_close": true
+    },
+    {
+      "requested_pixel_format": "BGR8Packed",
+      "ir_bit_depth": null,
+      "status": "passed",
+      "frames": [
+        {
+          "index": 1,
+          "present": true,
+          "sequence": 1,
+          "source": "0815-0000",
+          "timestamp_s": 300.4632126,
+          "received_monotonic_s": 300.4632126,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 2,
+          "present": true,
+          "sequence": 2,
+          "source": "0815-0000",
+          "timestamp_s": 300.4787371,
+          "received_monotonic_s": 300.4787371,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 3,
+          "present": true,
+          "sequence": 3,
+          "source": "0815-0000",
+          "timestamp_s": 300.4942457,
+          "received_monotonic_s": 300.4942457,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 4,
+          "present": true,
+          "sequence": 4,
+          "source": "0815-0000",
+          "timestamp_s": 300.5101565,
+          "received_monotonic_s": 300.5101565,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        },
+        {
+          "index": 5,
+          "present": true,
+          "sequence": 5,
+          "source": "0815-0000",
+          "timestamp_s": 300.5255878,
+          "received_monotonic_s": 300.5255878,
+          "hardware_timestamp_s": null,
+          "metadata": {
+            "hardware_ticks": 0,
+            "simulated": true,
+            "host_clock_domain": "gazespace.perf_counter",
+            "synthetic": true,
+            "sdk_emulator": true,
+            "hardware_clock_synchronized": false
+          },
+          "image_type": "ndarray",
+          "array_shape": [
+            1040,
+            1024,
+            3
+          ],
+          "array_dtype": "uint8",
+          "array_strides": [
+            3072,
+            3,
+            1
+          ],
+          "owns_data": true,
+          "c_contiguous": true,
+          "array_base_type": "NoneType"
+        }
+      ],
+      "checks": {
+        "bgr8_frames": true,
+        "owned_buffers": true,
+        "emulator_source_identity": true,
+        "strict_frame_timestamps": true,
+        "frame_sequence": true,
+        "control_readback": true,
+        "stable_owned_buffers": true,
+        "closed_camera": true,
+        "idempotent_close": true
+      },
+      "read_duration_ms": [
+        14.585499999952845,
+        15.499399999953312,
+        15.516200000035951,
+        15.900400000020909,
+        15.430199999968863
+      ],
+      "phase": "BGR8Packed/complete",
+      "capabilities": {
+        "serial": "0815-0000",
+        "model": "Emulation",
+        "device_class": "BaslerCamEmu",
+        "sdk_emulator": true,
+        "simulated": true,
+        "synthetic": true,
+        "camera_id": "basler:0815-0000",
+        "identity_strength": "serial",
+        "backend": "pylon",
+        "is_live": true,
+        "global_shutter_verified": false,
+        "requested_width": null,
+        "requested_height": null,
+        "requested_fps": null,
+        "host_clock_domain": "gazespace.perf_counter",
+        "timestamp_kind": "host_receive; hardware ticks reported separately",
+        "controls": {
+          "ExposureAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off",
+            "readback_matches": true
+          },
+          "ExposureTime": {
+            "requested": 3000,
+            "applied": true,
+            "actual": 3000.0,
+            "readback_matches": true
+          },
+          "GainAuto": {
+            "requested": "Off",
+            "applied": true,
+            "actual": "Off",
+            "readback_matches": true
+          },
+          "Gain": {
+            "requested": 0,
+            "applied": true,
+            "actual": 0.0,
+            "readback_matches": true
+          },
+          "PixelFormat": {
+            "requested": "BGR8Packed",
+            "applied": true,
+            "actual": "BGR8Packed",
+            "readback_matches": true
+          }
+        },
+        "width": 1024,
+        "height": 1040,
+        "pixel_format": "BGR8Packed",
+        "fps_reported": 100.0,
+        "fps_reported_node": "ResultingFrameRateAbs",
+        "fps_reported_note": "Device rate readback; actual delivered FPS requires frame timestamps"
+      },
+      "timestamps_s": [
+        300.4632126,
+        300.4787371,
+        300.4942457,
+        300.5101565,
+        300.5255878
+      ],
+      "timestamp_deltas_s": [
+        0.015524499999969521,
+        0.015508600000032402,
+        0.015910799999971914,
+        0.015431299999988823
+      ],
+      "sequences": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "control_readback": {
+        "ExposureAuto": {
+          "requested": "Off",
+          "applied": true,
+          "actual": "Off",
+          "readback_matches": true
+        },
+        "ExposureTime": {
+          "requested": 3000,
+          "applied": true,
+          "actual": 3000.0,
+          "readback_matches": true
+        },
+        "GainAuto": {
+          "requested": "Off",
+          "applied": true,
+          "actual": "Off",
+          "readback_matches": true
+        },
+        "Gain": {
+          "requested": 0,
+          "applied": true,
+          "actual": 0.0,
+          "readback_matches": true
+        },
+        "PixelFormat": {
+          "requested": "BGR8Packed",
+          "applied": true,
+          "actual": "BGR8Packed",
+          "readback_matches": true
+        }
+      },
+      "buffer_hashes_before_reuse": [
+        "f6b5c5154762f55852c11af3f9810e463ea07364a6f6f339f0d8b0979d2b6e1b",
+        "8bdceaaade8906abe9b61bdafddf906147a99d1eae34de9a7bc2d21736e30479",
+        "0729459842b68e4a7ee26a65f7ae1f9767588b17f5608aeb0fe4a19f7cd966d1",
+        "61dd1c5a212be6265d3193a12d7623782f5d773f36f93ef48e1f2f7424f174c5",
+        "deeb3d40d1282a33344c13b207bacb6f658f0e690f048fd760e517bb172bbbeb"
+      ],
+      "extra_frame": {
+        "index": 6,
+        "present": true,
+        "sequence": 6,
+        "source": "0815-0000",
+        "timestamp_s": 300.5713706,
+        "received_monotonic_s": 300.5713706,
+        "hardware_timestamp_s": null,
+        "metadata": {
+          "hardware_ticks": 0,
+          "simulated": true,
+          "host_clock_domain": "gazespace.perf_counter",
+          "synthetic": true,
+          "sdk_emulator": true,
+          "hardware_clock_synchronized": false
+        },
+        "image_type": "ndarray",
+        "array_shape": [
+          1040,
+          1024,
+          3
+        ],
+        "array_dtype": "uint8",
+        "array_strides": [
+          3072,
+          3,
+          1
+        ],
+        "owns_data": true,
+        "c_contiguous": true,
+        "array_base_type": "NoneType"
+      },
+      "buffer_hashes_after_reuse": [
+        "f6b5c5154762f55852c11af3f9810e463ea07364a6f6f339f0d8b0979d2b6e1b",
+        "8bdceaaade8906abe9b61bdafddf906147a99d1eae34de9a7bc2d21736e30479",
+        "0729459842b68e4a7ee26a65f7ae1f9767588b17f5608aeb0fe4a19f7cd966d1",
+        "61dd1c5a212be6265d3193a12d7623782f5d773f36f93ef48e1f2f7424f174c5",
+        "deeb3d40d1282a33344c13b207bacb6f658f0e690f048fd760e517bb172bbbeb"
+      ],
+      "frames_checked": 5,
+      "extra_buffer_reuse_frame": 1,
+      "array_shape": [
+        1040,
+        1024,
+        3
+      ],
+      "array_dtype": "uint8",
+      "min_pixel": 0,
+      "max_pixel": 255,
+      "serial_preserved_as_string": true,
+      "timestamps_strictly_increasing": true,
+      "buffers_owned_and_stable": true,
+      "first_frame_metadata": {
+        "hardware_ticks": 0,
+        "simulated": true,
+        "host_clock_domain": "gazespace.perf_counter",
+        "synthetic": true,
+        "sdk_emulator": true,
+        "hardware_clock_synchronized": false
+      },
+      "closed_and_not_grabbing": true,
+      "idempotent_close": true
+    }
+  ],
+  "official_reference": "https://docs.baslerweb.com/camera-emulation",
+  "clock_compatibility_reference": "https://docs.python.org/3.13/whatsnew/3.13.html#time",
+  "clock_compatibility_note": "Windows CPython before 3.13 uses a lower-resolution monotonic clock. Strict frame ordering is retained; no delays or fabricated timestamps are added by this verifier.",
+  "limitations": [
+    "Camera emulator does not validate USB transport, optics, IR illumination, shutter characteristics or physical camera timing.",
+    "Host timestamps and raw hardware ticks are recorded separately; hardware clocks are not assumed synchronized.",
+    "Control availability and value ranges depend on the real camera model."
+  ],
+  "reproduce_powershell": [
+    "$env:PYLON_CAMEMU=\"1\"",
+    "python scripts/verify_pypylon_emulator.py --output release_evidence/pypylon_sdk_emulator.json"
+  ],
+  "reproduce_bash": "PYLON_CAMEMU=1 python scripts/verify_pypylon_emulator.py --output release_evidence/pypylon_sdk_emulator.json",
+  "device": {
+    "serial": "0815-0000",
+    "device_class": "BaslerCamEmu",
+    "model": "Emulation"
+  },
+  "verified_at_utc": "2026-11-18T12:03:06.181362+00:00"
+}

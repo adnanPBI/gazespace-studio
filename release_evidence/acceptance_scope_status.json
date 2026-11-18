@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "release_candidate_version": "0.2.1",
-  "as_of_utc": "2026-11-18T11:57:22.030664+00:00",
-  "overall_status": "acceptance_incomplete",
+  "as_of_utc": "2026-11-18T12:19:18.486758+00:00",
+  "overall_status": "software_release_verified_physical_and_client_acceptance_pending",
   "overall_acceptance_passed": null,
   "software_regression": {
     "tests": 225,
@@ -11,22 +11,60 @@
     "skipped": 0,
     "passed": 225,
     "duration_s": 27.787,
-    "receipt": "release_evidence/pre_windows_font_fix_pytest.xml"
+    "receipt": "release_evidence/pre_windows_font_fix_pytest.xml",
+    "windows_receipt": "release_evidence/windows_ci_44299541968/windows_pytest.xml",
+    "full_windows_passed": 225
   },
   "windows_ci": {
-    "status": "font_corrected_candidate_windows_run_pending",
+    "status": "windows_software_release_verified",
     "repository": "https://github.com/adnanPBI/gazespace-studio",
+    "repository_private": true,
     "source_uploaded": true,
     "source_tree_committed": true,
-    "last_observed_source_commit_sha": "3d2d10035e755b4d3a18dedac6979a0210899cfe",
-    "last_completed_run_id": 44284381626,
-    "last_completed_run_url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626",
-    "last_completed_automated_result": "passed",
-    "last_completed_visual_result": "failed_missing_glyph_boxes",
-    "windows_artifact_accepted": false,
+    "tested_source_commit_sha": "52429351784c4d2a317261cca66cad92fc5d6923",
+    "run_id": 44299541968,
+    "run_url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968",
+    "run_started": true,
+    "run_conclusion": "success",
+    "windows_build_job_id": 134786705094,
+    "full_windows_tests": {
+      "passed": 225,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 30.963
+    },
+    "frozen_studio_pages": 7,
+    "font_rendering_verified": true,
+    "actual_windows_screenshot_review": "passed",
+    "downloaded_archives_verified": true,
+    "downloaded_payload_files_verified": 7674,
+    "archives": [
+      {
+        "application": "studio",
+        "archive": "GazeSpace-Studio-Windows-0.2.1-unsigned.zip",
+        "bytes": 419209852,
+        "sha256": "5d996562f5eaadd13e616c8be8c9e90e5112e41af9f26f6a384c4913cdc524b6",
+        "payload_file_count": 3837,
+        "payload_bytes": 1092405446,
+        "payload_inventory": "windows_archive_inventory_studio.json"
+      },
+      {
+        "application": "cli",
+        "archive": "GazeSpace-CLI-Windows-0.2.1-unsigned.zip",
+        "bytes": 419231377,
+        "sha256": "38f27670f181ebeef081f96a55028b69f7e9f4d450ca7e7b583333096b1fc064",
+        "payload_file_count": 3837,
+        "payload_bytes": 1092457830,
+        "payload_inventory": "windows_archive_inventory_cli.json"
+      }
+    ],
+    "signatures": "NotSigned",
     "authorization": "explicit_user_authorization_granted",
     "next_required_permission": null,
-    "next_action": "Upload font-corrected source snapshot and execute Windows build with glyph raster and separate-archive gates."
+    "physical_hardware_tested": false,
+    "human_gaze_accuracy_measured": false,
+    "client_integration_measured": false
   },
   "physical_devices_available_for_this_session": false,
   "human_gaze_accuracy_measured": false,
@@ -47,7 +85,32 @@
     "release_evidence/acceptance_installed_wheel.json": "b8ca17587a989566a662afc3c461f5336d48eccd19b6ab0fd682e6294eb39731",
     "release_evidence/acceptance_wheel_studio.json": "d25d2d758ee854dc691dda8e5a299d063f1c6db39771a8c2688d271b32fa39b5",
     "release_evidence/pre_windows_font_fix_pytest.xml": "3d74d4ff227f377ad6c72f60d020c6b5e62af3b857cf715216b60ab6b168a129",
-    "release_evidence/pre_windows_font_fix_pytest.log": "461436f17d07229ee535da1e3d0844794d3f0c47c4150894c30ea118a4a5ea62"
+    "release_evidence/pre_windows_font_fix_pytest.log": "461436f17d07229ee535da1e3d0844794d3f0c47c4150894c30ea118a4a5ea62",
+    "release_evidence/windows_ci_44299541968/windows_packaged_sdk_emulator.json": "3614c6758894e4a04c9ea228173855e6b06ebce0e9bfed159adc40eea87e5d15",
+    "release_evidence/windows_ci_44299541968/windows_source_environment.json": "1300a05f52ef47313076f949131ac150a29fe25e1890d0af647bf70066ba695d",
+    "release_evidence/windows_ci_44299541968/windows_packaged_verification.json": "d7b40849992b19e4f83c5e06bbda9d729efc2be81fdd4045682e05387bd964a9",
+    "release_evidence/windows_ci_44299541968/gazespace-tests-windows-latest-py3.12.download.json": "c4650f7e36607ecd0084728ac154344146385eae301dfffce7b34ad5691dd29c",
+    "release_evidence/windows_ci_44299541968/github_run_receipt.json": "4ad40180e6e849adee88b8f0e8b834f4cfcc2262bad4f4b6c308cd6e6170f43d",
+    "release_evidence/windows_ci_44299541968/matrix_summary.json": "ac8eda410b580833337e23eaae88c76911d4255af2b1fdd4ccdf1438ce359170",
+    "release_evidence/windows_ci_44299541968/downloaded_payload_verification_summary.json": "12a33fa69df20034cb12c9a1774c2234c3f22ac68477397c6f3e27eab53a4f2f",
+    "release_evidence/windows_ci_44299541968/windows_pypylon_pytest.process.json": "ad554317beb9e98fe6249831b989f6506cb63ce6b093e4bc5de941c60dbf4e03",
+    "release_evidence/windows_ci_44299541968/windows_packaged_sdk_emulator.configuration.json": "83222be0cf04dc93552ffc3f5f36c4ca729e49f6dd70921c16713cf6d3832498",
+    "release_evidence/windows_ci_44299541968/gazespace-tests-ubuntu-latest-py3.11.download.json": "efe439ccd70719809d276c50f10ff1c956fec4c42498376ad59b6deead00c074",
+    "release_evidence/windows_ci_44299541968/windows_pypylon_pytest.json": "7b577a0581ee215faee5be22c8c4afe5cbb4eff8beb751c21e8b7e7e6a8b2172",
+    "release_evidence/windows_ci_44299541968/pypylon_sdk_emulator_windows.json": "0bd0194e06efb11f20c72100cbb17fee445c6adad2b394c64690f946180f623f",
+    "release_evidence/windows_ci_44299541968/windows_studio_smoke.png": "c87dcd2ea75bab38993d9462b3809ff24ee65f15083d31e8e9bfd23fa3f0eeee",
+    "release_evidence/windows_ci_44299541968/windows_packaged_face_inference.json": "e070199eb116ef78963457ef3d02e1ebfc8b082776b090d73c92d10a451fcdc9",
+    "release_evidence/windows_ci_44299541968/windows_verification.json": "f49ce5d9b5391cfa950472c9c953b1205585d6bab1e727f2c156080a1c89b484",
+    "release_evidence/windows_ci_44299541968/windows_packaged_environment.json": "52db2436070b302cae47bfc06c140a18438cf3c57df2ed2a2b9f6fe4a1179fc4",
+    "release_evidence/windows_ci_44299541968/windows_packaged_sdk_emulator.partial.json": "105427f1180965a3a4de21a9b2c4c087448768349d30d1e65b713eca7ab9410b",
+    "release_evidence/windows_ci_44299541968/visual_review.json": "647f5c134c9962cd1a5db79da92445458fd2bffda219305661f1b129011195e0",
+    "release_evidence/windows_ci_44299541968/gazespace-tests-windows-latest-py3.11.download.json": "4e2e13721afb80873524ed67bacdf098ca9136470b0913fc1507f68bdd32cc6e",
+    "release_evidence/windows_ci_44299541968/windows_wheel_resources.json": "89ac7512b5513dd0ed5a8777b2fb9d3a02797927d94509815c1e50a1b18fb5f4",
+    "release_evidence/windows_ci_44299541968/gazespace-tests-ubuntu-latest-py3.12.download.json": "db3668620181284441938e032180dcffbf8c2968a87fd1691084aaa13f45e7ea",
+    "release_evidence/windows_ci_44299541968/windows_pytest.xml": "80fd64c3568e77c928fd867a5b007e7d3364be9117bb81afe17d49ff7880ba15",
+    "release_evidence/windows_ci_44299541968/windows_studio_smoke_font_probe.png": "36f482f655929e7b7633efc3b4192866405c531ac7aa258f58aba437676ecb4d",
+    "release_evidence/windows_ci_44299541968/windows_build.json": "b157124c2cabe31c3324e9dded9da243812f76311dd130632fc7884e9644893b",
+    "release_evidence/windows_ci_44299541968/windows_studio_smoke.json": "5bee10cb7e62b9001835a3368721564b1c341f59c2d75327fc6826cb7299d6a2"
   },
   "matrix": [
     {
@@ -57,15 +120,16 @@
       "software_scope_passed": true,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "225 tests passed; zero failures, errors or skips in the restored isolated environment."
+        "Full Windows SDK-enabled gate: 225 passed, zero failures/errors/skips, 30.963 s.",
+        "Fresh isolated local gate: 225 passed, zero failures/errors/skips, 27.787 s.",
+        "Four ordinary Windows/Linux Python 3.11/3.12 jobs each 223 passed plus 2 explicit optional SDK-emulator skips."
       ],
       "evidence": [
-        "release_evidence/pre_windows_font_fix_pytest.xml",
-        "release_evidence/pre_windows_font_fix_pytest.log"
+        "release_evidence/windows_ci_44299541968/windows_pytest.xml",
+        "release_evidence/windows_ci_44299541968/matrix_summary.json",
+        "release_evidence/pre_windows_font_fix_pytest.xml"
       ],
-      "remaining": [
-        "Run frozen Windows and actual rendered-glyph checks against the font-corrected source."
-      ]
+      "remaining": []
     },
     {
       "id": "native_operator_workflows",
@@ -74,13 +138,13 @@
       "software_scope_passed": true,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "Actual Qt worker/UI paths exercised on Linux; prior release contains seven native-page captures.",
-        "Write errors preserve failed-session status; stale and stopped displays clear active coordinates."
+        "Frozen native Windows Studio painted all 7 pages and closed cleanly.",
+        "Required 95 ASCII and 14 Unicode mappings and 12 distinct nonblank Qt rasters passed; actual Windows screenshot visually inspected as readable."
       ],
       "evidence": [
-        "release_evidence/desktop_verification.json",
-        "release_evidence/acceptance_revision_pytest.xml",
-        "tests/test_release_review.py"
+        "release_evidence/windows_ci_44299541968/windows_studio_smoke.json",
+        "release_evidence/windows_ci_44299541968/visual_review.json",
+        "release_evidence/windows_ci_44299541968/windows_pytest.xml"
       ],
       "remaining": [
         "Exercise the intended Windows display, DPI, monitor and operator workflow."
@@ -98,7 +162,7 @@
         "Desktop/CLI use the shared validator; drift includes baseline target error and elapsed time."
       ],
       "evidence": [
-        "release_evidence/acceptance_revision_pytest.xml",
+        "release_evidence/windows_ci_44299541968/windows_pytest.xml",
         "tests/test_validation_evidence.py",
         "tests/test_acceptance_controls.py"
       ],
@@ -113,13 +177,12 @@
       "software_scope_passed": true,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "Real SDK emulator exercised Mono8, Mono12 and BGR8Packed.",
-        "Requested size/FPS, legacy rate nodes and rejected readbacks are regression-tested; actual emulator frames matched the requested dimensions."
+        "Windows source used actual pypylon binding with official emulator across Mono8,Mono12,BGR8Packed, 5 frames per mode.",
+        "Frozen Windows SDK acquisition received 60 simulated 640×480 frames in 2.0122102 s; controls/timestamps/owned buffers/shutdown gates passed."
       ],
       "evidence": [
-        "release_evidence/pypylon_sdk_emulator.json",
-        "release_evidence/acceptance_revision_pytest.xml",
-        "tests/test_acceptance_controls.py"
+        "release_evidence/windows_ci_44299541968/pypylon_sdk_emulator_windows.json",
+        "release_evidence/windows_ci_44299541968/windows_packaged_sdk_emulator.json"
       ],
       "remaining": [
         "Repeat on the selected physical serial, lens, driver and trigger mode."
@@ -128,39 +191,40 @@
     {
       "id": "acceptance_collector",
       "requirement": "Bounded Windows inventory/camera evidence collection tools",
-      "status": "historical_windows_inventory_verified",
+      "status": "verified_windows_inventory",
       "software_scope_passed": true,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "Full PowerShell collector executed on Windows for run44284381626; frozen CLI/Studio/environment probes passed, exact combined release identity recorded.",
-        "No physical camera acquisition was requested."
+        "Three full Windows collector executions completed inventory-only, one for each exact archive, with matching executable and release identities.",
+        "Physical camera acquisition was not requested; all three records retain false physical/human/client flags."
       ],
       "evidence": [
-        "release_evidence/windows_ci_44284381626/windows_build.json"
+        "release_evidence/windows_ci_44299541968/windows_build.json",
+        "release_evidence/windows_ci_44299541968/downloaded_payload_verification_summary.json"
       ],
       "remaining": [
-        "Repeat the collector for each corrected delivery archive."
+        "Run the collector on the identified client workstation and explicitly selected physical cameras."
       ],
-      "windows_ci_execution_status": "historical_run_passed_new_exact_archives_pending"
+      "windows_ci_execution_status": "passed_for_combined_studio_and_cli_archives"
     },
     {
       "id": "windows_build",
       "requirement": "Windows CI, frozen CLI/Studio and optional SDK packaging",
-      "status": "historical_automated_pass_visual_failed",
-      "software_scope_passed": false,
+      "status": "verified_windows_software_release",
+      "software_scope_passed": true,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "Source and CI are uploaded; prior Windows automated build passed222 tests with SDKs, but visual review found unreadable font glyphs.",
-        "Bundled licensed font correction and95/14/12 glyph checks are implemented and locally tested."
+        "Tested source 52429351784c4d2a317261cca66cad92fc5d6923 completed Windows run 44299541968 successfully.",
+        "Frozen Studio and CLI passed generated end-to-end workflows, face/iris model inference, official Basler SDK-emulator checks and RealSense context/enumeration.",
+        "Both complete unsigned ZIPs were downloaded and independently verified: 3,837 files each, 7,674 total; archive hashes and every decompressed file match the builder and collector identities."
       ],
       "evidence": [
-        ".github/workflows/ci.yml",
-        "scripts/build_windows.ps1",
-        "release_evidence/windows_ci_44284381626/windows_build.json"
+        "release_evidence/windows_ci_44299541968/github_run_receipt.json",
+        "release_evidence/windows_ci_44299541968/windows_build.json",
+        "release_evidence/windows_ci_44299541968/downloaded_payload_verification_summary.json",
+        "release_evidence/windows_ci_44299541968/visual_review.json"
       ],
-      "remaining": [
-        "Run corrected Windows build, inspect actual frozen screenshot and download/hash-verify both separate archives."
-      ]
+      "remaining": []
     },
     {
       "id": "target_windows",
@@ -184,8 +248,8 @@
       "software_scope_passed": false,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "Remote devices were last observed offline; provider monthly usage pause prevents further tool checks.",
-        "Windows source and frozen RealSense SDK contexts enumerated zero physical devices successfully in historical run44284381626."
+        "The current Windows source and frozen RealSense SDK contexts both enumerated zero devices successfully.",
+        "No physical camera was attached to the CI runner. Remote provider access was last paused by its monthly tool quota; no retry/reconnect was attempted."
       ],
       "evidence": [
         "release_evidence/realsense_sdk_smoke.json",
@@ -206,7 +270,7 @@
         "Calibration and held-out reprojection algorithms are software-tested."
       ],
       "evidence": [
-        "release_evidence/acceptance_revision_pytest.xml",
+        "release_evidence/windows_ci_44299541968/windows_pytest.xml",
         "tests/test_calibration_images.py",
         "tests/test_validation_evidence.py"
       ],
@@ -221,10 +285,10 @@
       "software_scope_passed": false,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "Reference-photo inference produced 478 landmarks and finite observations; no gaze or head-angle ground truth was supplied."
+        "Frozen Windows reference-photo inference detected 478 landmarks and 2 irises with finite observations; no gaze/head-angle ground truth was supplied."
       ],
       "evidence": [
-        "release_evidence/mediapipe_inference_photo.json",
+        "release_evidence/windows_ci_44299541968/windows_packaged_face_inference.json",
         "docs/WINDOWS_HARDWARE_ACCEPTANCE.md"
       ],
       "remaining": [
@@ -261,7 +325,7 @@
         "A small repeated offset is not treated as a human accuracy or duration pass."
       ],
       "evidence": [
-        "release_evidence/acceptance_revision_pytest.xml",
+        "release_evidence/windows_ci_44299541968/windows_pytest.xml",
         "tests/test_drift.py",
         "tests/test_acceptance_controls.py"
       ],
@@ -279,7 +343,7 @@
         "Known-depth, correspondence, triangulation and invalid-geometry fixtures pass."
       ],
       "evidence": [
-        "release_evidence/acceptance_revision_pytest.xml",
+        "release_evidence/windows_ci_44299541968/windows_pytest.xml",
         "tests/test_hardware_v2.py",
         "tests/test_core_v2_regressions.py"
       ],
@@ -316,7 +380,7 @@
         "SDK, queue-worker and authenticated localhost API examples are supplied and software-tested."
       ],
       "evidence": [
-        "release_evidence/acceptance_revision_pytest.xml",
+        "release_evidence/windows_ci_44299541968/windows_pytest.xml",
         "examples/integrate_existing_windows_app.py",
         "examples/consume_local_api.py",
         "docs/INTEGRATION.md"
@@ -346,7 +410,6 @@
     }
   ],
   "next_evidence_order": [
-    "windows_build",
     "acceptance_criteria",
     "target_windows",
     "physical_cameras",
@@ -379,5 +442,45 @@
     "windows_executable_tested": false,
     "physical_hardware_tested": false,
     "human_gaze_accuracy_measured": false
+  },
+  "python_distribution": {
+    "status": "passed",
+    "source_commit": "52429351784c4d2a317261cca66cad92fc5d6923",
+    "run_id": 44299541968,
+    "wheel": "gazespace-0.2.1-py3-none-any.whl",
+    "bytes": 922523,
+    "sha256": "79d26e5979b895301ee7fed62ee1e743e86787f86a1d95f9a505ac8d249f14db",
+    "font_assets": {
+      "gazespace/assets/fonts/DejaVuSans.ttf": {
+        "bytes": 756072,
+        "sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22",
+        "source_bytes": 756072,
+        "source_sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22",
+        "matches_source_bytes": true,
+        "matches_source_with_CRLF_normalized_to_LF": false,
+        "comparison": "exact binary bytes"
+      },
+      "gazespace/assets/fonts/DejaVuSans-Bold.ttf": {
+        "bytes": 704128,
+        "sha256": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167",
+        "source_bytes": 704128,
+        "source_sha256": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167",
+        "matches_source_bytes": true,
+        "matches_source_with_CRLF_normalized_to_LF": false,
+        "comparison": "exact binary bytes"
+      },
+      "gazespace/assets/fonts/LICENSE-DejaVu.txt": {
+        "bytes": 4915,
+        "sha256": "c61ba9e8668a511cbd0bcfdee8329e02ca6ca4048abda6ca7ee8ac68a059776a",
+        "source_bytes": 4816,
+        "source_sha256": "d75938dec098f06f0ac3c00853065d94f020be1c3c62ef1dc2975ba15b4d9b0e",
+        "matches_source_bytes": false,
+        "matches_source_with_CRLF_normalized_to_LF": true,
+        "comparison": "Text differs only by Windows checkout CRLF line endings; license content unchanged"
+      }
+    },
+    "wheel_runtime_executed_by_this_check": false,
+    "scope": "Inspect actual Windows-built wheel resources; font binaries match exact source bytes and complete license text matches with CRLF normalized to LF.",
+    "noneditable_wheel_import_verified_by_windows_build": true
   }
 }

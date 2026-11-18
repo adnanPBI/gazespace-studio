@@ -1,0 +1,15 @@
+{
+  "command": [
+    "D:\\a\\gazespace-studio\\gazespace-studio\\.venv\\Scripts\\python.exe",
+    "D:\\a\\gazespace-studio\\gazespace-studio\\scripts\\verify_pypylon_emulator.py",
+    "--output",
+    "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\pytest-of-runneradmin\\pytest-0\\test_real_pypylon_emulator_acq0\\emulator.json"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_s": 2.236543500000039,
+  "evidence_created": true,
+  "stdout_log": "windows_pypylon_pytest.stdout.log",
+  "stderr_log": "windows_pypylon_pytest.stderr.log",
+  "physical_hardware_tested": false
+}

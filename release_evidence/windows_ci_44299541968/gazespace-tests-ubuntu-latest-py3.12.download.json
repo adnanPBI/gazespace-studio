@@ -1,0 +1,11 @@
+{
+  "artifact_id": 14425347708,
+  "run_id": 44299541968,
+  "source_commit": "52429351784c4d2a317261cca66cad92fc5d6923",
+  "name": "gazespace-tests-ubuntu-latest-py3.12",
+  "archive": "/workspace/scratch/35b77c06faa6/windows_ci_downloads/run_44299541968/gazespace-tests-ubuntu-latest-py3.12.zip",
+  "directory": "/workspace/scratch/35b77c06faa6/windows_ci_downloads/run_44299541968/gazespace-tests-ubuntu-latest-py3.12",
+  "bytes": 254413,
+  "sha256": "8f1efb755327be42610d2cca0d0994d3c410d463448dfec8f95f2309f0df4d56",
+  "github_digest_verified": true
+}

@@ -2,80 +2,83 @@
 
 **Status snapshot: 2026-11-18 UTC.**
 
-**The corrected source passed a fresh 225-test gate with zero failures, errors or skips. The earlier Windows candidate passed automated build gates, but its actual desktop screenshot failed visual review because text rendered as missing-glyph boxes.** That artifact is not accepted for desktop handoff. Bundled licensed fonts and a real glyph-raster gate are implemented and locally verified. The corrected frozen Windows build and its screenshot still require verification.
+**Windows software build, frozen-runtime verification and bounded visual review are complete.** The corrected source passed 225 tests locally and 225 tests in the full SDK-enabled Windows gate, with no failures, errors or skips. The real Windows screenshots render readable text; the earlier font defect is resolved. Complete Studio and CLI archives passed runner verification, were downloaded, and then passed an independent check of both archive hashes and **all 7,674 contained files**. Software packaging and download integrity are complete.
 
-Physical cameras, human gaze accuracy and integration into the client's existing application remain unmeasured. Overall physical/client acceptance remains `null`; pending measurements are neither assumed passes nor measured failures. The machine-readable companion is `release_evidence/acceptance_scope_status.json`.
+Physical cameras, human gaze accuracy and integration into the client's existing application remain unmeasured. Overall physical/client acceptance remains `null`; those pending measurements are neither assumed passes nor measured failures. The machine-readable companion is `release_evidence/acceptance_scope_status.json`.
 
-## Current source evidence
+## Exact tested code and environment
 
-The corrected source passed **225 tests, zero failures, errors or skips, in 27.787 seconds**, including the actual optional Basler SDK emulator. The fresh receipt is [`pre_windows_font_fix_pytest.xml`](../release_evidence/pre_windows_font_fix_pytest.xml). The [isolated-environment receipt](../release_evidence/restored_environment.json) records Python **3.12.14**, no inherited system packages, a successful `pip check`, and the actual identities of both bundled font files and their license.
+- **Tested source commit:** [`52429351784c4d2a317261cca66cad92fc5d6923`](https://github.com/adnanPBI/gazespace-studio/commit/52429351784c4d2a317261cca66cad92fc5d6923).
+- **Source tree:** `daa481f9b040332c714818dbd910c7f0bfb7dd4b`.
+- **Successful CI:** [run 44299541968](https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968), [Windows build job 134786705094](https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968/job/134786705094).
+- **Windows build environment:** Windows Server 2025, build 26100, Python 3.12.10; Qt used its offscreen platform.
+- **Current compact evidence:** [`windows_ci_44299541968`](../release_evidence/windows_ci_44299541968/). Full raw archive inventories and logs remain in the run diagnostics.
 
-The source gate covers desktop lifecycle, camera/runtime failures, calibration and context integrity, SDK/API integration, recording/replay and exports. The font gate checks **95 printable ASCII characters, 14 UI Unicode characters and 12 distinct nonblank raster shapes**, using the real styled widget's resolved font. Regressions reject missing glyphs and repeated boxes.
+A later documentation/evidence-only commit does not replace the tested code identity above. Hosted Server 2025 and offscreen rendering do not establish interactive monitor, DPI, camera-driver or lifecycle acceptance on the client's Windows 10/11 workstation.
 
-Earlier 222-test, 219-test, 207-test and 0.2.0 173-test baselines remain historical. None substitutes for the new frozen Windows verification after the font and packaging changes.
+## Executed verification
 
-## Observed Windows build: automated pass, visual defect
-
-[Run 44284381626](https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626), [Windows build job 134734614731](https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626/job/134734614731), tested source commit **`3d2d10035e755b4d3a18dedac6979a0210899cfe`**. The diagnostics artifact was downloaded again and SHA-256 verified. Compact receipts are available under [`windows_ci_44284381626`](../release_evidence/windows_ci_44284381626/); full logs remain attached to the run. Its [evidence index](../release_evidence/windows_ci_44284381626/README.md) explicitly records the failed screenshot review.
-
-The actual environment was **Windows Server 2025, build 26100, Python 3.12.10**. The Qt checks used the **offscreen** platform. These are observed Windows software results, not client Windows 10/11 monitor or physical-camera acceptance.
-
-| Executed check | Observed result | Receipt in the run diagnostics |
+| Check | Observed result | Evidence |
 |---|---|---|
-| Full SDK-enabled Windows source suite | **222 passed; 0 failed, errors or skips; 32.948 seconds** | `windows_pytest.xml` |
-| Frozen CLI end-to-end workflow | Passed; **60 generated frames**, calibrated screen and spatial outputs, recording and HTML/JSON/CSV exports | `windows_packaged_verification.json`, `windows_packaged_simulation/simulation_summary.json` |
-| Frozen face/iris inference | Passed; **478 landmarks, two irises, finite features** from a reference photograph | `windows_packaged_face_inference.json` |
-| Basler SDK emulator | **Mono8, Mono12 and BGR8Packed** passed strict timestamp, control-readback, buffer-ownership and shutdown checks | `pypylon_sdk_emulator_windows.json` |
-| Frozen Basler capture | **57 simulated frames, 640×480, 2.0146 seconds**, clean shutdown | `windows_packaged_sdk_emulator.json` |
-| RealSense SDK context/enumeration | Completed successfully; **zero physical devices** | `windows_packaged_environment.json` |
-| Frozen Studio automated smoke | Seven pages painted and closed; bundled guides present | `windows_studio_smoke.json` |
-| Actual Studio screenshot review | **Failed: text rendered as missing-glyph boxes.** Automated page-paint success did not establish readable text. | `windows_studio_smoke.png` |
-| Full PowerShell acceptance collector | Executed in **inventory-only mode**; no camera requested; environment/CLI/Studio steps completed | `windows_release_acceptance_20261118_103204_705/acceptance_summary.json` |
+| Fresh isolated Linux source suite | **225 passed; 0 failures/errors/skips; 27.787 s** | [JUnit](../release_evidence/pre_windows_font_fix_pytest.xml) |
+| Isolated environment | Python 3.12.14, no inherited system packages, clean `pip check`, original bundled-font identities | [Environment](../release_evidence/restored_environment.json) |
+| Full Windows source suite with SDKs | **225 passed; 0 failures/errors/skips; 30.963 s** | [Windows JUnit](../release_evidence/windows_ci_44299541968/windows_pytest.xml) |
+| Four Linux/Windows Python 3.11/3.12 matrix jobs | **223 passed + 2 optional SDK skips each**, zero failures/errors | [Matrix counts](../release_evidence/windows_ci_44299541968/matrix_summary.json) |
+| Source and frozen synthetic workflows | Each processed **60 generated frames with 60 valid outputs**, calibrated screen/spatial mapping and HTML/JSON/CSV exports | [Source summary](../release_evidence/windows_ci_44299541968/windows_simulation/simulation_summary.json), [frozen summary](../release_evidence/windows_ci_44299541968/windows_packaged_simulation/simulation_summary.json) |
+| Frozen face/iris inference | **478 landmarks, two irises and finite features** in the reference photograph | [Inference receipt](../release_evidence/windows_ci_44299541968/windows_packaged_face_inference.json) |
+| Source Basler SDK emulator | **Mono8, Mono12 and BGR8Packed; five frames each**; strict timestamps, control readback, owned buffers and shutdown passed | [SDK receipt](../release_evidence/windows_ci_44299541968/pypylon_sdk_emulator_windows.json) |
+| Frozen Basler acquisition | **60 simulated 640×480 frames in 2.0122102 s**, zero read/clock errors and clean shutdown | [Capture receipt](../release_evidence/windows_ci_44299541968/windows_packaged_sdk_emulator.json) |
+| RealSense SDK context/enumeration | Completed successfully; **zero physical devices** | [Frozen environment](../release_evidence/windows_ci_44299541968/windows_packaged_environment.json) |
+| Frozen Studio automation | **Seven pages painted; 95 ASCII, 14 Unicode and 12 distinct nonblank glyph rasters**; bundled guides and clean shutdown verified | [Studio receipt](../release_evidence/windows_ci_44299541968/windows_studio_smoke.json) |
+| Independent bounded visual review | Live workspace screenshot and font proof readable; missing-glyph boxes absent | [Review](../release_evidence/windows_ci_44299541968/visual_review.json), [actual screenshot](../release_evidence/windows_ci_44299541968/windows_studio_smoke.png), [font proof](../release_evidence/windows_ci_44299541968/windows_studio_smoke_font_probe.png) |
+| Full PowerShell collectors | Combined archive and both separate archives executed inventory/environment/packaged checks; **no physical camera requested** | [Combined](../release_evidence/windows_ci_44299541968/windows_release_acceptance_combined_20261118_121058_965/acceptance_summary.json), [Studio](../release_evidence/windows_ci_44299541968/windows_release_acceptance_studio_20261118_121212_568/acceptance_summary.json), [CLI](../release_evidence/windows_ci_44299541968/windows_release_acceptance_cli_20261118_121318_071/acceptance_summary.json) |
 
-The reference photograph has no gaze or head-angle ground truth. SDK emulators are nonphysical fixtures; zero-device enumeration proves SDK initialization, not RealSense acquisition. The collector's execution does not turn an inventory-only run into camera acceptance. No receipt establishes live human gaze accuracy.
+Matrix durations were Ubuntu/Python 3.11 **18.216 s**, Ubuntu/3.12 **21.592 s**, Windows/3.11 **30.296 s**, Windows/3.12 **29.377 s**. The full Windows gate separately exercised the optional SDK paths without skips.
 
-### Historical artifact identity and correction
+The source and frozen generated-pupil fixtures reported nine-target synthetic screen errors of approximately **13.94 px median and 17.50 px p95**. Those values describe an artificial fixture, not a human gaze measurement or customer accuracy pass. The reference photograph has no gaze/head-angle ground truth. SDK emulators remain nonphysical, and zero-device enumeration proves SDK initialization rather than RealSense acquisition.
 
-The historical `windows_build.json` records an **unsigned** combined archive, `GazeSpace-Windows-0.2.1-unsigned.zip`, containing independent Studio and CLI onedir folders. Each executable requires its complete `_internal` directory. The runner's `release_identity.json` records **863,083,807 bytes** and SHA-256:
+The visual review inspected the actual Live workspace screenshot and font proof. The automation painted seven pages; this does not imply separate visual inspection of all seven pages or interactive physical-display acceptance.
 
-```text
-DF748AC0870409F61C2AAB3E36440CD3C7D6FA9CFC7EDBF44973EAF0C5EF191D
-```
+## Verified Windows archive identity
 
-This is a **runner-recorded hash**. A successful local download and rehash of the complete binary archive has not been confirmed. This archive is also the candidate with the observed font defect and is not the accepted desktop handoff artifact.
+The [build receipt](../release_evidence/windows_ci_44299541968/windows_build.json) records **unsigned developer builds**. Both complete delivery archives contain **3,837 files** and are strictly below **500 MiB (524,288,000 bytes)**. On the Windows runner and again after download, every decompressed file hash was verified and each archive's complete application folder matched the corresponding combined payload.
 
-The correction bundles licensed DejaVu regular/bold fonts, registers them before UI construction, and requires actual distinct nonblank glyph rasterization in the frozen smoke gate. The new build also creates complete separate Studio and CLI ZIPs, each strictly below **500 MiB (524,288,000 bytes)**, and verifies every decompressed file hash against the corresponding combined payload. Actual new archive sizes and hashes remain pending execution. Record the new source commit, Windows run, screenshots and archive identities after verification. Keep the tested source commit separate from a subsequent documentation-only commit.
+| Archive | Exact bytes | SHA-256 verified on runner and after download |
+|---|---:|---|
+| `GazeSpace-Studio-Windows-0.2.1-unsigned.zip` | 419,209,852 | `5d996562f5eaadd13e616c8be8c9e90e5112e41af9f26f6a384c4913cdc524b6` |
+| `GazeSpace-CLI-Windows-0.2.1-unsigned.zip` | 419,231,377 | `38f27670f181ebeef081f96a55028b69f7e9f4d450ca7e7b583333096b1fc064` |
+
+The corresponding [Studio identity](../release_evidence/windows_ci_44299541968/windows_release_acceptance_studio_20261118_121212_568/release_identity.json) and [CLI identity](../release_evidence/windows_ci_44299541968/windows_release_acceptance_cli_20261118_121318_071/release_identity.json) also identify the exact executables. These are independent onedir distributions: keep each executable with its entire `_internal` directory.
+
+**Local delivery integrity: passed.** The [independent downloaded-payload receipt](../release_evidence/windows_ci_44299541968/downloaded_payload_verification_summary.json) confirms both exact archive byte counts/hashes and **3,837 files per archive, 7,674 hashes in total**. The complete payloads match the combined manifest, executable identities match all three collector records, and required fonts/license are present. This check verifies downloaded bytes; Windows execution is established separately by the successful frozen-runtime receipts. The larger combined ZIP itself was not downloaded, so no local hash claim is made for that archive.
+
+The actual Windows-built wheel is **922,523 bytes**, SHA-256 `79d26e5979b895301ee7fed62ee1e743e86787f86a1d95f9a505ac8d249f14db`. [Wheel inspection](../release_evidence/windows_ci_44299541968/windows_wheel_resources.json) verified exact font binaries and complete license content; the license text differs from the Linux source only by Windows CRLF line endings. This resource inspection is separate from runtime execution.
+
 
 ## Remaining acceptance scope
 
 | Area | Current status | Evidence still required |
 |---|---|---|
-| Core, desktop, runtime, SDK/API and evidence integrity | Verified in the fresh 225-test source gate | Run the corrected exact candidate through frozen Windows verification. |
-| Corrected frozen Studio font rendering and delivery | Windows verification pending | Require glyph proof, inspect the actual screenshot, preserve new run/source/artifact identity, and verify downloaded archive hashes. |
-| Target Windows lifecycle and monitors | Client workstation pending | Run the exact distribution on the intended Windows 10/11 PC; check startup/shutdown, DPI, monitors, camera exclusivity, unplug/replug and sleep/wake. |
-| Physical UVC/IR/global-shutter/depth acquisition | Physical camera pending | Connect identified serials, drivers, optics and illumination; verify controls, sustained acquisition and shutter/trigger behavior. SDK or USB connectivity alone does not establish global shutter. |
-| Intrinsics, world transform and workspace surfaces | Measured geometry pending | Supply measured board dimensions, fresh held-out images, final focus/resolution, world landmarks and measured surfaces. |
-| Pupil localization, head pose and person-specific gaze | Human/reference measurement pending | Collect independent labeled/reference measurements and fresh person-specific targets across agreed lighting, eyewear, head motion and distances. Retain coverage and eye-origin provenance. |
-| Stationary precision and drift | Human measurement pending | Measure target error, stationary jitter and before/after drift over an agreed elapsed interval and operating conditions. |
-| Depth/stereo eye geometry and synchronization | Rig measurement pending | Use calibrated aligned depth or a measured stereo rig; verify point correspondence and exposure synchronization independently. |
-| End-to-end latency and reliability | Timing measurement pending | Instrument named sensor/host/consumer/display boundaries; measure p50/p95 and full-run valid/invalid rates under agreed load/duration. |
-| Existing client application integration | Client repository pending | Supply the actual repository/interfaces, dependency lock, deployment requirements and baseline; integrate and verify its real build. |
-| Customer pass/fail and optional publisher signing | Criteria pending | Agree metric units, thresholds, percentiles, duration and tested conditions. Supply signing identity/policy if required. The observed build is unsigned. |
+| Core, desktop, runtime, SDK/API and calibration evidence integrity | Software verified locally and in Windows CI | Preserve exact tested commit, configuration and receipts. |
+| Frozen Windows build, font rendering and complete downloaded archives | Software and download verification complete | Use these exact files for client acceptance; preserve their hashes. |
+| Target Windows lifecycle and monitors | Client workstation pending | Check startup/shutdown, DPI, monitors, camera exclusivity, unplug/replug and sleep/wake on the intended Windows 10/11 PC. |
+| Physical UVC/IR/global-shutter/depth acquisition | Physical camera pending | Connect identified serials/drivers/optics/illumination; verify controls, sustained acquisition and actual shutter/trigger behavior. |
+| Intrinsics, world transform and surfaces | Measured geometry pending | Supply measured boards, fresh held-out images, final focus/resolution, world landmarks and workspace surfaces. |
+| Pupil localization, head pose and personal gaze | Human/reference measurement pending | Collect independent labels/reference measurements and fresh targets across agreed people, eyewear, lighting, head motion and distances. |
+| Stationary precision and drift | Human measurement pending | Measure baseline target error, fixation jitter and before/after drift over the agreed interval and conditions. |
+| Depth/stereo geometry and synchronization | Rig measurement pending | Verify aligned depth or a measured stereo rig, feature correspondence and exposure synchronization. |
+| End-to-end latency and reliability | Instrumented measurement pending | Measure named sensor/host/consumer/display boundaries, p50/p95, full-run validity and actual loss under agreed load. |
+| Existing client application | Client repository pending | Supply the real repository/interfaces, dependency lock, deployment method and baseline; integrate and verify its actual build. |
+| Customer pass/fail and publisher signing | Criteria/policy pending | Agree units, thresholds, percentiles, duration and conditions; supply signing identity if required. |
 
-## Access and authorization
+Each physical acceptance result must identify the build/configuration, person/condition where relevant, reference method, metric/unit, sample/target coverage, duration and agreed threshold. A numeric measurement alone does not establish an acceptance pass.
 
-Source upload and Windows CI were explicitly authorized and have executed. The earlier automatic approval rejection is resolved by that authorization and is retained only as history.
+Processing duration, host arrival gaps and receive-to-script age are different timing boundaries; none automatically measures exposure-to-display latency. Runtime mailbox replacements are not sensor/USB frame-loss counts. Generic facial anatomy gives an approximate eye origin; aligned depth gives a visible eye-surface midpoint. A ray or bounded surface hit does not establish unconstrained fixation depth. New validation labels do not establish independent observations, and zero drift between two wrong estimates does not establish accurate gaze.
 
-Physical remote access is blocked by the provider's last observed response: **Desktop Commander monthly usage is exhausted and calls are paused**. The last available device inventory showed the remote PCs offline; their current connectivity cannot be confirmed while the quota block applies. No repeated reconnect attempt can establish acceptance during that provider block. This is separate from the resolved source-upload authorization.
+## History and physical access
 
-## Conditions for a truthful physical pass
+The [earlier run 44284381626](https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626) passed automated gates but failed screenshot review. Its receipts remain explicitly historical; the corrected code and actual images in the current run resolve the observed defect. The 0.2.0 delivery baseline is preserved in [DELIVERY_STATUS.md](DELIVERY_STATUS.md).
 
-Each acceptance result must identify the exact build/configuration, source provenance, person/condition where relevant, metric/unit, reference method, sample/target coverage, duration and agreed threshold. A numeric result without its criterion remains a measurement.
+Source upload and Windows CI were explicitly authorized and executed; the earlier upload-approval blocker is resolved. Physical remote access remains blocked by the provider's last observed response: **Desktop Commander monthly usage is exhausted and calls are paused**. Remote PCs were last listed offline, and current connectivity cannot be confirmed through that paused provider. No alternate owner-local remote capability is currently available. This does not block the completed hosted Windows software verification.
 
-- **Timing:** processing time, host arrival gaps and receive-to-script age measure different intervals. They do not establish sensor exposure-to-display latency. Source PTS and hardware clocks must not be compared directly with the host `gazespace.perf_counter` domain.
-- **Reliability:** settled calibration samples exclude rejected attempts. Report validity against the full attempted run. Runtime mailbox replacement counts do not measure sensor or USB/SDK loss.
-- **Geometry:** generic anatomy gives an approximate eye origin; aligned depth gives a visible eye-surface midpoint. Perpendicular ray miss and measured surface intersections do not establish unconstrained fixation depth.
-- **Validation:** a new session label alone does not establish independence. Preserve fresh acquisition metadata and nonreused observations, consistent context, target coverage and model identity.
-- **Drift:** baseline target error, stationary precision, repeated offset and elapsed interval are separate results. Zero drift between two wrong estimates does not establish accurate gaze.
-
-After corrected Windows verification and image review pass, run the [Windows collector](WINDOWS_ACCEPTANCE_RUNNER.md) against that exact release on the intended PC and explicitly selected physical cameras. Then collect the agreed human/geometry/timing measurements and integrate the actual client application following [WINDOWS_HARDWARE_ACCEPTANCE.md](WINDOWS_HARDWARE_ACCEPTANCE.md). Hosted software verification cannot complete those physical or client-specific rows.
+Run the [Windows acceptance collector](WINDOWS_ACCEPTANCE_RUNNER.md) against the exact release on the intended PC and explicitly selected physical cameras when access is available. Then collect the agreed geometry, human and timing measurements and integrate the client application following [WINDOWS_HARDWARE_ACCEPTANCE.md](WINDOWS_HARDWARE_ACCEPTANCE.md).

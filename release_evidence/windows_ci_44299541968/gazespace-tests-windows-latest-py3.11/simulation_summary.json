@@ -1,0 +1,45 @@
+{
+  "synthetic": true,
+  "human_gaze_accuracy_measured": false,
+  "session": "D:\\a\\gazespace-studio\\gazespace-studio\\release_evidence\\ci_simulation\\sessions\\20261118T120058_ae789e811f",
+  "profile": "D:\\a\\gazespace-studio\\gazespace-studio\\release_evidence\\ci_simulation\\synthetic_profile.json",
+  "measurements": {
+    "synthetic": true,
+    "independent_targets": true,
+    "screen_error": {
+      "median": 13.94063937704952,
+      "p95": 17.501013907034842,
+      "mean": 12.561902646194774,
+      "max": 17.62691874702733,
+      "unit": "pixels",
+      "count": 9
+    },
+    "note": "Software fixture; does not establish real-person gaze accuracy"
+  },
+  "runtime": {
+    "frames": 60,
+    "gaze_valid": 60,
+    "rejected": 0,
+    "blink_frames": 0,
+    "processing_median_ms": 4.725149999984524,
+    "processing_p95_ms": 5.9931100000341075,
+    "calibrated_screen": true,
+    "calibrated_spatial": true,
+    "physical_accuracy_verified": false,
+    "lighting": {
+      "p05": 40.0,
+      "median": 40.0,
+      "p95": 190.0,
+      "dark_fraction": 0.0,
+      "bright_fraction": 0.0001388888888888889,
+      "contrast": 150.0,
+      "sharpness_laplacian": 755.1007638888889,
+      "warnings": []
+    }
+  },
+  "exports": {
+    "json": "D:\\a\\gazespace-studio\\gazespace-studio\\release_evidence\\ci_simulation\\report\\report.json",
+    "html": "D:\\a\\gazespace-studio\\gazespace-studio\\release_evidence\\ci_simulation\\report\\report.html",
+    "csv": "D:\\a\\gazespace-studio\\gazespace-studio\\release_evidence\\ci_simulation\\report\\gaze.csv"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "collected_at_utc": "2026-11-18T12:12:12.5846983Z",
+  "operating_system": {
+    "records": [
+      {
+        "Caption": "Microsoft Windows Server 2025 Datacenter",
+        "Version": "10.0.26100",
+        "BuildNumber": "26100",
+        "OSArchitecture": "64-bit",
+        "LastBootUpTime": "2026-11-18T11:58:06.157344+00:00"
+      }
+    ],
+    "status": "collected"
+  },
+  "processors": {
+    "records": [
+      {
+        "Name": "AMD EPYC 9V74 80-Core Processor                ",
+        "Manufacturer": "AuthenticAMD",
+        "NumberOfCores": 1,
+        "NumberOfLogicalProcessors": 2,
+        "MaxClockSpeed": 2596
+      }
+    ],
+    "status": "collected"
+  },
+  "video_controllers": {
+    "records": [
+      {
+        "Name": "Microsoft Hyper-V Video",
+        "DriverVersion": "10.0.26100.1150",
+        "DriverDate": "2006-06-21T00:00:00+00:00",
+        "VideoProcessor": null,
+        "CurrentHorizontalResolution": 1024,
+        "CurrentVerticalResolution": 768,
+        "CurrentRefreshRate": 1
+      }
+    ],
+    "status": "collected"
+  },
+  "usb_controllers": {
+    "records": [],
+    "status": "collected"
+  },
+  "cameras": {
+    "records": [],
+    "status": "collected"
+  },
+  "camera_and_usb_drivers": {
+    "records": [],
+    "status": "collected"
+  },
+  "inventory_only": true,
+  "camera_acquisition_attempted": false
+}

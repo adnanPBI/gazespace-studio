@@ -1,0 +1,11 @@
+{
+  "artifact_id": 14423933914,
+  "run_id": 44299541968,
+  "source_commit": "52429351784c4d2a317261cca66cad92fc5d6923",
+  "name": "gazespace-tests-windows-latest-py3.11",
+  "archive": "/workspace/scratch/35b77c06faa6/windows_ci_downloads/run_44299541968/gazespace-tests-windows-latest-py3.11.zip",
+  "directory": "/workspace/scratch/35b77c06faa6/windows_ci_downloads/run_44299541968/gazespace-tests-windows-latest-py3.11",
+  "bytes": 254391,
+  "sha256": "8094bac2d56468f0a76d27043dc317a0c7690749474744994b04b2f74afa809d",
+  "github_digest_verified": true
+}

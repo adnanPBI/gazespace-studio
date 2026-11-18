@@ -16,9 +16,13 @@
 - [x] Local REST/WebSocket telemetry and authentication/host/origin tests.
 - [x] Real Basler SDK emulator verification for three pixel formats and requested camera controls.
 - [x] Windows setup, verification, packaging and optional signing automation provided.
-- [x] A Windows Server 2025 build executed the full SDK-enabled suite and frozen runtime checks; its first screenshot subsequently failed visual review.
+- [x] Corrected Windows Server 2025 build executed the full SDK-enabled suite: **225 passed, zero failures/errors/skips, 30.963 seconds**.
 - [x] Bundled-font correction verified in a fresh isolated source gate: **225 passed, zero failures/errors/skips, 27.787 seconds**; dependency check passed.
-- [ ] Verify corrected fonts in the new frozen Windows build and inspect its actual desktop screenshot before accepting that artifact.
+- [x] Frozen Studio glyph gate passed: **95 ASCII, 14 Unicode, 12 distinct rasters**; actual Live workspace screenshot and font proof passed independent visual review.
+- [x] Frozen CLI simulation, actual face/iris inference, Basler emulator and RealSense zero-device enumeration passed.
+- [x] Complete separate Studio/CLI archives verified on the runner: **3,837 files each**, exact combined-payload equality, each strictly below 500 MiB.
+- [x] Both complete Windows ZIPs downloaded; archive bytes/hashes and **all 7,674 contained file hashes** independently verified against the Windows payload manifests and collector identities.
+- [x] Actual Windows-built wheel inspected: exact font binaries and complete license content verified; CRLF-only text difference recorded.
 
 ## Repeat source verification
 
@@ -76,9 +80,13 @@ These are onedir applications. Preserve the complete distribution folders and th
 
 Signing is optional and requires an existing authorized CurrentUser code-signing certificate selected through `-CertificateThumbprint`. An optional `-TimestampServer http://YOUR_TSA` controls Windows PowerShell Authenticode timestamping. The script verifies the resulting signature. Without those inputs the correct status is **unsigned developer build**, not signed release.
 
-The supplied CI configuration defines Linux/Windows Python 3.11/3.12 test jobs and a Windows packaging job. [Run 44284381626](https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626) completed the full Windows build job for source commit `3d2d10035e755b4d3a18dedac6979a0210899cfe`: 222 tests with no skips, actual frozen CLI/face/Studio execution, three Basler emulator formats, zero-device RealSense enumeration and an inventory-only collector run. Compact receipts are available under [`windows_ci_44284381626`](../release_evidence/windows_ci_44284381626/). Seven painted pages were insufficient proof of readable text: the screenshot failed visual review, so that artifact is not the accepted desktop deliverable. Retain the new candidate's distinct-glyph proof and visually inspect the new frozen screenshot before recording success.
+[Run 44299541968](https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968), [Windows build job 134786705094](https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968/job/134786705094), completed for tested source commit `52429351784c4d2a317261cca66cad92fc5d6923`. All four Linux/Windows Python 3.11/3.12 matrix jobs passed: 223 passed plus two optional SDK skips each. The full SDK-enabled Windows build gate exercised **225 tests without skips**. [Compact receipts](../release_evidence/windows_ci_44299541968/) include the JUnit report, source/frozen verification, actual screenshots, independent visual review, SDK checks and collector receipts.
 
-Keep the tested source commit separate from any later documentation-only commit. Runner-recorded package hashes do not by themselves establish a successful local download and rehash of those bytes.
+The full collector executed for the combined archive and each separate delivery archive in **inventory-only mode**. No physical camera or human gaze measurement was requested. The source and frozen synthetic workflows each produced 60 valid outputs from 60 generated frames; this verifies the software path and preserves synthetic provenance.
+
+The earlier [run 44284381626](https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626) passed automated gates but its screenshot failed visual review. Its receipts remain historical. The new font proof and directly inspected screenshot establish that the observed rendering defect is resolved in the current build.
+
+Keep the tested source commit separate from any later documentation-only commit. Runner verification and independent local binary verification are both complete. The [downloaded-payload summary](../release_evidence/windows_ci_44299541968/downloaded_payload_verification_summary.json) identifies the exact verified Studio/CLI ZIPs. See [ACCEPTANCE_STATUS.md](ACCEPTANCE_STATUS.md) for remaining physical/client measurements.
 
 ## Not established by this source release
 

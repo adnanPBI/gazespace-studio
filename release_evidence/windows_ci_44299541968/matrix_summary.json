@@ -1,0 +1,53 @@
+{
+  "source_commit": "52429351784c4d2a317261cca66cad92fc5d6923",
+  "run_id": 44299541968,
+  "run_url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968",
+  "matrix": [
+    {
+      "name": "gazespace-tests-ubuntu-latest-py3.11",
+      "tests": 225,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 2,
+      "seconds": 18.216,
+      "passed": 223
+    },
+    {
+      "name": "gazespace-tests-ubuntu-latest-py3.12",
+      "tests": 225,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 2,
+      "seconds": 21.592,
+      "passed": 223
+    },
+    {
+      "name": "gazespace-tests-windows-latest-py3.11",
+      "tests": 225,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 2,
+      "seconds": 30.296,
+      "passed": 223
+    },
+    {
+      "name": "gazespace-tests-windows-latest-py3.12",
+      "tests": 225,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 2,
+      "seconds": 29.377,
+      "passed": 223
+    }
+  ],
+  "source_sdk_tests_skipped_in_matrix": 2,
+  "full_sdk_windows_build": {
+    "status": "passed",
+    "passed": 225,
+    "skipped": 0,
+    "failures": 0,
+    "errors": 0,
+    "seconds": 30.963,
+    "job_id": 134786705094
+  }
+}

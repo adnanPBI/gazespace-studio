@@ -1,0 +1,577 @@
+{
+  "id": 44299541968,
+  "status": "completed",
+  "conclusion": "success",
+  "head_sha": "52429351784c4d2a317261cca66cad92fc5d6923",
+  "created_at": "2026-11-18T11:58:39Z",
+  "updated_at": "2026-11-18T12:13:51Z",
+  "url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44299541968",
+  "repository": "adnanPBI/gazespace-studio",
+  "private_repository": true,
+  "jobs": [
+    {
+      "id": 134785373348,
+      "name": "Software / ubuntu-latest / Python 3.12",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44299541968,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install Linux native runtime libraries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install full application and test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run algorithms, acquisition, API, session and Qt tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Check dependency readiness",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run detector-to-calibration-to-recording-to-report simulation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Retain software test receipts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 134785373878,
+      "name": "Software / ubuntu-latest / Python 3.11",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44299541968,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install Linux native runtime libraries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install full application and test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run algorithms, acquisition, API, session and Qt tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Check dependency readiness",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run detector-to-calibration-to-recording-to-report simulation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Retain software test receipts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 134785373981,
+      "name": "Software / windows-latest / Python 3.12",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44299541968,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install Linux native runtime libraries",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 4
+        },
+        {
+          "name": "Install full application and test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run algorithms, acquisition, API, session and Qt tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Check dependency readiness",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run detector-to-calibration-to-recording-to-report simulation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Retain software test receipts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 134785373987,
+      "name": "Software / windows-latest / Python 3.11",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44299541968,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install Linux native runtime libraries",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 4
+        },
+        {
+          "name": "Install full application and test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run algorithms, acquisition, API, session and Qt tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Check dependency readiness",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run detector-to-calibration-to-recording-to-report simulation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Retain software test receipts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 134786705094,
+      "name": "Windows Studio and CLI / Python 3.12",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44299541968,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Parse all Windows scripts with the native PowerShell parser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Build, verify frozen applications and collect exact-release Windows evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Retain Windows diagnostics even when a gate fails",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Retain Windows Studio distributable",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Retain Windows CLI distributable",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Retain Windows verification and Python packages",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 14426076755,
+      "name": "gazespace-windows-cli-unsigned",
+      "size_in_bytes": 419231571,
+      "url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14426076755",
+      "archive_download_url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14426076755/zip",
+      "expired": false,
+      "created_at": "2026-11-18T12:13:42Z",
+      "expires_at": "2026-12-02T12:13:37Z",
+      "updated_at": "2026-11-18T12:13:42Z",
+      "digest": "sha256:cdaf0350d4966689a3b149e99857bd15df31bc62a270234bad8a4da35d631b12",
+      "workflow_run": {
+        "id": 44299541968,
+        "repository_id": 1462578948,
+        "head_repository_id": 1462578948,
+        "head_branch": "main",
+        "head_sha": "52429351784c4d2a317261cca66cad92fc5d6923"
+      }
+    },
+    {
+      "id": 14425847255,
+      "name": "gazespace-windows-studio-unsigned",
+      "size_in_bytes": 419210052,
+      "url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425847255",
+      "archive_download_url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425847255/zip",
+      "expired": false,
+      "created_at": "2026-11-18T12:13:36Z",
+      "expires_at": "2026-12-02T12:13:30Z",
+      "updated_at": "2026-11-18T12:13:36Z",
+      "digest": "sha256:c8b4f8807e5460984d44bd8810d6fd1ad65ebf62216b9722a9c2254dc849a0f4",
+      "workflow_run": {
+        "id": 44299541968,
+        "repository_id": 1462578948,
+        "head_repository_id": 1462578948,
+        "head_branch": "main",
+        "head_sha": "52429351784c4d2a317261cca66cad92fc5d6923"
+      }
+    },
+    {
+      "id": 14425603088,
+      "name": "gazespace-windows-build-diagnostics",
+      "size_in_bytes": 3278385,
+      "url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425603088",
+      "archive_download_url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425603088/zip",
+      "expired": false,
+      "created_at": "2026-11-18T12:13:29Z",
+      "expires_at": "2026-12-02T12:13:27Z",
+      "updated_at": "2026-11-18T12:13:29Z",
+      "digest": "sha256:ec034442496906e0d82724bf6ae8596365022c40fa70488ae342b387b6dbefea",
+      "workflow_run": {
+        "id": 44299541968,
+        "repository_id": 1462578948,
+        "head_repository_id": 1462578948,
+        "head_branch": "main",
+        "head_sha": "52429351784c4d2a317261cca66cad92fc5d6923"
+      }
+    },
+    {
+      "id": 14425538270,
+      "name": "gazespace-windows-verification",
+      "size_in_bytes": 6603855,
+      "url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425538270",
+      "archive_download_url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425538270/zip",
+      "expired": false,
+      "created_at": "2026-11-18T12:13:44Z",
+      "expires_at": "2026-12-02T12:13:43Z",
+      "updated_at": "2026-11-18T12:13:44Z",
+      "digest": "sha256:7f250818793973541bc36679e1506a905b5b2eab21ae19b193132aa0cc3cbc30",
+      "workflow_run": {
+        "id": 44299541968,
+        "repository_id": 1462578948,
+        "head_repository_id": 1462578948,
+        "head_branch": "main",
+        "head_sha": "52429351784c4d2a317261cca66cad92fc5d6923"
+      }
+    },
+    {
+      "id": 14425347708,
+      "name": "gazespace-tests-ubuntu-latest-py3.12",
+      "size_in_bytes": 254413,
+      "url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425347708",
+      "archive_download_url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425347708/zip",
+      "expired": false,
+      "created_at": "2026-11-18T12:00:19Z",
+      "expires_at": "2026-12-02T12:00:18Z",
+      "updated_at": "2026-11-18T12:00:19Z",
+      "digest": "sha256:8f1efb755327be42610d2cca0d0994d3c410d463448dfec8f95f2309f0df4d56",
+      "workflow_run": {
+        "id": 44299541968,
+        "repository_id": 1462578948,
+        "head_repository_id": 1462578948,
+        "head_branch": "main",
+        "head_sha": "52429351784c4d2a317261cca66cad92fc5d6923"
+      }
+    },
+    {
+      "id": 14425128908,
+      "name": "gazespace-tests-windows-latest-py3.12",
+      "size_in_bytes": 254476,
+      "url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425128908",
+      "archive_download_url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14425128908/zip",
+      "expired": false,
+      "created_at": "2026-11-18T12:00:45Z",
+      "expires_at": "2026-12-02T12:00:44Z",
+      "updated_at": "2026-11-18T12:00:45Z",
+      "digest": "sha256:f723e0b469b20fd04e185ed56f545f6bfe06e31b4608e166d954ccd7616c2c1b",
+      "workflow_run": {
+        "id": 44299541968,
+        "repository_id": 1462578948,
+        "head_repository_id": 1462578948,
+        "head_branch": "main",
+        "head_sha": "52429351784c4d2a317261cca66cad92fc5d6923"
+      }
+    },
+    {
+      "id": 14424353339,
+      "name": "gazespace-tests-ubuntu-latest-py3.11",
+      "size_in_bytes": 254391,
+      "url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14424353339",
+      "archive_download_url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14424353339/zip",
+      "expired": false,
+      "created_at": "2026-11-18T12:00:43Z",
+      "expires_at": "2026-12-02T12:00:41Z",
+      "updated_at": "2026-11-18T12:00:43Z",
+      "digest": "sha256:f31e16e58d9b471b0d9d58075b93ea55fbe933f672243da77b2380635bb28c13",
+      "workflow_run": {
+        "id": 44299541968,
+        "repository_id": 1462578948,
+        "head_repository_id": 1462578948,
+        "head_branch": "main",
+        "head_sha": "52429351784c4d2a317261cca66cad92fc5d6923"
+      }
+    },
+    {
+      "id": 14423933914,
+      "name": "gazespace-tests-windows-latest-py3.11",
+      "size_in_bytes": 254391,
+      "url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14423933914",
+      "archive_download_url": "https://api.github.com/repos/adnanPBI/gazespace-studio/actions/artifacts/14423933914/zip",
+      "expired": false,
+      "created_at": "2026-11-18T12:01:00Z",
+      "expires_at": "2026-12-02T12:00:59Z",
+      "updated_at": "2026-11-18T12:01:00Z",
+      "digest": "sha256:8094bac2d56468f0a76d27043dc317a0c7690749474744994b04b2f74afa809d",
+      "workflow_run": {
+        "id": 44299541968,
+        "repository_id": 1462578948,
+        "head_repository_id": 1462578948,
+        "head_branch": "main",
+        "head_sha": "52429351784c4d2a317261cca66cad92fc5d6923"
+      }
+    }
+  ]
+}

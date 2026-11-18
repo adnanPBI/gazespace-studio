@@ -1,0 +1,79 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-11-18T12:12:18.765420+00:00",
+  "version": "0.2.1",
+  "platform": "Windows-2025Server-10.0.26100-SP0",
+  "frozen_executable": true,
+  "bundled_guides_present": true,
+  "qt_platform": "offscreen",
+  "native_ui_pages_painted": 7,
+  "font_verification": {
+    "status": "passed",
+    "requested_family": "DejaVu Sans",
+    "resolved_family": "DejaVu Sans",
+    "raw_font_family": "DejaVu Sans",
+    "ascii_glyphs_checked": 95,
+    "unicode_glyphs_checked": 14,
+    "missing_glyphs": [],
+    "raster_probe_characters": "ABGWim018?@\u00d7",
+    "distinct_probe_rasters": 12,
+    "expected_probe_rasters": 12,
+    "probe_ink_pixels": [
+      326,
+      394,
+      352,
+      514,
+      154,
+      399,
+      326,
+      216,
+      356,
+      188,
+      475,
+      213
+    ],
+    "probe_raster_sha256": [
+      "ed887b419f30eb5620e7d312cf5c674ab08a4b94e4f43967c61eb00e2a6f4aa1",
+      "9e4509c206b56a22e5d0879ffd37c7b8249274dea28473545274daf0e31af9f2",
+      "6a6edc3060f485c7899da7c2761687f1903ec6304e18a9b489c3f3abb8738425",
+      "933822a93fa1ed11d73c68c7246286ef473586bb43b46dee781cca29a4c7e6d5",
+      "8ea93ccafcad081a894154210ef75ae00fad94395ac172b0aa458044799a62cd",
+      "801162967d57cf17a33fbd3151a8c2c4ddf1f481263f165031487a34c65e128d",
+      "d643911dc5488c039ce0b39d12aeef2d2c7420f821e399a333961e0082b393ae",
+      "42d7921b34f350b0cad285f65cc71c7344f602b5b5c476dc3c847390cc13e460",
+      "d4382c79508678a738b66e1c5fbbe78f77c84803d9496ef35c6d69ecbe48177f",
+      "48f8c19e71266f54058b76876d2e32ed765b3d79c538cd8d78c775804fd9a904",
+      "5bebda425b438a6885890f9784eec929e0d857f4815442fae5d05f4f8836f4d3",
+      "a93acbec6be64d4f33fc45ee7cf341a17e1f31fb7c9968f06b7accdfc512db4e"
+    ],
+    "registration": {
+      "family": "DejaVu Sans",
+      "fonts": [
+        {
+          "file": "DejaVuSans.ttf",
+          "bytes": 756072,
+          "sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22",
+          "font_id": 0,
+          "families": [
+            "DejaVu Sans"
+          ]
+        },
+        {
+          "file": "DejaVuSans-Bold.ttf",
+          "bytes": 704128,
+          "sha256": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167",
+          "font_id": 1,
+          "families": [
+            "DejaVu Sans"
+          ]
+        }
+      ],
+      "license": "LICENSE-DejaVu.txt",
+      "qt_platform": "offscreen"
+    },
+    "raster_probe_png": "packaged_studio_font_probe.png"
+  },
+  "screenshot": "packaged_studio.png",
+  "camera_opened": false,
+  "interactive_windows_monitor_acceptance": false
+}

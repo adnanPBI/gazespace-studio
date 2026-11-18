@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "source_commit": "52429351784c4d2a317261cca66cad92fc5d6923",
+  "run_id": 44299541968,
+  "wheel": "gazespace-0.2.1-py3-none-any.whl",
+  "bytes": 922523,
+  "sha256": "79d26e5979b895301ee7fed62ee1e743e86787f86a1d95f9a505ac8d249f14db",
+  "font_assets": {
+    "gazespace/assets/fonts/DejaVuSans.ttf": {
+      "bytes": 756072,
+      "sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22",
+      "source_bytes": 756072,
+      "source_sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22",
+      "matches_source_bytes": true,
+      "matches_source_with_CRLF_normalized_to_LF": false,
+      "comparison": "exact binary bytes"
+    },
+    "gazespace/assets/fonts/DejaVuSans-Bold.ttf": {
+      "bytes": 704128,
+      "sha256": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167",
+      "source_bytes": 704128,
+      "source_sha256": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167",
+      "matches_source_bytes": true,
+      "matches_source_with_CRLF_normalized_to_LF": false,
+      "comparison": "exact binary bytes"
+    },
+    "gazespace/assets/fonts/LICENSE-DejaVu.txt": {
+      "bytes": 4915,
+      "sha256": "c61ba9e8668a511cbd0bcfdee8329e02ca6ca4048abda6ca7ee8ac68a059776a",
+      "source_bytes": 4816,
+      "source_sha256": "d75938dec098f06f0ac3c00853065d94f020be1c3c62ef1dc2975ba15b4d9b0e",
+      "matches_source_bytes": false,
+      "matches_source_with_CRLF_normalized_to_LF": true,
+      "comparison": "Text differs only by Windows checkout CRLF line endings; license content unchanged"
+    }
+  },
+  "wheel_runtime_executed_by_this_check": false,
+  "scope": "Inspect actual Windows-built wheel resources; font binaries match exact source bytes and complete license text matches with CRLF normalized to LF."
+}
