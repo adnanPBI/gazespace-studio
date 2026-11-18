@@ -8,7 +8,8 @@ from PySide6.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QPushB
 from ..acquisition import TargetCollector
 from ..clock import host_now_s
 from .widgets import label, VideoCanvas
-from .theme import TEAL, MUTED, AMBER, TEXT, BG
+from .theme import FONT_FAMILY, TEAL, MUTED, AMBER, TEXT, BG
+from .fonts import configure_app_fonts
 
 
 class TargetSessionDialog(QWidget):
@@ -17,6 +18,7 @@ class TargetSessionDialog(QWidget):
 
     def __init__(self, snapshot, targets, *, purpose='calibration', screen=None,
                  screen_size=None, collector_options=None, parent=None):
+        configure_app_fonts()
         super().__init__(parent, Qt.WindowType.Window)
         self.setWindowTitle('GazeSpace · ' + purpose)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
@@ -107,12 +109,12 @@ class TargetSessionDialog(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         p.fillRect(self.rect(),QColor('#091221'))
-        p.setPen(QColor(TEAL));p.setFont(QFont('Segoe UI',13,QFont.Weight.DemiBold))
+        p.setPen(QColor(TEAL));p.setFont(QFont(FONT_FAMILY,13,QFont.Weight.DemiBold))
         p.drawText(QRectF(30,24,self.width()-60,25),Qt.AlignmentFlag.AlignCenter,'GAZESPACE  /  '+self.purpose.upper())
-        p.setPen(QColor(TEXT));p.setFont(QFont('Segoe UI',19,QFont.Weight.DemiBold))
+        p.setPen(QColor(TEXT));p.setFont(QFont(FONT_FAMILY,19,QFont.Weight.DemiBold))
         p.drawText(QRectF(30,56,self.width()-60,35),Qt.AlignmentFlag.AlignCenter,
                    f'Target {min(self.index+1,len(self.targets))} of {len(self.targets)}')
-        p.setPen(QColor(MUTED));p.setFont(QFont('Segoe UI',11))
+        p.setPen(QColor(MUTED));p.setFont(QFont(FONT_FAMILY,11))
         p.drawText(QRectF(30,self.height()-80,self.width()-60,28),Qt.AlignmentFlag.AlignCenter,self.status_text)
         p.drawText(QRectF(30,self.height()-45,self.width()-60,24),Qt.AlignmentFlag.AlignCenter,
                    'SPACE  collect / retry     ·     ESC  cancel without changing calibration')
@@ -147,6 +149,7 @@ class SpatialSessionDialog(QDialog):
     samples_ready = Signal(object)
 
     def __init__(self, snapshot, targets, extrinsics, *, purpose='spatial calibration', parent=None):
+        configure_app_fonts()
         super().__init__(parent)
         self.setWindowTitle('GazeSpace · ' + purpose)
         self.resize(820,650)

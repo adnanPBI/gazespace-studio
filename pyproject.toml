@@ -9,7 +9,7 @@ description = "Local-first Windows gaze tracking, eye/pupil detection, calibrati
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "src/gazespace/assets/fonts/LICENSE-DejaVu.txt"]
 authors = [{name = "GazeSpace Reference Implementation"}]
 dependencies = ["numpy>=1.26,<2", "opencv-contrib-python>=4.8,<4.12", "scipy>=1.11,<2", "Pillow>=10,<13"]
 
@@ -29,6 +29,9 @@ gazespace-studio = "gazespace.desktop:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+gazespace = ["assets/fonts/*.ttf", "assets/fonts/*.txt", "assets/fonts/*.md"]
 
 [tool.setuptools.data-files]
 "share/gazespace" = ["README.md", "LICENSE"]

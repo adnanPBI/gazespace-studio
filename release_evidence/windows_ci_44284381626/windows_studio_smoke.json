@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-11-18T10:29:42.084368+00:00",
+  "version": "0.2.1",
+  "platform": "Windows-2025Server-10.0.26100-SP0",
+  "frozen_executable": true,
+  "bundled_guides_present": true,
+  "qt_platform": "offscreen",
+  "native_ui_pages_painted": 7,
+  "screenshot": "windows_studio_smoke.png",
+  "camera_opened": false,
+  "interactive_windows_monitor_acceptance": false
+}

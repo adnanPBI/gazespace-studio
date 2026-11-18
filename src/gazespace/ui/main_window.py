@@ -34,6 +34,7 @@ from ..sessions import SessionRecorder, load_session, list_sessions, SessionRepl
 from ..analytics import analyze_session, export_report, heatmap_svg
 from ..demo import build_demo_profile, DEMO_SOURCE_CONTEXT
 from .theme import STYLE, TEAL, MUTED
+from .fonts import configure_app_fonts
 from .widgets import label, card, Metric, VideoCanvas, GazeMap, WorkspaceView
 from .jobs import FunctionJob
 from .calibration_dialogs import TargetSessionDialog, SpatialSessionDialog
@@ -63,6 +64,7 @@ class MainWindow(QMainWindow):
     error_reported = Signal(str)
 
     def __init__(self, workspace=None, profile=None, *, interactive_errors=True):
+        configure_app_fonts()
         super().__init__()
         self.workspace=Path(workspace or default_workspace()).expanduser().resolve()
         for name in ('profiles','board','sessions','reports'):

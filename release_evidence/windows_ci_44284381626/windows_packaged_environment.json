@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "status": "collected",
+  "started_at_utc": "2026-11-18T10:29:31.115364+00:00",
+  "platform": "Windows-2025Server-10.0.26100-SP0",
+  "python": "3.12.10",
+  "executable": "D:\\a\\gazespace-studio\\gazespace-studio\\dist\\GazeSpaceCLI\\GazeSpaceCLI.exe",
+  "executable_sha256": "630c8a2c636949d31b98366daeb9254d8ecea1aa33363b6c21b824288ddb02b5",
+  "frozen_executable": true,
+  "host_clock": {
+    "domain": "gazespace.perf_counter",
+    "implementation": "QueryPerformanceCounter()",
+    "resolution_s": 1e-07,
+    "monotonic": true,
+    "adjustable": false
+  },
+  "physical_hardware_tested": false,
+  "camera_acquisition_attempted": false,
+  "environment": {
+    "SESSIONNAME": null,
+    "QT_QPA_PLATFORM": "offscreen",
+    "QT_SCALE_FACTOR": null,
+    "QT_SCREEN_SCALE_FACTORS": null,
+    "PYLON_CAMEMU": "1"
+  },
+  "imports": {
+    "numpy": {
+      "required": true,
+      "imported": true,
+      "distribution_version": null,
+      "module_version": "1.26.4",
+      "metadata_note": "Distribution metadata unavailable in this runtime; successful module import is recorded separately"
+    },
+    "cv2": {
+      "required": true,
+      "imported": true,
+      "distribution_version": "4.11.0.86",
+      "module_version": "4.11.0"
+    },
+    "scipy": {
+      "required": true,
+      "imported": true,
+      "distribution_version": null,
+      "module_version": "1.17.1",
+      "metadata_note": "Distribution metadata unavailable in this runtime; successful module import is recorded separately"
+    },
+    "PySide6": {
+      "required": true,
+      "imported": true,
+      "distribution_version": null,
+      "module_version": "6.12.0",
+      "metadata_note": "Distribution metadata unavailable in this runtime; successful module import is recorded separately"
+    },
+    "mediapipe": {
+      "required": true,
+      "imported": true,
+      "distribution_version": "0.10.21",
+      "module_version": "0.10.21"
+    },
+    "fastapi": {
+      "required": true,
+      "imported": true,
+      "distribution_version": "0.163.2",
+      "module_version": "0.163.2"
+    },
+    "pypylon": {
+      "required": false,
+      "imported": true,
+      "distribution_version": "26.5.0",
+      "module_version": "not exposed"
+    },
+    "pyrealsense2": {
+      "required": false,
+      "imported": true,
+      "distribution_version": "2.59.2.11152",
+      "module_version": "2.59.2"
+    }
+  },
+  "displays": [
+    {
+      "name": "",
+      "manufacturer": "",
+      "model": "",
+      "serial_reported": "",
+      "primary": true,
+      "qt_logical_geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 800,
+        "height": 800
+      },
+      "qt_available_geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 800,
+        "height": 800
+      },
+      "device_pixel_ratio": 1.0,
+      "logical_dpi_x": 96.0,
+      "logical_dpi_y": 96.0,
+      "physical_dpi_x_reported": 100.0,
+      "physical_dpi_y_reported": 100.0,
+      "physical_size_mm_reported": [
+        203.2,
+        203.2
+      ],
+      "refresh_hz_reported": 60.0
+    }
+  ],
+  "sdk_inventory": {
+    "basler": {
+      "status": "enumerated",
+      "device_count": 1,
+      "devices": [
+        {
+          "serial": "0815-0000",
+          "model": "Emulation",
+          "vendor": "Basler",
+          "device_class": "BaslerCamEmu",
+          "sdk_emulator": true
+        }
+      ],
+      "duration_s": 0.3026980999999296
+    },
+    "realsense": {
+      "status": "enumerated",
+      "device_count": 0,
+      "devices": [],
+      "duration_s": 0.017491399999926216
+    }
+  },
+  "active_step": "complete",
+  "required_imports_ok": true,
+  "qt_platform": "offscreen",
+  "qt_scale_factor_rounding_policy": "HighDpiScaleFactorRoundingPolicy.PassThrough",
+  "native_windows_display_context": false,
+  "display_inventory_ok": true,
+  "win32_sm_remotesession": false,
+  "display_measurement_note": "Qt-reported values for the current process/session. Virtual or remote displays and EDID dimensions are not independent measurements of a physical monitor.",
+  "completed_at_utc": "2026-11-18T10:29:35.218928+00:00"
+}

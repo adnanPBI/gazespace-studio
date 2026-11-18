@@ -82,6 +82,7 @@ $CommonArguments = @('-m', 'PyInstaller', '--noconfirm', '--clean', '--onedir', 
     '--specpath', $BuildDirectory, '--collect-all', 'mediapipe', '--collect-all', 'cv2',
     '--collect-all', 'jax', '--collect-all', 'jaxlib',
     '--collect-all', 'fastapi', '--collect-all', 'uvicorn', '--copy-metadata', 'gazespace',
+    '--collect-data', 'gazespace',
     '--hidden-import', 'uvicorn.logging', '--hidden-import', 'uvicorn.loops.auto',
     '--hidden-import', 'uvicorn.protocols.http.auto', '--hidden-import', 'uvicorn.protocols.websockets.auto',
     '--hidden-import', 'uvicorn.lifespan.on', '--hidden-import', 'starlette.websockets')
@@ -127,40 +128,201 @@ foreach ($Executable in $Executables) {
 & (Join-Path $PSScriptRoot 'verify_windows.ps1') -SkipTests -PackagedCli $Executables[1] -PackagedStudio $Executables[0] -BaslerEmulator:$Basler -DepthSdk:$Depth
 if (-not $?) { throw 'Packaged CLI or Studio smoke verification failed' }
 $SigningLabel = if ($null -ne $SigningCertificate) { 'signed' } else { 'unsigned' }
-$Archive = Join-Path $DistributionDirectory "GazeSpace-Windows-$Version-$SigningLabel.zip"
-Compress-Archive -LiteralPath (Join-Path $DistributionDirectory 'GazeSpaceStudio'), (Join-Path $DistributionDirectory 'GazeSpaceCLI') -DestinationPath $Archive -CompressionLevel Optimal -Force
-$ReleaseSha256 = (Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash
+# Python's ZIP implementation includes hidden files that Compress-Archive can
+# omit. Verify every file's decompressed bytes, not only an archive CRC/listing.
+# Split archives must exactly match their folder in the combined payload.
+$ArchiveHelper = Join-Path $BuildDirectory 'verify_delivery_archive.py'
+$ArchiveHelperCode = @'
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import traceback
+import zipfile
 
-# Exercise the collector shipped in the actual application folder against the
-# finalized archive. No camera backend is selected and no physical-device
-# attestation is supplied; hosted CI establishes inventory/software behavior.
-$AcceptanceDirectory = Join-Path $EvidenceDirectory ('windows_release_acceptance_' + [DateTime]::UtcNow.ToString('yyyyMMdd_HHmmss_fff'))
+def digest_stream(stream):
+    digest = hashlib.sha256()
+    for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+        digest.update(chunk)
+    return digest.hexdigest()
+
+def digest_file(path):
+    with path.open('rb') as stream:
+        return digest_stream(stream)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--archive', type=Path, required=True)
+parser.add_argument('--receipt', type=Path, required=True)
+parser.add_argument('--folder', type=Path, action='append', required=True)
+parser.add_argument('--max-bytes', type=int, default=0)
+parser.add_argument('--reference', type=Path)
+args = parser.parse_args()
+archive = args.archive.resolve()
+temporary = archive.with_name(archive.name + '.partial')
+receipt = {'status': 'checking', 'archive': archive.name,
+           'archive_path': str(archive), 'max_bytes_exclusive': args.max_bytes or None}
+try:
+    files, directories, sources = {}, set(), {}
+    roots = [folder.resolve(strict=True) for folder in args.folder]
+    if len({root.name for root in roots}) != len(roots):
+        raise ValueError('Archive folders must have unique top-level names')
+    for root in roots:
+        if not root.is_dir():
+            raise ValueError(f'Payload root is not a directory: {root}')
+        for path in [root, *sorted(root.rglob('*'))]:
+            name = path.relative_to(root.parent).as_posix()
+            if path.is_symlink():
+                raise ValueError(f'Unverified symbolic link in Windows payload: {name}')
+            if path.is_dir():
+                directories.add(name + '/')
+            elif path.is_file():
+                files[name] = {'bytes': path.stat().st_size, 'sha256': digest_file(path)}
+                sources[name] = path
+            else:
+                raise ValueError(f'Unsupported payload entry: {name}')
+    if not files:
+        raise ValueError('Application payload contains no files')
+    if args.reference:
+        reference = json.loads(args.reference.read_text(encoding='utf-8-sig'))
+        if reference.get('status') != 'passed':
+            raise ValueError('Combined archive reference did not pass verification')
+        prefixes = tuple(root.name + '/' for root in roots)
+        expected = {name: value for name, value in reference['files'].items()
+                    if name.startswith(prefixes)}
+        expected_dirs = {name for name in reference['directories'] if name.startswith(prefixes)}
+        if files != expected or directories != expected_dirs:
+            raise ValueError('Split payload differs from its complete combined-archive folder')
+        receipt['combined_inventory_reference'] = args.reference.name
+        receipt['matches_combined_payload'] = True
+    with zipfile.ZipFile(temporary, 'w', compression=zipfile.ZIP_DEFLATED,
+                         compresslevel=6, allowZip64=True, strict_timestamps=False) as output:
+        for name in sorted(directories):
+            output.writestr(name, b'')
+        for name, path in sorted(sources.items()):
+            output.write(path, name)
+    with zipfile.ZipFile(temporary) as checked:
+        names = checked.namelist()
+        if len(names) != len(set(names)) or set(names) != set(files) | directories:
+            raise ValueError('Archive payload inventory has omissions, additions or duplicates')
+        for name, expected in files.items():
+            if checked.getinfo(name).file_size != expected['bytes']:
+                raise ValueError(f'Archive payload size differs: {name}')
+            with checked.open(name) as stream:
+                if digest_stream(stream) != expected['sha256']:
+                    raise ValueError(f'Archive payload bytes differ: {name}')
+    size = temporary.stat().st_size
+    if args.max_bytes and size >= args.max_bytes:
+        raise ValueError(f'Delivery archive must be below {args.max_bytes} bytes; got {size}')
+    receipt.update(status='passed', bytes=size, sha256=digest_file(temporary),
+                   payload_verified=True, file_count=len(files),
+                   payload_bytes=sum(value['bytes'] for value in files.values()),
+                   files=files, directories=sorted(directories),
+                   verified_at_utc=datetime.now(timezone.utc).isoformat())
+    os.replace(temporary, archive)
+except Exception as exc:
+    receipt.update(status='failed', error=f'{type(exc).__name__}: {exc}',
+                   traceback=traceback.format_exc())
+    raise
+finally:
+    temporary.unlink(missing_ok=True)
+    args.receipt.parent.mkdir(parents=True, exist_ok=True)
+    args.receipt.write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
+print(f"Verified {archive.name}: {receipt['file_count']} files, {receipt['bytes']} bytes, SHA256 {receipt['sha256']}")
+'@
+[IO.File]::WriteAllText($ArchiveHelper, $ArchiveHelperCode, [Text.UTF8Encoding]::new($false))
+
+function New-VerifiedDeliveryArchive {
+    param([string]$Application, [string]$ArchivePath, [string[]]$Folders,
+          [long]$LimitBytes = 0, [string]$ReferenceManifest = '')
+    $InventoryPath = Join-Path $EvidenceDirectory "windows_archive_inventory_$Application.json"
+    $ArchiveArguments = @($ArchiveHelper, '--archive', $ArchivePath, '--receipt', $InventoryPath,
+                          '--max-bytes', [string]$LimitBytes)
+    foreach ($Folder in $Folders) { $ArchiveArguments += @('--folder', $Folder) }
+    if ($ReferenceManifest) { $ArchiveArguments += @('--reference', $ReferenceManifest) }
+    Invoke-Checked -Executable $PythonExecutable -Arguments $ArchiveArguments | Out-Host
+    $Inventory = Get-Content -LiteralPath $InventoryPath -Raw | ConvertFrom-Json
+    if ($Inventory.status -ne 'passed' -or -not $Inventory.payload_verified) {
+        throw "Archive payload verification failed: $ArchivePath"
+    }
+    return $Inventory
+}
+
 $PackagedCollector = Join-Path (Split-Path -Parent $Executables[1]) 'scripts\collect_windows_acceptance.ps1'
 $CollectorSdkInventory = if ($Basler -and $Depth) {'all'} elseif ($Basler) {'basler'} elseif ($Depth) {'realsense'} else {'none'}
-$CollectorSucceeded = $false
-try {
-    & $PackagedCollector -OutputDirectory $AcceptanceDirectory -PackagedCli $Executables[1] -PackagedStudio $Executables[0] -ReleaseArchive $Archive -CameraBackend none -SdkInventory $CollectorSdkInventory
-    $CollectorSucceeded = $?
-} finally { Set-Location -LiteralPath $ProjectRoot }
-if (-not $CollectorSucceeded) { throw 'The packaged Windows acceptance collector failed' }
-$AcceptanceSummary = Get-Content -LiteralPath (Join-Path $AcceptanceDirectory 'acceptance_summary.json') -Raw | ConvertFrom-Json
-if ($AcceptanceSummary.status -ne 'environment_collected_camera_not_requested' -or -not $AcceptanceSummary.windows_executed) {
-    throw 'The full Windows acceptance collector did not complete its inventory-only run'
+
+function Invoke-DeliveryCollector {
+    param([string]$Application, $Inventory)
+    # Use the already verified frozen executables and the collector shipped in
+    # their folder for EACH exact ZIP. No camera acquisition is requested.
+    $AcceptanceDirectory = Join-Path $EvidenceDirectory ('windows_release_acceptance_' + $Application + '_' + [DateTime]::UtcNow.ToString('yyyyMMdd_HHmmss_fff'))
+    $CollectorSucceeded = $false
+    try {
+        & $PackagedCollector -OutputDirectory $AcceptanceDirectory -PackagedCli $Executables[1] -PackagedStudio $Executables[0] -ReleaseArchive $Inventory.archive_path -CameraBackend none -SdkInventory $CollectorSdkInventory
+        $CollectorSucceeded = $?
+    } finally { Set-Location -LiteralPath $ProjectRoot }
+    if (-not $CollectorSucceeded) { throw "Packaged acceptance collector failed for $Application" }
+    $Summary = Get-Content -LiteralPath (Join-Path $AcceptanceDirectory 'acceptance_summary.json') -Raw | ConvertFrom-Json
+    if ($Summary.status -ne 'environment_collected_camera_not_requested' -or -not $Summary.windows_executed) {
+        throw "The full collector did not complete inventory for $Application"
+    }
+    if ($Summary.camera_acquisition_requested -or $Summary.physical_hardware_tested -or $Summary.real_person_gaze_accuracy_established -or $Summary.source_integration_acceptance_established) {
+        throw 'Hosted Windows inventory must not claim physical/human/client acceptance'
+    }
+    foreach ($StepName in @('environment_probe', 'packaged_cli_doctor', 'packaged_studio')) {
+        $Step = $Summary.steps.$StepName
+        if ($Step.status -ne 'passed' -or $Step.exit_code -ne 0 -or $Step.timed_out) {
+            throw "Collector frozen executable gate failed: $Application / $StepName"
+        }
+    }
+    $Hardware = Get-Content -LiteralPath (Join-Path $AcceptanceDirectory 'windows_hardware_inventory.json') -Raw | ConvertFrom-Json
+    if ($Hardware.operating_system.status -ne 'collected' -or @($Hardware.operating_system.records).Count -lt 1) {
+        throw 'The collector did not obtain the Windows operating-system CIM baseline'
+    }
+    $Identity = Get-Content -LiteralPath (Join-Path $AcceptanceDirectory 'release_identity.json') -Raw | ConvertFrom-Json
+    $ArchiveIdentity = @($Identity.artifacts | Where-Object { $_.full_path -eq $Inventory.archive_path })
+    if (-not $Identity.complete_release_archive_hashed -or $ArchiveIdentity.Count -ne 1 -or $ArchiveIdentity[0].sha256 -ne $Inventory.sha256 -or $ArchiveIdentity[0].bytes -ne $Inventory.bytes) {
+        throw "Collector receipt does not identify the exact $Application archive"
+    }
+    foreach ($Executable in $Executables) {
+        $ExecutableIdentity = @($Identity.artifacts | Where-Object { $_.full_path -eq $Executable })
+        if ($ExecutableIdentity.Count -ne 1 -or $ExecutableIdentity[0].sha256 -ne (Get-FileHash -LiteralPath $Executable -Algorithm SHA256).Hash) {
+            throw "Collector receipt does not identify the tested executable: $Executable"
+        }
+    }
+    $AcceptanceArchive = $AcceptanceDirectory + '.zip'
+    if (-not (Test-Path -LiteralPath $AcceptanceArchive)) { throw 'The full collector did not produce its evidence ZIP' }
+    return [ordered]@{
+        application=$Application; archive=$Inventory.archive; bytes=$Inventory.bytes; sha256=$Inventory.sha256
+        payload_verified=$true; payload_file_count=$Inventory.file_count; payload_bytes=$Inventory.payload_bytes
+        payload_inventory="windows_archive_inventory_$Application.json"
+        full_windows_collector_executed=$true
+        full_windows_collector_mode='inventory_only_no_camera_selected'
+        full_windows_collector_status=$Summary.status
+        full_windows_collector_directory=(Split-Path -Leaf $AcceptanceDirectory)
+        full_windows_collector_evidence_archive=(Split-Path -Leaf $AcceptanceArchive)
+        full_windows_collector_evidence_bytes=(Get-Item -LiteralPath $AcceptanceArchive).Length
+        full_windows_collector_evidence_sha256=(Get-FileHash -LiteralPath $AcceptanceArchive -Algorithm SHA256).Hash
+        physical_hardware_tested=$false; real_person_gaze_accuracy_established=$false
+    }
 }
-if ($AcceptanceSummary.camera_acquisition_requested -or $AcceptanceSummary.physical_hardware_tested -or $AcceptanceSummary.real_person_gaze_accuracy_established) {
-    throw 'Hosted Windows inventory must not claim camera acquisition or physical/human gaze acceptance'
+
+$Archive = Join-Path $DistributionDirectory "GazeSpace-Windows-$Version-$SigningLabel.zip"
+$ApplicationFolders = @((Join-Path $DistributionDirectory 'GazeSpaceStudio'), (Join-Path $DistributionDirectory 'GazeSpaceCLI'))
+$CombinedInventory = New-VerifiedDeliveryArchive -Application 'combined' -ArchivePath $Archive -Folders $ApplicationFolders
+$CombinedCollector = Invoke-DeliveryCollector -Application 'combined' -Inventory $CombinedInventory
+$DeliveryArchives = @()
+foreach ($Definition in @(@{application='studio';label='Studio';folder=$ApplicationFolders[0]},
+                          @{application='cli';label='CLI';folder=$ApplicationFolders[1]})) {
+    $SplitArchive = Join-Path $DistributionDirectory "GazeSpace-$($Definition.label)-Windows-$Version-$SigningLabel.zip"
+    $SplitInventory = New-VerifiedDeliveryArchive -Application $Definition.application -ArchivePath $SplitArchive -Folders @($Definition.folder) -LimitBytes 524288000 -ReferenceManifest (Join-Path $EvidenceDirectory 'windows_archive_inventory_combined.json')
+    $SplitCollector = Invoke-DeliveryCollector -Application $Definition.application -Inventory $SplitInventory
+    $SplitCollector['max_bytes_exclusive']=524288000
+    $SplitCollector['matches_combined_payload']=[bool]$SplitInventory.matches_combined_payload
+    $DeliveryArchives += $SplitCollector
 }
-$HardwareInventory = Get-Content -LiteralPath (Join-Path $AcceptanceDirectory 'windows_hardware_inventory.json') -Raw | ConvertFrom-Json
-if ($HardwareInventory.operating_system.status -ne 'collected' -or @($HardwareInventory.operating_system.records).Count -lt 1) {
-    throw 'The collector did not obtain the Windows operating-system CIM baseline'
-}
-$ReleaseIdentity = Get-Content -LiteralPath (Join-Path $AcceptanceDirectory 'release_identity.json') -Raw | ConvertFrom-Json
-$ArchiveIdentity = @($ReleaseIdentity.artifacts | Where-Object { $_.full_path -eq $Archive })
-if (-not $ReleaseIdentity.complete_release_archive_hashed -or $ArchiveIdentity.Count -ne 1 -or $ArchiveIdentity[0].sha256 -ne $ReleaseSha256) {
-    throw 'The collector receipt does not identify the exact finalized Windows release archive'
-}
-$AcceptanceArchive = $AcceptanceDirectory + '.zip'
-if (-not (Test-Path -LiteralPath $AcceptanceArchive)) { throw 'The full collector did not produce its evidence ZIP' }
+
 $Receipt = [ordered]@{
     status='built_and_software_verified_on_windows'
     version=$Version
@@ -172,13 +334,17 @@ $Receipt = [ordered]@{
     realsense_sdk_included=[bool]$Depth
     signatures=$SignatureResults
     archive=(Split-Path -Leaf $Archive)
-    sha256=$ReleaseSha256
+    bytes=$CombinedInventory.bytes
+    sha256=$CombinedInventory.sha256
+    payload_verified=$true
+    payload_inventory='windows_archive_inventory_combined.json'
+    delivery_archives=$DeliveryArchives
     full_windows_collector_executed=$true
     full_windows_collector_mode='inventory_only_no_camera_selected'
-    full_windows_collector_status=$AcceptanceSummary.status
-    full_windows_collector_directory=(Split-Path -Leaf $AcceptanceDirectory)
-    full_windows_collector_evidence_archive=(Split-Path -Leaf $AcceptanceArchive)
-    full_windows_collector_evidence_sha256=(Get-FileHash -LiteralPath $AcceptanceArchive -Algorithm SHA256).Hash
+    full_windows_collector_status=$CombinedCollector.full_windows_collector_status
+    full_windows_collector_directory=$CombinedCollector.full_windows_collector_directory
+    full_windows_collector_evidence_archive=$CombinedCollector.full_windows_collector_evidence_archive
+    full_windows_collector_evidence_sha256=$CombinedCollector.full_windows_collector_evidence_sha256
     physical_camera_acceptance='Not established by this build'
     manual_desktop_acceptance='Launch Studio and verify actual Windows monitor/camera workflows with the operator'
 }

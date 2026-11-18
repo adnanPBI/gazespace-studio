@@ -18,6 +18,7 @@ def smoke_test(receipt_path: str) -> int:
     from PySide6.QtWidgets import QApplication
     from gazespace import __version__
     from gazespace.ui.main_window import MainWindow
+    from gazespace.ui.fonts import configure_app_fonts, verify_font_rendering
 
     path = Path(receipt_path).resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -29,6 +30,7 @@ def smoke_test(receipt_path: str) -> int:
         if not bundled_guides_present:
             raise RuntimeError('Packaged Studio is missing README.md or docs/USER_GUIDE.md beside its executable')
     app = QApplication.instance() or QApplication(sys.argv[:1])
+    configure_app_fonts(app)
     app.setApplicationName('GazeSpace Studio packaging verification')
     errors: list[str] = []
     with TemporaryDirectory(prefix='gazespace_studio_smoke_') as workspace:
@@ -37,6 +39,9 @@ def smoke_test(receipt_path: str) -> int:
         window.show()
         pages_painted = 0
         try:
+            app.processEvents()
+            font_verification = verify_font_rendering(
+                window.nav_buttons[0].font(), output_png=path.with_name(path.stem + '_font_probe.png'))
             for index in range(window.pages.count()):
                 window.pages.setCurrentIndex(index)
                 app.processEvents()
@@ -64,6 +69,7 @@ def smoke_test(receipt_path: str) -> int:
         'bundled_guides_present': bundled_guides_present,
         'qt_platform': app.platformName(),
         'native_ui_pages_painted': pages_painted,
+        'font_verification': font_verification,
         'screenshot': image_path.name,
         'camera_opened': False,
         'interactive_windows_monitor_acceptance': False,

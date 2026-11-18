@@ -17,6 +17,20 @@ The photograph is used solely to exercise actual face/iris inference. The person
 is not an application user or endorser. There are no gaze labels, head-angle
 labels or camera-calibration measurements for the image.
 
+## Bundled UI fonts
+
+The unmodified `DejaVuSans.ttf` and `DejaVuSans-Bold.ttf` files are copied from
+Matplotlib's distributed DejaVu font assets. The complete Bitstream Vera and
+Arev copyright and permission notices accompany them in
+`src/gazespace/assets/fonts/LICENSE-DejaVu.txt`. Upstream font project:
+https://dejavu-fonts.github.io/.
+
+The wheel includes the fonts and their license as package data. The Windows
+portable applications retain them under `_internal/gazespace/assets/fonts`.
+Keep that license with the font files when redistributing the application.
+These fonts retain their original family names and glyphs; no font design was
+altered. Their license is separate from the original application's MIT license.
+
 ## Components
 
 The application uses NumPy, SciPy, OpenCV, Pillow, MediaPipe and optional PySide6,

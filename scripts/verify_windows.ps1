@@ -131,6 +131,11 @@ try {
         if ($StudioReceipt.status -ne 'passed' -or -not $StudioReceipt.frozen_executable -or $StudioReceipt.native_ui_pages_painted -lt 1) {
             throw 'Packaged Studio did not return a valid native UI verification receipt'
         }
+        if ($StudioReceipt.font_verification.status -ne 'passed' -or $StudioReceipt.font_verification.ascii_glyphs_checked -ne 95 -or $StudioReceipt.font_verification.unicode_glyphs_checked -ne 14 -or @($StudioReceipt.font_verification.missing_glyphs).Count -ne 0 -or $StudioReceipt.font_verification.distinct_probe_rasters -ne 12 -or $StudioReceipt.font_verification.expected_probe_rasters -ne 12) {
+            throw 'Packaged Studio text is not verified: required glyphs or distinct rendered character shapes are missing'
+        }
+        $FontProof = Join-Path $EvidenceDirectory $StudioReceipt.font_verification.raster_probe_png
+        if (-not (Test-Path -LiteralPath $FontProof)) { throw 'Packaged Studio did not save its actual Qt glyph rendering proof' }
         $PackagedStudioChecked = $true
     }
     $PythonVersion = (& $PythonExecutable -c 'import platform; print(platform.python_version())').Trim()

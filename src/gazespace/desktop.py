@@ -10,9 +10,11 @@ def launch(workspace=None, profile=None, demo=False):
         from PySide6.QtWidgets import QApplication
         from PySide6.QtCore import QTimer
         from .ui.main_window import MainWindow
+        from .ui.fonts import configure_app_fonts
     except ImportError as exc:
         raise RuntimeError("Desktop needs python -m pip install 'gazespace[desktop,face,api]'") from exc
     app=QApplication.instance() or QApplication(sys.argv[:1])
+    configure_app_fonts(app)
     app.setApplicationName('GazeSpace Studio')
     app.setOrganizationName('GazeSpace')
     window=MainWindow(workspace=workspace,profile=profile)

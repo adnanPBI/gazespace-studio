@@ -10,8 +10,13 @@
 - Report incomplete target coverage and acquisition evidence as diagnostic only. Leave acceptance decisions pending agreed criteria rather than inventing a passing threshold.
 - Add a bounded Windows environment/camera acceptance collector, exact executable/archive hashes, driver/device/display inventory and privacy-preserving timing/quality statistics.
 - Package and exercise the optional Basler and RealSense paths in Windows CI; distinguish SDK emulator, zero-device enumeration and physical-camera evidence.
+- Make sidebar sizing respond to actual font metrics and later font/DPI changes, with a regression for enlarged navigation text.
+- Use one high-resolution monotonic host clock through capture, runtime and session timing. Reject nonfinite, future or explicitly incompatible receive timestamps; preserve video PTS and device timestamps separately. This corrects the coarse Windows clock failure without fabricating timestamp increments or weakening strict ordering.
+- Correct replay selection at recorded timestamp boundaries and preserve empty/stale sample invalidation.
+- Bundle licensed DejaVu regular/bold UI fonts, register them before widget construction, and verify required glyph mappings and distinct nonblank Qt rasterization in the frozen Studio gate. This addresses unreadable text found by inspecting the first passing Windows build's actual screenshot.
+- Create complete separate Studio and CLI delivery archives, each strictly below 500 MiB, with decompressed-file SHA-256 verification and exact equality to the corresponding combined-archive payload.
 
-The revised Linux source suite passed 207 tests. Actual Windows execution results are recorded separately in `ACCEPTANCE_STATUS.md` and downloadable CI artifacts. Physical eye/gaze measurements and client application integration require the real rig and client repository.
+The current corrected source passed **225 tests, zero failures/errors/skips, in 27.787 seconds** in a fresh isolated environment; `pip check` passed. Candidate `3d2d10035e755b4d3a18dedac6979a0210899cfe` previously passed **222 tests** and packaging checks on Windows Server 2025, but its screenshot failed visual review because text rendered as missing-glyph boxes. That build remains historical evidence and is not accepted for desktop handoff. The corrected frozen Windows build and visual review are pending. See [ACCEPTANCE_STATUS.md](ACCEPTANCE_STATUS.md) for current receipts. Physical eye/gaze measurements and client application integration require the real rig and client repository.
 
 ## 0.2.0 — 18 November 2026
 

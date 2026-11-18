@@ -1,0 +1,40 @@
+{
+  "history": [
+    {
+      "run_id": 44279237540,
+      "code_commit": "08b574e76ce586becd143e0d1c5f11c3b5e25808",
+      "result": "Windows navigation text clipping found",
+      "url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44279237540"
+    },
+    {
+      "run_id": 44279913554,
+      "code_commit": "bd7c604424819abd26d0e2adbe52f2a0eb179728",
+      "result": "Exact-fit navigation assertion corrected",
+      "url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44279913554"
+    },
+    {
+      "run_id": 44280482613,
+      "code_commit": "b26cc3b6c1151375432b76454a12c79d4a6b9f62",
+      "result": "SDK emulator gate failed; timing diagnostics and coherent high-resolution host clock added",
+      "url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44280482613"
+    },
+    {
+      "run_id": 44283326034,
+      "code_commit": "b3b2302e733484de972e2929cb690b54a1cd1ed1",
+      "result": "Windows replay seek/play regression found; recording-relative timeline preserved",
+      "url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44283326034"
+    },
+    {
+      "run_id": 44284381626,
+      "code_commit": "3d2d10035e755b4d3a18dedac6979a0210899cfe",
+      "automated_result": "passed",
+      "visual_result": "failed_missing_glyph_boxes",
+      "accepted_for_desktop_delivery": false,
+      "full_sdk_tests_passed": 222,
+      "full_sdk_tests_skipped": 0,
+      "physical_hardware_tested": false,
+      "url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626"
+    }
+  ],
+  "next_candidate": "bundled licensed fonts, actual glyph raster gate, separate verified delivery archives"
+}

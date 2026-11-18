@@ -1,0 +1,15 @@
+{
+  "status": "font_corrected_candidate_windows_run_pending",
+  "repository": "https://github.com/adnanPBI/gazespace-studio",
+  "source_uploaded": true,
+  "source_tree_committed": true,
+  "last_observed_source_commit_sha": "3d2d10035e755b4d3a18dedac6979a0210899cfe",
+  "last_completed_run_id": 44284381626,
+  "last_completed_run_url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626",
+  "last_completed_automated_result": "passed",
+  "last_completed_visual_result": "failed_missing_glyph_boxes",
+  "windows_artifact_accepted": false,
+  "authorization": "explicit_user_authorization_granted",
+  "next_required_permission": null,
+  "next_action": "Upload font-corrected source snapshot and execute Windows build with glyph raster and separate-archive gates."
+}

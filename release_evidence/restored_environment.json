@@ -1,0 +1,44 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-11-18T11:56:31.785726+00:00",
+  "python": "3.12.14",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "executable": "/workspace/scratch/35b77c06faa6/.release-venv/bin/python",
+  "isolated_environment": true,
+  "venv_configuration": "home = /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin\ninclude-system-site-packages = false\nversion = 3.12.14\nexecutable = /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12\ncommand = /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m venv /workspace/scratch/35b77c06faa6/.release-venv\n",
+  "packages": {
+    "gazespace": "0.2.1",
+    "numpy": "1.26.4",
+    "opencv-contrib-python": "4.11.0.86",
+    "scipy": "1.17.1",
+    "mediapipe": "0.10.21",
+    "PySide6": "6.12.0",
+    "fastapi": "0.163.2",
+    "uvicorn": "0.54.0",
+    "pytest": "9.2.0",
+    "pypylon": "26.5.0",
+    "pyrealsense2": "2.59.2.11152",
+    "pyinstaller": "6.22.3",
+    "build": "1.6.1"
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "stdout": "No broken requirements found.\n",
+    "stderr": ""
+  },
+  "font_assets": {
+    "DejaVuSans.ttf": {
+      "bytes": 756072,
+      "sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22"
+    },
+    "DejaVuSans-Bold.ttf": {
+      "bytes": 704128,
+      "sha256": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167"
+    },
+    "LICENSE-DejaVu.txt": {
+      "bytes": 4816,
+      "sha256": "d75938dec098f06f0ac3c00853065d94f020be1c3c62ef1dc2975ba15b4d9b0e"
+    }
+  },
+  "scope": "Restored dependency installation and font asset identity; not new Windows or camera execution"
+}

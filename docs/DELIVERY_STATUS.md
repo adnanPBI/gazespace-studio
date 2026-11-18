@@ -1,6 +1,6 @@
 # GazeSpace Studio — delivery and verification history
 
-**Current acceptance revision: 0.2.1.** See [ACCEPTANCE_STATUS.md](ACCEPTANCE_STATUS.md) for the current acceptance state. The baseline evidence below records the completed **0.2.0** delivery and remains historical; it is not a claim that later Windows or physical acceptance passed.
+**Current acceptance revision: 0.2.1.** See [ACCEPTANCE_STATUS.md](ACCEPTANCE_STATUS.md) for the current **225-test source pass** and remaining Windows verification. [Windows run 44284381626](https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626) passed automated build checks, but its screenshot failed font visual review; corrected frozen verification remains pending. The **0.2.0** baseline below is preserved as historical evidence.
 
 **18 November 2026 — version 0.2.0.** This release supplies the working Python application,
 native desktop, SDK, CLI and local API. It extends the earlier GazeSpace source

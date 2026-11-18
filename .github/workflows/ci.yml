@@ -119,18 +119,35 @@ jobs:
             build/**/xref-*.html
           if-no-files-found: warn
           retention-days: 14
-      - name: Retain Windows distributables
+      - name: Retain Windows Studio distributable
         uses: actions/upload-artifact@v7
         with:
-          name: gazespace-windows-studio-cli-unsigned
+          name: gazespace-windows-studio-unsigned
+          path: dist/GazeSpace-Studio-Windows-*-unsigned.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Retain Windows CLI distributable
+        uses: actions/upload-artifact@v7
+        with:
+          name: gazespace-windows-cli-unsigned
+          path: dist/GazeSpace-CLI-Windows-*-unsigned.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Retain Windows verification and Python packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: gazespace-windows-verification
           path: |
-            dist/GazeSpace-Windows-*-unsigned.zip
             dist/python_packages/
+            release_evidence/windows_archive_inventory_*.json
             release_evidence/windows_build.json
             release_evidence/windows_verification.json
             release_evidence/windows_packaged_verification.json
             release_evidence/windows_studio_smoke.json
             release_evidence/windows_studio_smoke.png
+            release_evidence/windows_studio_smoke_font_probe.png
             release_evidence/windows_packaged_environment.json
             release_evidence/windows_packaged_face_inference.json
             release_evidence/windows_source_environment.json

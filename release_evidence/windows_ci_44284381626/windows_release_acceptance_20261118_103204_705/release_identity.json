@@ -1,0 +1,29 @@
+{
+  "source_files": [],
+  "complete_release_archive_hashed": true,
+  "artifacts": [
+    {
+      "file": "GazeSpace-Windows-0.2.1-unsigned.zip",
+      "full_path": "D:\\a\\gazespace-studio\\gazespace-studio\\dist\\GazeSpace-Windows-0.2.1-unsigned.zip",
+      "bytes": 863083807,
+      "sha256": "DF748AC0870409F61C2AAB3E36440CD3C7D6FA9CFC7EDBF44973EAF0C5EF191D"
+    },
+    {
+      "file": "GazeSpaceCLI.exe",
+      "full_path": "D:\\a\\gazespace-studio\\gazespace-studio\\dist\\GazeSpaceCLI\\GazeSpaceCLI.exe",
+      "bytes": 26995952,
+      "sha256": "630C8A2C636949D31B98366DAEB9254D8ECEA1AA33363B6C21B824288DDB02B5",
+      "signature_status": "NotSigned",
+      "signer_thumbprint": null
+    },
+    {
+      "file": "GazeSpaceStudio.exe",
+      "full_path": "D:\\a\\gazespace-studio\\gazespace-studio\\dist\\GazeSpaceStudio\\GazeSpaceStudio.exe",
+      "bytes": 26943355,
+      "sha256": "1C7240EC0FB6C2B8F295DFC4E9C5B9C3FD29DC4571CE3E5E3059F1CF7B318E21",
+      "signature_status": "NotSigned",
+      "signer_thumbprint": null
+    }
+  ],
+  "limitation": "An EXE hash alone does not identify adjacent DLLs/data; provide -ReleaseArchive to identify the complete distributed ZIP. Source hashes identify the tested local code but do not prove it matches another application."
+}

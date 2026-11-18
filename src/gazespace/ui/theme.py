@@ -7,9 +7,10 @@ MUTED = '#93a7c0'
 TEAL = '#45dfbd'
 BLUE = '#5ca9ff'
 AMBER = '#ffcf81'
+FONT_FAMILY = 'DejaVu Sans'
 STYLE = '''
 QMainWindow, QDialog, QWidget#root { background:#0c1421; color:#edf5ff; }
-QWidget { color:#edf5ff; font-family:"Segoe UI","DejaVu Sans",sans-serif; font-size:13px; }
+QWidget { color:#edf5ff; font-family:"__FONT_FAMILY__"; font-size:13px; }
 QFrame#sidebar { background:#101b2b; border-right:1px solid #26364d; }
 QFrame#card { background:#142032; border:1px solid #26364d; border-radius:12px; }
 QLabel#muted { color:#93a7c0; }
@@ -49,4 +50,4 @@ QScrollBar::handle:vertical { background:#3a4d67; border-radius:5px; min-height:
 QStatusBar { background:#101b2b; color:#93a7c0; border-top:1px solid #26364d; }
 QMenuBar, QMenu { background:#142032; color:#edf5ff; }
 QToolTip { background:#253a53; color:#edf5ff; border:1px solid #4b647f; }
-'''
+'''.replace('__FONT_FAMILY__', FONT_FAMILY)

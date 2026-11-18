@@ -54,22 +54,25 @@ For a real camera, launch `python -m gazespace desktop`, open **Cameras & tracki
 | Camera and stereo calibration | Printable checkerboard SVG, diverse-image intrinsic fitting, fresh-view reprojection validation, optional aligned-depth factory-intrinsics import, board pose, stereo transforms, checked triangulation and timestamp-pairing utilities |
 | Value-added analytics | Local sessions, optional camera-video recording, replay/seek, AOI dwell, stable gaze clusters, RMS jitter, heatmaps and offline HTML/JSON/CSV reports |
 | Integration | Direct Python SDK, headless CLI, REST and WebSocket telemetry with local host/origin checks and optional bearer authentication; desktop API generates a token |
-| Delivery | Source, automated tests, reproducible simulation, evidence reports, Windows setup/build/verification scripts and release documentation |
+| Delivery | Source, automated tests, reproducible simulation, evidence reports, Windows Studio/CLI packaging and verification, and release documentation; exact artifact acceptance is recorded separately |
 
 The native interface contains **Live workspace; Cameras & tracking; Calibration; Spatial workspace; Sessions & insights; Profiles & diagnostics; Integration API**. These sections are connected to the underlying implementation rather than static mockups.
 
 ## Verification available in this package
 
-The current acceptance revision is **0.2.1**. The revised source gate passed **207 tests**. Track Windows build execution and the remaining physical/client-specific evidence in [ACCEPTANCE_STATUS.md](docs/ACCEPTANCE_STATUS.md).
+The current acceptance revision is **0.2.1**. [ACCEPTANCE_STATUS.md](docs/ACCEPTANCE_STATUS.md) identifies observed results, tested commits and remaining artifact checks. Historical evidence retains its original version and run identity.
 
-The release was exercised in a Linux environment with Python **3.12.14**, OpenCV **4.11.0**, MediaPipe **0.10.21** and PySide6 **6.12.0**. The exact final test result is supplied with the release evidence rather than hard-coded here.
+The current corrected source passed **225 tests with zero failures, errors or skips** in a fresh isolated environment. The [JUnit receipt](release_evidence/pre_windows_font_fix_pytest.xml) records **27.787 seconds**, and the [environment receipt](release_evidence/restored_environment.json) confirms a clean dependency check and bundled-font identity. The corrected frozen Windows build and screenshot verification remain pending.
 
-- Automated tests cover the actual desktop lifecycle, stable calibration acquisition, profile compatibility, geometry, capture failures, API behavior, recording/replay and exports.
-- The synthetic image pipeline exercises pupil detection and learned gaze mapping, with explicit simulated provenance.
-- Actual MediaPipe inference detected **478 landmarks and both irises in a reference photograph**. That verifies inference integration, not live gaze accuracy. See [mediapipe_inference_photo.json](release_evidence/mediapipe_inference_photo.json).
-- The real **pypylon 26.5.0** binding was exercised against Basler's official camera emulator in **Mono8, Mono12 and BGR8Packed**, including control readback, timestamps, copied buffers and shutdown. See [pypylon_sdk_emulator.json](release_evidence/pypylon_sdk_emulator.json). An SDK emulator does not exercise a USB camera, optics, IR illuminator or global-shutter sensor.
+The [historical Windows run](https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626) completed its full software/build gate with **222 tests and no skips**, frozen CLI simulation, packaged face inference, SDK checks and the Windows acceptance collector. Inspection of its actual Studio screenshot then found unreadable font glyphs. That candidate is **not accepted for desktop handoff**. The correction now bundles licensed UI fonts and checks actual required glyphs and distinct nonblank raster shapes; its final Windows evidence must come from the new run.
 
-**Physical acceptance remains specific to the client environment.** No client repository, actual camera rig, measured workspace fixture or human gaze ground truth was supplied. Windows compilation/signing and real-device user acceptance must be performed on the intended machine. The delivered software supports those workflows; it does not claim certified eye-tracker performance. Details are in [WINDOWS_HARDWARE_ACCEPTANCE.md](docs/WINDOWS_HARDWARE_ACCEPTANCE.md).
+- Automated tests exercise the real desktop lifecycle, calibration acquisition, profile compatibility, geometry, camera failures, API behavior, recording/replay and exports.
+- Generated pupil images exercise learned screen and spatial mapping, recording and reports. Their provenance remains explicitly synthetic.
+- Frozen Windows MediaPipe inference detected **478 landmarks and both irises in a reference photograph**. This verifies inference integration; the photograph has no gaze or head-angle ground truth.
+- The real **pypylon 26.5.0** binding passed Basler's official emulator checks for **Mono8, Mono12 and BGR8Packed**, including strict timestamps, actual control readback, owned buffers and shutdown. A separate frozen capture received **57 simulated frames**. Neither receipt exercises physical USB hardware, optics, illumination or a global-shutter sensor.
+- RealSense SDK enumeration completed on Windows with **zero devices**. The Windows collector ran in **inventory-only mode** with no camera requested. The hosted environment was **Windows Server 2025 with Python 3.12.10**; it does not replace acceptance on the client's Windows 10/11 workstation. These observations are recorded in the archived diagnostics for the linked Windows run.
+
+**Physical and client acceptance remains pending.** No client repository, actual camera rig, measured workspace fixture or human gaze ground truth was supplied. These require identified hardware, measured targets, real operators and agreed thresholds. The software supports the corresponding workflows; current evidence does not establish human gaze accuracy. See [WINDOWS_HARDWARE_ACCEPTANCE.md](docs/WINDOWS_HARDWARE_ACCEPTANCE.md).
 
 ## Reproducible end-to-end demonstration
 
@@ -94,7 +97,7 @@ engine = GazeEngine.from_profile(
     source_context={"camera_id": "0", "backend": "dshow", "subject_id": "operator-1"},
 )
 try:
-    result = engine.process(frame_bgr, timestamp_s=captured_monotonic_s)
+    result = engine.process(frame_bgr, timestamp_s=captured_host_timestamp_s)
     if result.screen_valid and result.gaze_screen_px is not None:
         existing_ui.show_gaze(*result.gaze_screen_px)
     else:
@@ -103,7 +106,7 @@ finally:
     engine.close()
 ```
 
-The abbreviated context above must be extended to match a profile's calibrated display and control settings where those fields are bound. See [INTEGRATION.md](docs/INTEGRATION.md) for threading, complete context, output fields, stale handling, depth/stereo and authenticated HTTP/WebSocket examples.
+Capture `captured_host_timestamp_s` with `gazespace.clock.host_now_s()` at frame receipt. Keep video PTS and hardware timestamps separate from this host clock. The abbreviated context above must be extended to match a profile's calibrated display and control settings where those fields are bound. See [INTEGRATION.md](docs/INTEGRATION.md) for threading, complete context, output fields, stale handling, depth/stereo and authenticated HTTP/WebSocket examples.
 
 ## Profiles and upgrade behavior
 
@@ -123,7 +126,9 @@ The build workflow targets two **onedir** distributions:
 - `dist\GazeSpaceStudio\GazeSpaceStudio.exe` — native desktop launcher.
 - `dist\GazeSpaceCLI\GazeSpaceCLI.exe` — command-line application.
 
-Distribute each complete directory, including its `_internal` dependencies. The script also creates a combined `GazeSpace-Windows-0.2.1-unsigned.zip` and Python wheel/source distributions under `dist\python_packages`. With an existing authorized code-signing certificate, the archive is labeled `signed` after signature verification. The build runs packaged CLI and native Studio smoke checks and writes its Windows receipt. A successful Linux source run is not a Windows build receipt.
+Distribute each complete directory, including its `_internal` dependencies. The script creates a combined `GazeSpace-Windows-0.2.1-unsigned.zip` plus separate complete `GazeSpace-Studio-Windows-0.2.1-unsigned.zip` and `GazeSpace-CLI-Windows-0.2.1-unsigned.zip` archives. Each separate archive must be **strictly below 500 MiB (524,288,000 bytes)**. Verification hashes every decompressed file, confirms that each complete folder matches its payload in the combined archive, and checks the exact release identity. Actual archive sizes/hashes are recorded only after the build runs.
+
+Python wheel/source distributions are placed under `dist\python_packages`. With an existing authorized code-signing certificate, archives are labeled `signed` after signature verification. The build runs packaged CLI and native Studio smoke checks and writes its Windows receipt. A successful Linux source run is not a Windows build receipt.
 
 ## Documentation
 

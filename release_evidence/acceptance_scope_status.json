@@ -1,50 +1,32 @@
 {
   "schema_version": 1,
   "release_candidate_version": "0.2.1",
-  "as_of_utc": "2026-11-18T09:43:16.614264+00:00",
+  "as_of_utc": "2026-11-18T11:57:22.030664+00:00",
   "overall_status": "acceptance_incomplete",
   "overall_acceptance_passed": null,
   "software_regression": {
-    "tests": 207,
+    "tests": 225,
     "failures": 0,
     "errors": 0,
     "skipped": 0,
-    "passed": 207,
-    "duration_s": 18.425,
-    "receipt": "release_evidence/acceptance_revision_pytest.xml"
+    "passed": 225,
+    "duration_s": 27.787,
+    "receipt": "release_evidence/pre_windows_font_fix_pytest.xml"
   },
   "windows_ci": {
-    "status": "authorized_pending_run",
+    "status": "font_corrected_candidate_windows_run_pending",
     "repository": "https://github.com/adnanPBI/gazespace-studio",
-    "repository_contents": "initial README only",
-    "repository_initial_head": "7fb34ffed7d0743983f76998ad170fd82b0400b9",
-    "source_commit_sha": null,
-    "run_started": false,
-    "run_url": null,
-    "commit_sha": null,
-    "windows_artifact_verified": false,
-    "approval_review_outcome": "historical_rejection_resolved_by_explicit_user_authorization",
-    "reason": "The user explicitly authorized the prepared GazeSpace Studio 0.2.1 source-tree upload to private adnanPBI/gazespace-studio and Windows CI execution. Upload/run evidence is not yet available.",
+    "source_uploaded": true,
+    "source_tree_committed": true,
+    "last_observed_source_commit_sha": "3d2d10035e755b4d3a18dedac6979a0210899cfe",
+    "last_completed_run_id": 44284381626,
+    "last_completed_run_url": "https://github.com/adnanPBI/gazespace-studio/actions/runs/44284381626",
+    "last_completed_automated_result": "passed",
+    "last_completed_visual_result": "failed_missing_glyph_boxes",
+    "windows_artifact_accepted": false,
+    "authorization": "explicit_user_authorization_granted",
     "next_required_permission": null,
-    "resume_rule": "Proceed within the explicitly authorized payload/destination and execution scope; claim no Windows pass before observing its result.",
-    "source_tree_committed": false,
-    "binary_fixture_blobs_staged": 3,
-    "staged_fixture_scope": "Public NASA reference photograph and two generated visual test fixtures; no source tree or workflow committed.",
-    "source_uploaded": false,
-    "authorization": {
-      "status": "granted",
-      "source": "explicit_user_authorization_in_current_turn",
-      "scope": [
-        "prepared GazeSpace Studio 0.2.1 source-tree upload to https://github.com/adnanPBI/gazespace-studio",
-        "Windows CI execution"
-      ],
-      "historical_rejection": {
-        "outcome": "rejected",
-        "reason": "Automatic approval review requires explicit user authorization for both the full source-tree upload payload and the private GitHub destination.",
-        "resolution": "Resolved by the user explicitly authorizing the prepared source-tree upload to the named private repository and Windows CI execution."
-      }
-    },
-    "next_action": "Upload the authorized source snapshot and start Windows CI; record actual source commit, run URL and observed results."
+    "next_action": "Upload font-corrected source snapshot and execute Windows build with glyph raster and separate-archive gates."
   },
   "physical_devices_available_for_this_session": false,
   "human_gaze_accuracy_measured": false,
@@ -55,7 +37,7 @@
     "Host delivery timing and processing time do not establish exposure-to-display latency.",
     "Accepted calibration samples do not provide all-attempt invalid/drop denominators.",
     "Runtime pending-buffer replacement counts are not sensor/transport frame loss.",
-    "Earlier 0.2.0 reports remain historical snapshots; the current source regression receipt is the 207-test acceptance revision."
+    "Historical 0.2.0 and earlier 0.2.1 receipts retain their original run identities; current regression is the 225-test font correction receipt."
   ],
   "evidence_sha256": {
     "release_evidence/acceptance_revision_pytest.xml": "6892d58a936eb25104a0bac56e6f1d6f0e174036103a16dc86eee38c3a8d5d08",
@@ -63,7 +45,9 @@
     "release_evidence/acceptance_runner_verification.json": "411fb670af2651a671922836b6817025587191590989c8d027a048677a254185",
     "release_evidence/acceptance_camera_soak_SDK_EMULATOR_fixture.json": "896bf784e6665bdad17d07f6409f748fa449fb4ec28748ad8290c7ef66aac95a",
     "release_evidence/acceptance_installed_wheel.json": "b8ca17587a989566a662afc3c461f5336d48eccd19b6ab0fd682e6294eb39731",
-    "release_evidence/acceptance_wheel_studio.json": "d25d2d758ee854dc691dda8e5a299d063f1c6db39771a8c2688d271b32fa39b5"
+    "release_evidence/acceptance_wheel_studio.json": "d25d2d758ee854dc691dda8e5a299d063f1c6db39771a8c2688d271b32fa39b5",
+    "release_evidence/pre_windows_font_fix_pytest.xml": "3d74d4ff227f377ad6c72f60d020c6b5e62af3b857cf715216b60ab6b168a129",
+    "release_evidence/pre_windows_font_fix_pytest.log": "461436f17d07229ee535da1e3d0844794d3f0c47c4150894c30ea118a4a5ea62"
   },
   "matrix": [
     {
@@ -73,14 +57,14 @@
       "software_scope_passed": true,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "207 tests passed; zero failures, errors or skips."
+        "225 tests passed; zero failures, errors or skips in the restored isolated environment."
       ],
       "evidence": [
-        "release_evidence/acceptance_revision_pytest.xml",
-        "release_evidence/acceptance_revision_pytest.log"
+        "release_evidence/pre_windows_font_fix_pytest.xml",
+        "release_evidence/pre_windows_font_fix_pytest.log"
       ],
       "remaining": [
-        "Run the same gate against the exact final packaged revision."
+        "Run frozen Windows and actual rendered-glyph checks against the font-corrected source."
       ]
     },
     {
@@ -144,42 +128,38 @@
     {
       "id": "acceptance_collector",
       "requirement": "Bounded Windows inventory/camera evidence collection tools",
-      "status": "verified_helpers_windows_pending",
+      "status": "historical_windows_inventory_verified",
       "software_scope_passed": true,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "Helper suite: 6 passed; SDK-emulator soak received 60 frames and closed cleanly.",
-        "Recorded host timing and control readbacks retain simulated provenance; unsupported physical quantities remain null."
+        "Full PowerShell collector executed on Windows for run44284381626; frozen CLI/Studio/environment probes passed, exact combined release identity recorded.",
+        "No physical camera acquisition was requested."
       ],
       "evidence": [
-        "release_evidence/acceptance_runner_verification.json",
-        "release_evidence/acceptance_camera_soak_SDK_EMULATOR_fixture.json",
-        "release_evidence/acceptance_environment_probe_LINUX_fixture.json"
+        "release_evidence/windows_ci_44284381626/windows_build.json"
       ],
       "remaining": [
-        "Execute the PowerShell collector on Windows and preserve the exact artifact hashes."
+        "Repeat the collector for each corrected delivery archive."
       ],
-      "windows_ci_execution_status": "authorized_pending_run"
+      "windows_ci_execution_status": "historical_run_passed_new_exact_archives_pending"
     },
     {
       "id": "windows_build",
       "requirement": "Windows CI, frozen CLI/Studio and optional SDK packaging",
-      "status": "authorized_pending_run",
+      "status": "historical_automated_pass_visual_failed",
       "software_scope_passed": false,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "Last observed repository state: initial README only at HEAD 7fb34ffed7d0743983f76998ad170fd82b0400b9.",
-        "Historical automatic approval rejection was resolved by explicit user authorization for the named private repository upload and Windows CI.",
-        "No application source upload or Windows CI run has yet been confirmed in this status snapshot."
+        "Source and CI are uploaded; prior Windows automated build passed222 tests with SDKs, but visual review found unreadable font glyphs.",
+        "Bundled licensed font correction and95/14/12 glyph checks are implemented and locally tested."
       ],
       "evidence": [
         ".github/workflows/ci.yml",
         "scripts/build_windows.ps1",
-        "scripts/verify_windows.ps1"
+        "release_evidence/windows_ci_44284381626/windows_build.json"
       ],
       "remaining": [
-        "Upload the authorized source snapshot and start Windows CI.",
-        "After observed execution, retain the actual source commit, Windows run URL, job logs, artifact hashes and frozen-runtime receipts."
+        "Run corrected Windows build, inspect actual frozen screenshot and download/hash-verify both separate archives."
       ]
     },
     {
@@ -204,8 +184,8 @@
       "software_scope_passed": false,
       "physical_or_client_acceptance_passed": null,
       "observed": [
-        "Physical devices were last observed offline; a current connectivity recheck is pending.",
-        "The prior Linux RealSense SDK import succeeded; SDK context creation failed before enumeration."
+        "Remote devices were last observed offline; provider monthly usage pause prevents further tool checks.",
+        "Windows source and frozen RealSense SDK contexts enumerated zero physical devices successfully in historical run44284381626."
       ],
       "evidence": [
         "release_evidence/realsense_sdk_smoke.json",
@@ -380,7 +360,12 @@
   ],
   "status_update_rule": "Update only the relevant scope after observing its actual result; retain run/build/configuration identity and measurement provenance.",
   "next_required_permission": null,
-  "python_distribution": {
+  "physical_device_connectivity": {
+    "status": "provider_tool_usage_paused_after_last_offline_inventory",
+    "current_recheck_completed": false,
+    "provider_instruction": "Do not retry or reconnect while provider monthly tool usage is paused."
+  },
+  "historical_python_distribution": {
     "status": "passed",
     "verified_at_utc": "2026-11-18T09:37:02.673937+00:00",
     "version": "0.2.1",
@@ -394,9 +379,5 @@
     "windows_executable_tested": false,
     "physical_hardware_tested": false,
     "human_gaze_accuracy_measured": false
-  },
-  "physical_device_connectivity": {
-    "status": "last_observed_offline_recheck_pending",
-    "current_recheck_completed": false
   }
 }

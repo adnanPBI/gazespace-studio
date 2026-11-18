@@ -5,7 +5,7 @@ import numpy as np
 from PySide6.QtCore import Qt, QPointF, QRectF, Signal
 from PySide6.QtGui import QImage, QPainter, QPen, QColor, QFont, QPolygonF
 from PySide6.QtWidgets import QWidget, QLabel, QFrame, QVBoxLayout
-from .theme import BG, PANEL, BORDER, TEXT, MUTED, TEAL, BLUE, AMBER
+from .theme import FONT_FAMILY, BG, PANEL, BORDER, TEXT, MUTED, TEAL, BLUE, AMBER
 
 
 def label(text: str, kind: str = '', wrap: bool = False) -> QLabel:
@@ -90,7 +90,7 @@ class VideoCanvas(QWidget):
         p.fillRect(self.rect(), QColor('#080f1b'))
         if self._image is None:
             p.setPen(QColor(MUTED))
-            p.setFont(QFont('Segoe UI', 16))
+            p.setFont(QFont(FONT_FAMILY, 16))
             p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter,
                        'Camera preview\n\nStart a camera or open the built-in simulation')
             return
@@ -130,7 +130,7 @@ class VideoCanvas(QWidget):
             badge = f'Drag around the {self.selection_side} eye, then release'
         p.fillRect(QRectF(12, 12, min(self.width()-24, 370), 29), QColor('#dd102033'))
         p.setPen(QColor(AMBER if self.synthetic else TEAL))
-        p.setFont(QFont('Segoe UI', 10, QFont.Weight.DemiBold))
+        p.setFont(QFont(FONT_FAMILY, 10, QFont.Weight.DemiBold))
         p.drawText(QRectF(23, 12, self.width()-40, 29), Qt.AlignmentFlag.AlignVCenter, badge)
 
     def mousePressEvent(self, event):
@@ -201,7 +201,7 @@ class GazeMap(QWidget):
             p.setBrush(QColor(TEAL))
             p.drawEllipse(q, 3, 3)
         p.setPen(QColor(MUTED))
-        p.setFont(QFont('Segoe UI', 9))
+        p.setFont(QFont(FONT_FAMILY, 9))
         p.drawText(QRectF(0,self.height()-24,self.width(),20), Qt.AlignmentFlag.AlignCenter, self.caption)
 
 
@@ -261,7 +261,7 @@ class WorkspaceView(QWidget):
             p.setPen(QPen(QColor(col),2))
             p.drawLine(project([0,0,0]),project(xyz))
             p.drawText(project(xyz)+QPointF(4,-4),name)
-        p.setPen(QColor(MUTED));p.setFont(QFont('Segoe UI',9))
+        p.setPen(QColor(MUTED));p.setFont(QFont(FONT_FAMILY,9))
         p.drawText(QRectF(12,10,self.width()-24,25),'WORLD FRAME · meters   /   drag to orbit · wheel to zoom')
         if not self.surfaces:
             p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, 'Add measured workspace surfaces\nThe ray appears after spatial calibration')
