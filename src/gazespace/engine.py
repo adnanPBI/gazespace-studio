@@ -2,10 +2,10 @@
 from __future__ import annotations
 from collections import deque
 from pathlib import Path
-import time
 import numpy as np
 import cv2
 from .types import Observation, GazeResult, CameraIntrinsics, CameraExtrinsics, Surface, Frame
+from .clock import host_now_s
 from .filtering import OneEuro
 from .geometry import camera_to_world_point, camera_to_world_direction, first_surface_hit, unit_vector
 from .calibration import GazeModel, load_profile
@@ -72,10 +72,10 @@ class GazeEngine:
                    source_context=source_context, **kwargs)
 
     def process(self, image_bgr: np.ndarray, timestamp_s: float | None = None) -> GazeResult:
-        return self.process_frame(Frame(image_bgr, time.monotonic() if timestamp_s is None else timestamp_s))
+        return self.process_frame(Frame(image_bgr, host_now_s() if timestamp_s is None else timestamp_s))
 
     def process_frame(self, frame: Frame) -> GazeResult:
-        started = time.monotonic()
+        started = host_now_s()
         image_bgr, timestamp_s = frame.image, frame.timestamp_s
         ob = self.tracker.process(image_bgr, timestamp_s)
         self._apply_depth(frame, ob)
@@ -84,7 +84,7 @@ class GazeEngine:
             self.last_lighting = frame_quality(image_bgr)
         if self.last_lighting:
             result.warnings.extend(self.last_lighting["warnings"])
-        result.processing_ms = (time.monotonic() - started)*1000
+        result.processing_ms = (host_now_s() - started)*1000
         self.recent_times.append(result.processing_ms)
         self.last_observation = ob
         return result
@@ -128,7 +128,7 @@ class GazeEngine:
         self.direction_filter.reset()
         self.last_observation = None
         self.last_capture_timestamp = None
-        stamp = time.monotonic() if timestamp_s is None else float(timestamp_s)
+        stamp = host_now_s() if timestamp_s is None else float(timestamp_s)
         self.last_result = GazeResult(stamp, False, reason, "unavailable", 0.0,
                                       capture_timestamp_s=stamp)
         return self.last_result

@@ -1,4 +1,4 @@
-"""Authenticated local GazeSpace 0.2 HTTP consumer; standard library only.
+"""Authenticated local GazeSpace 0.2 HTTP consumer; stdlib HTTP plus shared clock.
 
 Start tracking and the Integration API in Studio, then copy its token:
 
@@ -9,7 +9,8 @@ Start tracking and the Integration API in Studio, then copy its token:
 Importing this module makes no requests and starts no threads. Call poll() on a
 worker; marshal its result to your existing UI. Clear markers on every invalid
 update and when fresh_until_monotonic_s expires on the UI's own timer. The
-deadline uses this consumer's host clock; do not compare the server's source
+deadline uses gazespace.clock.host_now_s() in this consumer; use that same
+clock in the UI deadline check. Do not compare the server's source
 timestamp directly against an unrelated clock. The token is read from the
 environment and is never printed. No raw
 camera image, recording or system cursor action is requested by this example.
@@ -22,6 +23,7 @@ import json
 import math
 import os
 import time
+from gazespace.clock import HOST_CLOCK_DOMAIN, host_now_s
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
@@ -75,7 +77,7 @@ class LocalGazeClient:
         self._last_new_frame_at: float | None = None
 
     def poll(self) -> dict:
-        started = time.monotonic()
+        started = host_now_s()
         request = Request(self._url, headers={
             "Authorization": "Bearer " + self._token,
             "Accept": "application/json", "Cache-Control": "no-cache",
@@ -87,7 +89,7 @@ class LocalGazeClient:
             return unavailable(f"api_http_{exc.code}")
         except (URLError, TimeoutError, OSError, ValueError):
             return unavailable("api_connection_or_payload_error")
-        finished = time.monotonic()
+        finished = host_now_s()
         return self._select(payload, finished - started, finished)
 
     def _select(self, payload, round_trip_s: float, now: float) -> dict:
@@ -141,6 +143,7 @@ class LocalGazeClient:
             "capture_age_ms": age_ms,
             "request_round_trip_ms": round_trip_s * 1000,
             "received_monotonic_s": now,
+            "host_clock_domain": HOST_CLOCK_DOMAIN,
             "fresh_until_monotonic_s": now + self.max_age_s - age_ms / 1000 - round_trip_s,
             "eye_origin_source": latest.get("eye_origin_source"),
             "source": latest.get("source"),

@@ -20,6 +20,7 @@ import platform
 import subprocess
 import sys
 import time
+from gazespace.clock import HOST_CLOCK_DOMAIN, host_now_s, host_clock_info
 
 
 def utc_now() -> str:
@@ -87,6 +88,7 @@ def run_worker(config: dict, checkpoint: Path) -> int:
         'platform': platform.platform(), 'frozen_executable': bool(getattr(sys, 'frozen', False)),
         'executable_sha256': file_hash(Path(sys.executable)), 'configuration': config,
         'physical_hardware_tested': False, 'camera_opened': False, 'frames_received': 0,
+        'host_clock': host_clock_info(),
         'camera_acquisition_attempted': True,
         'simulated': False, 'images_saved': False, 'clean_shutdown': False,
         'real_person_gaze_accuracy_established': False,
@@ -107,6 +109,7 @@ def run_worker(config: dict, checkpoint: Path) -> int:
     invalid_frames = 0
     read_failures = 0
     timestamp_errors = 0
+    host_clock_errors = 0
     sequence_discontinuities = 0
     previous_stamp = None
     previous_sequence = None
@@ -114,7 +117,7 @@ def run_worker(config: dict, checkpoint: Path) -> int:
     acquisition_error = None
     close_error = None
     capture_started = None
-    opened = time.monotonic()
+    opened = host_now_s()
     last_checkpoint = opened
     timing_path = Path(config['timing_csv'])
     fields = ['sequence', 'elapsed_host_s', 'host_receive_monotonic_s', 'frame_timestamp_s',
@@ -133,7 +136,7 @@ def run_worker(config: dict, checkpoint: Path) -> int:
         capabilities = json_value(source.capabilities())
         simulated = any(bool(capabilities.get(k)) for k in ('synthetic', 'simulated', 'sdk_emulator'))
         report.update(camera=capabilities, camera_opened=True, simulated=simulated,
-                      camera_open_duration_ms=(time.monotonic() - opened) * 1000)
+                      camera_open_duration_ms=(host_now_s() - opened) * 1000)
         if simulated and not config['allow_simulated']:
             raise ValueError('Selected source is simulated; use --allow-simulated only for a software fixture, never physical acceptance')
         if not simulated and not capabilities.get('is_live', getattr(source, 'is_live', False)):
@@ -142,15 +145,15 @@ def run_worker(config: dict, checkpoint: Path) -> int:
             raise ValueError('Discovered device serial differs from the explicitly selected serial')
         report['status'] = 'capturing'
         write_json(checkpoint, report)
-        capture_started = time.monotonic()
+        capture_started = host_now_s()
         deadline = capture_started + config['seconds']
         with timing_path.open('w', encoding='utf-8', newline='') as stream:
             writer = csv.DictWriter(stream, fieldnames=fields)
             writer.writeheader()
-            while time.monotonic() < deadline:
-                before = time.monotonic()
+            while host_now_s() < deadline:
+                before = host_now_s()
                 frame = source.read()
-                arrived = time.monotonic()
+                arrived = host_now_s()
                 if frame is None:
                     read_failures += 1
                     time.sleep(0.005)
@@ -173,7 +176,12 @@ def run_worker(config: dict, checkpoint: Path) -> int:
                     sequence_discontinuities += 1
                 previous_sequence = frame.sequence
                 receive = frame.received_monotonic_s
-                age_ms = None if receive is None else max(0.0, (arrived - receive) * 1000)
+                declared_clock = frame.metadata.get('host_clock_domain')
+                clock_valid = (receive is not None and math.isfinite(receive) and receive <= arrived
+                               and (declared_clock is None or declared_clock == HOST_CLOCK_DOMAIN))
+                if not clock_valid:
+                    host_clock_errors += 1
+                age_ms = (arrived - receive) * 1000 if clock_valid else None
                 if age_ms is not None:
                     ages.append(age_ms)
                 read_ms = (arrived - before) * 1000
@@ -210,24 +218,24 @@ def run_worker(config: dict, checkpoint: Path) -> int:
                     write_json(checkpoint, report)
                     stream.flush()
                     last_checkpoint = arrived
-            actual_duration = time.monotonic() - capture_started
+            actual_duration = host_now_s() - capture_started
         report['camera_after_capture'] = json_value(source.capabilities())
     except Exception as exc:
         acquisition_error = f'{type(exc).__name__}: {exc}'
     finally:
         if capture_started is not None:
-            actual_duration = time.monotonic() - capture_started
+            actual_duration = host_now_s() - capture_started
         report.update(status='closing_camera', frames_received=len(frame_times), acquisition_error=acquisition_error)
         write_json(checkpoint, report)
         if source is not None:
-            closing = time.monotonic()
+            closing = host_now_s()
             try:
                 source.request_stop()
                 source.close()
                 report['clean_shutdown'] = True
             except Exception as exc:
                 close_error = f'{type(exc).__name__}: {exc}'
-            report['close_duration_ms'] = (time.monotonic() - closing) * 1000
+            report['close_duration_ms'] = (host_now_s() - closing) * 1000
 
     gaps = [(b - a) * 1000 for a, b in zip(frame_times, frame_times[1:])]
     fps = (len(frame_times) - 1) / (frame_times[-1] - frame_times[0]) if len(frame_times) > 1 else 0.0
@@ -239,6 +247,7 @@ def run_worker(config: dict, checkpoint: Path) -> int:
         'no_capture_exception': acquisition_error is None,
         'valid_bgr_frames': invalid_frames == 0,
         'finite_increasing_frame_timestamps': timestamp_errors == 0,
+        'valid_host_receive_clock': host_clock_errors == 0,
         'clean_shutdown': bool(report['clean_shutdown']) and close_error is None,
         'read_failures_within_limit': read_failures <= config['max_read_failures'],
     }
@@ -259,6 +268,7 @@ def run_worker(config: dict, checkpoint: Path) -> int:
         completed_at_utc=utc_now(), capture_duration_s=actual_duration,
         frames_received=len(frame_times), observed_delivery_fps=fps, actual_frame_shapes=dict(shapes),
         read_failures=read_failures, invalid_frames=invalid_frames, timestamp_errors=timestamp_errors,
+        host_clock_errors=host_clock_errors,
         adapter_sequence_discontinuities=sequence_discontinuities,
         blocking_read_ms=summarize(read_times), host_arrival_gap_ms=summarize(gaps),
         host_receive_to_script_ms=summarize(ages), mean_luminance_u8=summarize(luminance),
@@ -355,7 +365,7 @@ def main(argv: list[str] | None = None) -> int:
         command = [sys.executable, str(Path(__file__).resolve()), '_worker']
     command += ['--config', str(config_path), '--checkpoint', str(checkpoint)]
     timeout = args.seconds + args.startup_grace_seconds + args.shutdown_grace_seconds
-    started = time.monotonic()
+    started = host_now_s()
     with log_path.open('w', encoding='utf-8') as log:
         process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
         code, terminated = wait_bounded(process, timeout)
@@ -365,7 +375,7 @@ def main(argv: list[str] | None = None) -> int:
         report = {'schema_version': 1, 'status': 'worker_failed_before_receipt', 'physical_hardware_tested': False,
                   'camera_opened': False, 'frames_received': 0, 'clean_shutdown': False, 'configuration': config}
     report.update(worker_exit_code=code, worker_forced_termination=terminated,
-                  bounded_total_seconds=timeout, actual_command_duration_s=time.monotonic() - started,
+                  bounded_total_seconds=timeout, actual_command_duration_s=host_now_s() - started,
                   worker_log=log_path.name, timing_csv=Path(config['timing_csv']).name,
                   real_person_gaze_accuracy_established=False, images_saved=False)
     if terminated:

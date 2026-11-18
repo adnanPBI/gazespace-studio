@@ -67,9 +67,26 @@ try {
         }
     }
     $PackagedChecked = $false
+    $PackagedFaceChecked = $false
     if ($PackagedCli) {
         $ResolvedCli = (Resolve-Path -LiteralPath $PackagedCli).Path
         Invoke-Checked -Executable $ResolvedCli -Arguments @('doctor')
+        $BundledFaceImage = Join-Path (Split-Path -Parent $ResolvedCli) 'examples\reference_face_nasa.png'
+        if (-not (Test-Path -LiteralPath $BundledFaceImage)) { throw 'The frozen CLI distribution is missing its attributed reference-face fixture' }
+        $FaceReceiptPath = Join-Path $EvidenceDirectory 'windows_packaged_face_inference.json'
+        if (Test-Path -LiteralPath $FaceReceiptPath) { Remove-Item -LiteralPath $FaceReceiptPath -Force }
+        Invoke-Checked -Executable $ResolvedCli -Arguments @('face-smoke', '--image', $BundledFaceImage, '--output', $FaceReceiptPath)
+        $FaceReceipt = Get-Content -LiteralPath $FaceReceiptPath -Raw | ConvertFrom-Json
+        if ($FaceReceipt.status -ne 'passed' -or -not $FaceReceipt.frozen_executable -or -not $FaceReceipt.face_detected -or $FaceReceipt.landmark_count -ne 478 -or $FaceReceipt.iris_count -ne 2 -or -not $FaceReceipt.features_finite) {
+            throw 'The frozen MediaPipe facial/iris model failed the real-reference-photo inference gate'
+        }
+        if ($FaceReceipt.image_sha256 -ne (Get-FileHash -LiteralPath $BundledFaceImage -Algorithm SHA256).Hash) {
+            throw 'The frozen face-inference receipt does not identify the bundled reference image'
+        }
+        if ($FaceReceipt.hardware_validated -or $FaceReceipt.gaze_accuracy_validated -or $FaceReceipt.head_angle_accuracy_validated -or $FaceReceipt.human_gaze_accuracy_measured) {
+            throw 'A reference-photo inference check must not claim human gaze, pose accuracy or hardware acceptance'
+        }
+        $PackagedFaceChecked = $true
         Invoke-Checked -Executable $ResolvedCli -Arguments @('simulate', '--output', (Join-Path $EvidenceDirectory 'windows_packaged_simulation'), '--seconds', '2', '--record-video')
         $EnvironmentReceiptPath = Join-Path $EvidenceDirectory 'windows_packaged_environment.json'
         if (Test-Path -LiteralPath $EnvironmentReceiptPath) { Remove-Item -LiteralPath $EnvironmentReceiptPath -Force }
@@ -126,6 +143,7 @@ try {
         software_tests_executed = -not [bool]$SkipTests
         synthetic_end_to_end_session = 'passed'
         packaged_cli_smoke_test = $PackagedChecked
+        packaged_face_iris_inference_test = $PackagedFaceChecked
         packaged_studio_smoke_test = $PackagedStudioChecked
         basler_sdk_emulator_test = [bool]$BaslerEmulator
         realsense_sdk_enumeration_test = [bool]$DepthSdk

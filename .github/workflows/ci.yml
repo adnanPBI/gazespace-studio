@@ -132,6 +132,7 @@ jobs:
             release_evidence/windows_studio_smoke.json
             release_evidence/windows_studio_smoke.png
             release_evidence/windows_packaged_environment.json
+            release_evidence/windows_packaged_face_inference.json
             release_evidence/windows_source_environment.json
             release_evidence/windows_packaged_sdk_emulator*
             release_evidence/windows_release_acceptance_*/

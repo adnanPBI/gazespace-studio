@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView, QListWidget, QPlainTextEdit,
     QSlider, QSplitter, QMessageBox, QDialog, QDialogButtonBox, QProgressBar, QSizePolicy)
 from .. import __version__
+from ..clock import host_now_s
 from ..capture import create_source, list_cameras, list_basler_cameras, SyntheticEyeSource
 from ..vision import GazeTracker
 from ..engine import GazeEngine
@@ -605,7 +606,7 @@ class MainWindow(QMainWindow):
                 self.health_details.setPlainText(json.dumps({'state':state,'camera':snap.get('camera'),
                     'metrics':metrics,'last_error':snap.get('last_error')},indent=2,default=str))
         if self._replay_clock is not None and self.replay is not None:
-            now=time.monotonic();record=self.replay.advance(now-self._replay_clock);self._replay_clock=now
+            now=host_now_s();record=self.replay.advance(now-self._replay_clock);self._replay_clock=now
             self._show_replay_record(record)
             duration=self.replay.duration_s
             t=getattr(self.replay,'position_s',0)
@@ -1077,7 +1078,7 @@ class MainWindow(QMainWindow):
     def play_replay(self):
         if not self.replay:return
         if getattr(self.replay,'position_s',0)>=self.replay.duration_s:self.replay.seek(0)
-        self._replay_clock=time.monotonic();self.replay_button.setText('Playing…')
+        self._replay_clock=host_now_s();self.replay_button.setText('Playing…')
 
     def pause_replay(self):
         self._replay_clock=None

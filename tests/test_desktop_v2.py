@@ -2,6 +2,7 @@
 import os
 os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
 import time
+from gazespace.clock import host_now_s
 import numpy as np
 import pytest
 from PySide6.QtWidgets import QApplication
@@ -91,7 +92,7 @@ def test_fullscreen_collector_uses_current_targets():
 def test_collector_disconnect_does_not_stick():
     app=QApplication.instance() or QApplication([])
     dialog=TargetSessionDialog(lambda:{'state':'fault','observation':None},[('center',(.5,.5))],screen_size=(800,600))
-    dialog.show();dialog.collect();dialog.wall_started=time.monotonic()-20;dialog.tick()
+    dialog.show();dialog.collect();dialog.wall_started=host_now_s()-20;dialog.tick()
     assert not dialog._active and 'retry' in dialog.status_text
     dialog.close();app.processEvents()
 

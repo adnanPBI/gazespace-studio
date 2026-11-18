@@ -10,5 +10,8 @@ if __name__ == '__main__':
     if sys.argv[1:2] == ['environment-probe']:
         from environment_acceptance import main as environment_main
         raise SystemExit(environment_main(sys.argv[2:]))
+    if sys.argv[1:2] == ['face-smoke']:
+        from verify_face_inference import main as face_main
+        raise SystemExit(face_main(sys.argv[2:]))
     from gazespace.cli import main
     raise SystemExit(main())

@@ -23,8 +23,10 @@ any additional fields bound by your calibration (for example mirror or monitor
 origin). Do not copy expected values from a saved profile as verification of
 the current hardware. Recreate the adapter after changing those settings.
 
-For a host-owned BGR camera, call on_camera_frame with its acquisition time in
-time.monotonic() seconds. For aligned depth, call process_frame with a Frame:
+For a host-owned BGR camera, timestamp acquisition with
+gazespace.clock.host_now_s() (time.perf_counter, not time.monotonic on Windows
+Python 3.11/3.12), then pass that value to on_camera_frame. For aligned depth,
+call process_frame with a Frame:
 depth_m is HxW meters on the BGR grid and metadata contains depth_aligned_to=
 "color", depth_intrinsics=CameraIntrinsics.to_dict(), and the truthful
 depth_deprojection_supported flag. Preserve hardware_timestamp_s separately;
@@ -42,7 +44,7 @@ from copy import deepcopy
 import math
 from pathlib import Path
 from threading import Event, Lock, get_ident
-import time
+from gazespace.clock import HOST_CLOCK_DOMAIN, host_now_s
 from typing import Callable, Mapping
 
 import numpy as np
@@ -132,6 +134,7 @@ class ExistingAppGazeAdapter:
         return self.process_frame(Frame(
             image=bgr_frame, timestamp_s=captured_monotonic_s, sequence=sequence,
             source="existing_application",
+            metadata={"host_clock_domain": HOST_CLOCK_DOMAIN},
             received_monotonic_s=captured_monotonic_s,
         ))
 
@@ -139,12 +142,14 @@ class ExistingAppGazeAdapter:
         """Process one owned BGR8 frame; keep its optional aligned depth intact."""
         self._check_owner()
         received = frame.received_monotonic_s
-        now = time.monotonic()
+        now = host_now_s()
         if received is None or not math.isfinite(received):
             return self.invalidate("missing_host_receive_timestamp")
         if not math.isfinite(frame.timestamp_s):
             return self.invalidate("nonfinite_capture_timestamp")
-        if received > now + 0.01:
+        declared_clock = frame.metadata.get("host_clock_domain")
+        if ((declared_clock is not None and declared_clock != HOST_CLOCK_DOMAIN)
+                or received > now):
             return self.invalidate("receive_timestamp_not_in_host_clock")
         if now - received > self.max_age_s:
             return self.invalidate("stale_queued_frame")
@@ -164,7 +169,7 @@ class ExistingAppGazeAdapter:
                 value = self.invalidate("calibration_context_mismatch")
                 value["context_mismatches"] = sorted(set(differences))
                 return self._set_latest(value)
-            if time.monotonic() - received > self.max_age_s:
+            if host_now_s() - received > self.max_age_s:
                 return self.invalidate("stale_after_processing")
             value = result.as_dict()
             value.update(
@@ -174,6 +179,7 @@ class ExistingAppGazeAdapter:
                                  and result.surface_xy_m is not None),
                 received_monotonic_s=float(received),
                 fresh_until_monotonic_s=float(received) + self.max_age_s,
+                host_clock_domain=HOST_CLOCK_DOMAIN,
             )
             return self._set_latest(value)
         except Exception:
@@ -185,7 +191,7 @@ class ExistingAppGazeAdapter:
         with self._lock:
             value = deepcopy(self._latest)
         deadline = value.get("fresh_until_monotonic_s")
-        if deadline is not None and time.monotonic() > deadline:
+        if deadline is not None and host_now_s() > deadline:
             return _unavailable("stale_capture")
         return value
 

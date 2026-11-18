@@ -15,6 +15,7 @@ import numpy as np
 import cv2
 
 from .acquisition import TargetCollector
+from .clock import host_now_s
 from .analytics import compare_anchors
 from .capture import FrameSource
 from .vision import GazeTracker
@@ -236,7 +237,7 @@ class ScreenSession:
                                          session_id=self.session_id)
         self.collector.start()
         self.collecting = True
-        self.collect_started = time.monotonic()
+        self.collect_started = host_now_s()
         self.accepted = 0
         self.last_error = "Allow fixation to settle before samples are collected"
         self.draw()
@@ -255,7 +256,7 @@ class ScreenSession:
             return None
         if frame is None:
             self.last_error = "Camera frame missing or source ended"
-            if self.collecting and time.monotonic() - self.collect_started > self.max_seconds_per_target:
+            if self.collecting and host_now_s() - self.collect_started > self.max_seconds_per_target:
                 self.collector.cancel()
                 self.collecting = False
                 self.accepted = 0
@@ -494,8 +495,8 @@ def spatial_session(source: FrameSource, tracker: GazeTracker, profile_path: str
                                      min_samples=samples_per_target, max_seconds=max_seconds,
                                      session_id=session_id)
         collector.start()
-        started = time.monotonic()
-        while not collector.complete and time.monotonic() - started <= max_seconds:
+        started = host_now_s()
+        while not collector.complete and host_now_s() - started <= max_seconds:
             frame = source.read()
             if frame is None:
                 if getattr(source, "eof", False):

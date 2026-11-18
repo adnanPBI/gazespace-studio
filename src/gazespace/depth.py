@@ -7,12 +7,12 @@ coordinates are never mixed. A missing/invalid depth returns no metric point.
 from __future__ import annotations
 
 from threading import Event
-import time
 
 import cv2
 import numpy as np
 
 from .capture import FrameSource, to_bgr
+from .clock import HOST_CLOCK_DOMAIN, host_now_s
 from .types import CameraIntrinsics, Frame
 
 
@@ -108,6 +108,7 @@ class RealSenseSource(FrameSource):
                          "model": device.get_info(rs.camera_info.name), "backend": "realsense",
                          "identity_strength": "serial", "width": color.width, "height": color.height,
                          "fps_reported": fps, "is_live": True, "depth_aligned_to": "color",
+                         "host_clock_domain": HOST_CLOCK_DOMAIN,
                          "intrinsics": self.intrinsics.to_dict(), "depth_scale_m": self.depth_scale,
                          "depth_deprojection_supported": self._cv_depth_supported,
                          "global_shutter_verified": False}
@@ -123,12 +124,13 @@ class RealSenseSource(FrameSource):
         color, depth = aligned.get_color_frame(), aligned.get_depth_frame()
         if not color or not depth:
             raise OSError("RealSense frame missing aligned color/depth")
-        received = time.monotonic()
+        received = host_now_s()
         image = to_bgr(np.asanyarray(color.get_data()))
         metric_depth = np.asanyarray(depth.get_data()).astype(np.float32) * self.depth_scale
         self.seq += 1
         return Frame(image, received, self.seq, self.info["serial"],
                      metadata={"simulated": False, "depth_aligned_to": "color",
+                               "host_clock_domain": HOST_CLOCK_DOMAIN,
                                "depth_intrinsics": self.intrinsics.to_dict(),
                                "depth_deprojection_supported": self._cv_depth_supported,
                                "hardware_clock_synchronized": False},

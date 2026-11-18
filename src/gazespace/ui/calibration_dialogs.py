@@ -1,12 +1,12 @@
 """Guided acquisition dialogs share the same temporal collector as the SDK."""
 from __future__ import annotations
-import time
 import uuid
 import numpy as np
 from PySide6.QtCore import Qt, QTimer, Signal, QRectF, QPointF
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QKeyEvent
 from PySide6.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QProgressBar
 from ..acquisition import TargetCollector
+from ..clock import host_now_s
 from .widgets import label, VideoCanvas
 from .theme import TEAL, MUTED, AMBER, TEXT, BG
 
@@ -62,7 +62,7 @@ class TargetSessionDialog(QWidget):
         tid, xy = self.targets[self.index]
         self.collector = TargetCollector(tid, xy, kind='screen', **self.options)
         self.collector.start()
-        self.wall_started=time.monotonic()
+        self.wall_started=host_now_s()
         self._active = True
         self.status_text = 'Settling on target… keep your eyes comfortably open'
         self.update()
@@ -70,7 +70,7 @@ class TargetSessionDialog(QWidget):
     def tick(self):
         if self._finished or not self._active:
             return
-        if time.monotonic()-self.wall_started>self.collector.max_seconds:
+        if host_now_s()-self.wall_started>self.collector.max_seconds:
             self._active=False;self.status_text='No stable observations in time. Press SPACE to retry, or ESC to cancel.';self.update();return
         state = self.snapshot()
         ob = state.get('observation')
@@ -185,11 +185,11 @@ class SpatialSessionDialog(QDialog):
         target = self.targets[self.index]
         self.collector = TargetCollector(str(target['id']),target['xyz_m'],kind='spatial')
         self.collector.start()
-        self.wall_started = time.monotonic()
+        self.wall_started = host_now_s()
         self.button.setEnabled(False)
 
     def tick(self):
-        if self.collector and time.monotonic()-self.wall_started > self.collector.max_seconds:
+        if self.collector and host_now_s()-self.wall_started > self.collector.max_seconds:
             self.collector = None
             self.button.setEnabled(True)
             self.status.setText('No stable observations in time. Restore the camera and retry this target.')

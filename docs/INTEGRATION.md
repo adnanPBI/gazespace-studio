@@ -17,9 +17,30 @@ Do not open the same camera simultaneously through an existing acquisition loop 
 
 `process(image_bgr, timestamp_s)` expects an unsigned 8-bit BGR array of shape `(height,width,3)`. The array must match the intrinsic calibration's exact resolution. Use `capture.to_bgr(raw, ir_bit_depth=12)` for a declared unpacked Mono12 source; packed industrial formats should be decoded through the vendor adapter.
 
-Use a monotonic acquisition timestamp. A host-receive timestamp is useful for processing, but it is not the sensor's exposure time. Preserve synchronized hardware timestamps separately when available. Video sources preserve presentation-time behavior instead of deriving motion timing from decoder throughput.
+Use a strictly increasing source timestamp for filtering. A host-receive timestamp is useful for processing, but it is not the sensor's exposure time. Preserve synchronized hardware timestamps separately when available. Video sources preserve presentation-time behavior instead of deriving motion timing from decoder throughput.
 
 `Frame` also supports `metadata`, `received_monotonic_s`, `hardware_timestamp_s`, and optional `depth_m`. An aligned depth image uses meters and the color image's pixel grid.
+
+**Host arrival times and freshness deadlines use `gazespace.clock.host_now_s()`, backed by `time.perf_counter()`.** Its reported domain is `gazespace.perf_counter`; the epoch is unspecified. Use this same function in custom acquisition callbacks and UI freshness checks. On Windows Python 3.11/3.12, `time.monotonic()` has a different, coarser clock implementation; mixing its absolute values with `perf_counter()` breaks age checks and can duplicate rapid camera timestamps. Python documents the Windows implementation change in its [3.13 time release notes](https://docs.python.org/3.13/whatsnew/3.13.html#time). The engine does not fabricate increments to make source timestamps appear distinct.
+
+For a custom live source, timestamp and copy the owned buffer at acquisition:
+
+```python
+from gazespace.clock import HOST_CLOCK_DOMAIN, host_now_s
+from gazespace.capture import to_bgr
+from gazespace.types import Frame
+
+raw = existing_camera.read()
+received = host_now_s()
+frame = Frame(
+    image=to_bgr(raw),
+    timestamp_s=received,
+    received_monotonic_s=received,
+    metadata={"host_clock_domain": HOST_CLOCK_DOMAIN},
+)
+```
+
+For a video or a device with its own source timeline, keep `timestamp_s` in that timeline and set `received_monotonic_s` separately with `host_now_s()`. Never compare video PTS, a hardware timestamp, UTC, or a remote process's source timestamp with the host freshness clock. `TrackingRuntime` rejects nonfinite, future, or explicitly mismatched receive clocks and clears active gaze when a frame expires. Source clock resets still require restarting/resetting the tracking sequence. Existing recordings retain their relative `session_time_s` replay timeline; no recorded timestamps are rewritten by this change.
 
 One engine is stateful. Construct and use it on the same processing thread, process frames sequentially, and close it after that thread has stopped. MediaPipe state and One Euro filters must not be called concurrently. Pass UI updates through the GUI framework's thread-safe mechanism.
 
@@ -233,6 +254,6 @@ python -m gazespace triangulate --left-profile profiles\left.json --right-profil
 
 `TargetCollector` is independent of GUI and camera ownership. It returns deep-copied settled observations, progress and explicit rejection reasons. Complete screen samples use normalized targets; spatial samples use measured world coordinates and current eye origin. New models should be fitted with `context=tracker.context(actual_image_size)` augmented by actual source/user/display settings and a distinct session ID.
 
-`SessionRecorder`, `SessionReplay`, `analyze_session` and `export_report` can be used without the desktop. A recorder adds a monotonic session timeline separate from the original source timestamp, enabling replay after reconnects. Metadata is validated before writing. Camera video requires explicit `record_video=True`.
+`SessionRecorder`, `SessionReplay`, `analyze_session` and `export_report` can be used without the desktop. A recorder adds a monotonic session timeline separate from the original source timestamp, enabling replay after reconnects. Its default clock is `host_now_s()` and the saved timeline remains elapsed seconds from recording start. A custom injected recording clock remains supported; new manifests describe its clock provenance without changing the session schema or old-file replay. Metadata is validated before writing. Camera video requires explicit `record_video=True`.
 
 Reports distinguish screen pixel error from dispersion, processing time from capture-to-display latency, and simulated evidence from physical measurements. Preserve those distinctions when forwarding data to clients.

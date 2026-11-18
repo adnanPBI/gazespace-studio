@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from gazespace.capture import FrameSource, SyntheticEyeSource
+from gazespace.clock import host_now_s
 from gazespace.runtime import TrackingRuntime
 from gazespace.types import Frame, GazeResult, Observation
 from gazespace.service import GazeService, create_api
@@ -95,7 +96,7 @@ def test_camera_disconnect_invalidates_before_retry():
             time.sleep(.02)
             if self.seq > 4:
                 raise OSError("USB disconnected")
-            return Frame(np.zeros((120,160,3),np.uint8),time.monotonic(),self.seq)
+            return Frame(np.zeros((120,160,3),np.uint8),host_now_s(),self.seq)
         def close(self): pass
     run = TrackingRuntime(Disconnecting, FakeEngine, reconnect_delay_s=.3)
     try:
@@ -119,7 +120,7 @@ def test_stale_frame_is_invalid_even_when_read_is_blocked():
             if self.seq > 1:
                 released.wait(2)
                 return None
-            return Frame(np.zeros((120,160,3),np.uint8),time.monotonic(),1)
+            return Frame(np.zeros((120,160,3),np.uint8),host_now_s(),1)
         def request_stop(self): released.set()
         def close(self): pass
     run=TrackingRuntime(Stalling,FakeEngine,max_age_s=.04)

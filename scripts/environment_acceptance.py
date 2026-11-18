@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import platform
 import sys
-import time
+from gazespace.clock import host_now_s, host_clock_info
 
 from camera_acceptance import file_hash, utc_now, write_json
 
@@ -19,6 +19,7 @@ def probe(output: Path, sdk_inventory: str = 'all') -> dict:
         'platform': platform.platform(), 'python': platform.python_version(),
         'executable': sys.executable, 'executable_sha256': file_hash(Path(sys.executable)),
         'frozen_executable': bool(getattr(sys, 'frozen', False)),
+        'host_clock': host_clock_info(),
         'physical_hardware_tested': False, 'camera_acquisition_attempted': False,
         'environment': {name: os.environ.get(name) for name in
                         ('SESSIONNAME', 'QT_QPA_PLATFORM', 'QT_SCALE_FACTOR', 'QT_SCREEN_SCALE_FACTORS', 'PYLON_CAMEMU')},
@@ -84,7 +85,7 @@ def probe(output: Path, sdk_inventory: str = 'all') -> dict:
     if sdk_inventory in ('basler', 'all'):
         report['active_step'] = 'basler_device_enumeration'
         write_json(output, report)
-        started = time.monotonic()
+        started = host_now_s()
         try:
             from pypylon import pylon
             devices = pylon.TlFactory.GetInstance().EnumerateDevices()
@@ -93,12 +94,12 @@ def probe(output: Path, sdk_inventory: str = 'all') -> dict:
             report['sdk_inventory']['basler'] = {'status': 'enumerated', 'device_count': len(data), 'devices': data}
         except Exception as exc:
             report['sdk_inventory']['basler'] = {'status': 'unavailable', 'device_count': None, 'error': f'{type(exc).__name__}: {exc}'}
-        report['sdk_inventory']['basler']['duration_s'] = time.monotonic() - started
+        report['sdk_inventory']['basler']['duration_s'] = host_now_s() - started
         write_json(output, report)
     if sdk_inventory in ('realsense', 'all'):
         report['active_step'] = 'realsense_device_enumeration'
         write_json(output, report)
-        started = time.monotonic()
+        started = host_now_s()
         try:
             import pyrealsense2 as rs
             context = rs.context()
@@ -114,7 +115,7 @@ def probe(output: Path, sdk_inventory: str = 'all') -> dict:
             report['sdk_inventory']['realsense'] = {'status': 'enumerated', 'device_count': len(data), 'devices': data}
         except Exception as exc:
             report['sdk_inventory']['realsense'] = {'status': 'unavailable', 'device_count': None, 'error': f'{type(exc).__name__}: {exc}'}
-        report['sdk_inventory']['realsense']['duration_s'] = time.monotonic() - started
+        report['sdk_inventory']['realsense']['duration_s'] = host_now_s() - started
         write_json(output, report)
     report.update(status='collected', active_step='complete', completed_at_utc=utc_now())
     write_json(output, report)

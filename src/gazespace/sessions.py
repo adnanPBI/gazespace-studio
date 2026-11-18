@@ -17,9 +17,10 @@ import csv
 import json
 import math
 import os
-import time
 import uuid
 import numpy as np
+
+from .clock import HOST_CLOCK_DOMAIN, host_now_s
 
 SESSION_SCHEMA_VERSION = 2
 
@@ -97,13 +98,13 @@ class SessionRecorder:
 
     def __init__(self, root: str | Path, metadata: dict | None = None, *,
                  record_gaze: bool = True, record_video: bool = False,
-                 fps: float = 30.0, clock: Callable[[], float] = time.monotonic):
+                 fps: float = 30.0, clock: Callable[[], float] | None = None):
         if not record_gaze and not record_video:
             raise ValueError("select gaze metadata, camera video, or both for recording")
         if not math.isfinite(fps) or not 1 <= fps <= 240:
             raise ValueError("video FPS must lie within [1,240]")
-        self._clock = clock
-        self._start = float(clock())
+        self._clock = host_now_s if clock is None else clock
+        self._start = float(self._clock())
         if not math.isfinite(self._start):
             raise ValueError("recording clock must be finite")
         self._lock = RLock()
@@ -124,6 +125,7 @@ class SessionRecorder:
         self.path.mkdir(parents=True, exist_ok=False)
         self.manifest = {
             "schema_version": SESSION_SCHEMA_VERSION,
+            "session_time_clock_domain": HOST_CLOCK_DOMAIN if clock is None else "custom_monotonic_relative",
             "session_id": self.session_id,
             "created_utc": _utc_now(), "closed_utc": None,
             "status": "recording", "metadata": self._metadata,

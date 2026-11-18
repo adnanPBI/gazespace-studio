@@ -6,6 +6,14 @@ import numpy as np
 
 @dataclass
 class Frame:
+    """Owned image with separate source, host-receive and device timestamps.
+
+    ``timestamp_s`` drives filtering in the source timeline (video PTS may be
+    different from arrival time). ``received_monotonic_s`` uses
+    ``gazespace.clock.host_now_s()`` / ``time.perf_counter()`` for freshness;
+    do not supply ``time.monotonic()`` on Windows Python 3.11/3.12, wall time,
+    or a device clock. ``hardware_timestamp_s`` remains in the device domain.
+    """
     image: np.ndarray
     timestamp_s: float
     sequence: int = 0

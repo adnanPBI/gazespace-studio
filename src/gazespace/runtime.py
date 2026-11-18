@@ -9,11 +9,12 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import replace
 import copy
+import math
 from threading import Condition, Event, Lock, Thread, current_thread
-import time
 from typing import Callable, Any
 
 from .types import Frame, GazeResult, Observation
+from .clock import HOST_CLOCK_DOMAIN, host_now_s
 
 
 class TrackingRuntime:
@@ -107,7 +108,7 @@ class TrackingRuntime:
         """
         if timeout < 0:
             raise ValueError("timeout must be nonnegative")
-        deadline = time.monotonic() + timeout
+        deadline = host_now_s() + timeout
         self._stop.set()
         with self._condition:
             self._generation += 1
@@ -123,7 +124,7 @@ class TrackingRuntime:
                 pass  # A request is optional; never cross-thread close the source.
         for worker in (self._capture_thread, self._process_thread):
             if worker is not None and worker is not current_thread():
-                worker.join(max(0.0, deadline - time.monotonic()))
+                worker.join(max(0.0, deadline - host_now_s()))
         with self._condition:
             completed = not self._alive_locked()
             self._state = "stopped" if completed else "stopping_blocked"
@@ -177,7 +178,8 @@ class TrackingRuntime:
                             if self._stop.is_set():
                                 break
                         frame = source.read()
-                        received = time.monotonic()
+                        acquired_at = host_now_s()
+                        received = acquired_at
                         if self._stop.is_set():
                             break
                         if frame is None:
@@ -193,10 +195,14 @@ class TrackingRuntime:
                         frame_received = getattr(frame, "received_monotonic_s", None)
                         if frame_received is not None:
                             received = float(frame_received)
+                        declared_clock = frame.metadata.get("host_clock_domain")
+                        if ((declared_clock is not None and declared_clock != HOST_CLOCK_DOMAIN)
+                                or not math.isfinite(received) or received > acquired_at):
+                            raise ValueError("Frame received_monotonic_s must use gazespace.clock.host_now_s()")
                         consecutive_reconnects = 0
                         with self._condition:
                             self._counters["received_frames"] += 1
-                            self._capture_times.append(time.monotonic())
+                            self._capture_times.append(host_now_s())
                             if self._paused:
                                 continue
                             if self._pending is not None:
@@ -268,10 +274,12 @@ class TrackingRuntime:
                                 filter_obj.reset()
                 previous_generation = generation
                 # Drop over-age frames before expensive inference.
-                if time.monotonic() - received > self.max_age_s:
+                age = host_now_s() - received
+                if not math.isfinite(age) or age < 0 or age > self.max_age_s:
                     with self._condition:
                         self._counters["stale_frames"] += 1
-                        self._invalidate_locked("stale_capture")
+                        self._invalidate_locked("invalid_host_clock" if not math.isfinite(age) or age < 0
+                                                else "stale_capture")
                     continue
                 result = (engine.process_frame(frame) if hasattr(engine, "process_frame")
                           else engine.process(frame.image, frame.timestamp_s))
@@ -280,16 +288,17 @@ class TrackingRuntime:
                 with self._condition:
                     if generation != self._generation or self._paused or self._stop.is_set():
                         continue
-                    age = time.monotonic() - received
-                    if age > self.max_age_s:
-                        result = self._invalid(result, "stale_processing_result")
+                    age = host_now_s() - received
+                    if not math.isfinite(age) or age < 0 or age > self.max_age_s:
+                        result = self._invalid(result, "invalid_host_clock" if not math.isfinite(age) or age < 0
+                                               else "stale_processing_result")
                         self._counters["stale_frames"] += 1
                         observation = None
                     self._frame, self._result, self._observation = frame, result, observation
                     self._last_received = received
                     self._engine_metrics = metrics
                     self._counters["processed_frames"] += 1
-                    self._process_times.append(time.monotonic())
+                    self._process_times.append(host_now_s())
                     self._state, self._last_error = "running", None
                 if self.on_result is not None:
                     try:
@@ -344,14 +353,20 @@ class TrackingRuntime:
         return (len(times) - 1) / max(1e-9, times[-1] - times[0]) if len(times) > 1 else 0.0
 
     def snapshot(self, include_frame: bool = True) -> dict:
-        now = time.monotonic()
         with self._lock:
-            age = None if self._last_received is None else max(0.0, now - self._last_received)
+            # Sample under the lock: a worker must not publish a newer arrival
+            # between sampling the clock and reading its receive timestamp.
+            now = host_now_s()
+            age = None if self._last_received is None else now - self._last_received
+            clock_invalid = age is not None and (not math.isfinite(age) or age < 0)
+            if clock_invalid:
+                age = None
             result = copy.deepcopy(self._result)
             observation = copy.deepcopy(self._observation)
             state = self._state
             if result is not None and (state != "running" or age is None or age > self.max_age_s):
-                result = self._invalid(result, "stale_capture" if state == "running" else state)
+                reason = "invalid_host_clock" if clock_invalid else "stale_capture"
+                result = self._invalid(result, reason if state == "running" else state)
                 observation = None
             frame = None
             if include_frame and self._frame is not None:
@@ -361,6 +376,7 @@ class TrackingRuntime:
             metrics = {**copy.deepcopy(self._engine_metrics), **self._counters,
                        "capture_fps": self._fps(self._capture_times),
                        "processing_fps": self._fps(self._process_times),
+                       "host_clock_domain": HOST_CLOCK_DOMAIN,
                        "capture_age_ms": None if age is None else age * 1000,
                        "callback_error": self._callback_error}
             return {"state": state, "running": state == "running" and self._alive_locked(),

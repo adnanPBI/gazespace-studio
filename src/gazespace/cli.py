@@ -10,6 +10,7 @@ import time
 import numpy as np
 import cv2
 from . import __version__
+from .clock import host_now_s
 from .capture import create_source, list_cameras, list_basler_cameras
 from .types import CameraIntrinsics, CameraExtrinsics, Surface
 from .calibration import (GazeModel, calibrate_intrinsics, solve_world_board_extrinsics,
@@ -128,7 +129,7 @@ def cmd_track(args):
             else GazeEngine(make_tracker(args)))
     stream=None
     count=0
-    started=time.monotonic()
+    started=host_now_s()
     try:
         if args.record:
             dest=Path(args.record)
@@ -154,7 +155,7 @@ def cmd_track(args):
                     if args.max_frames and count>=args.max_frames:
                         break
                 else:
-                    fps=count/max(1e-4,time.monotonic()-started)
+                    fps=count/max(1e-4,host_now_s()-started)
                     rendered=draw_diagnostics(frame.image,result,engine.last_observation,fps)
                     cv2.imshow("GazeSpace | calibration-aware tracking",rendered)
                     if cv2.waitKey(1)&0xff in (27,ord("q")):

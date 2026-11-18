@@ -10,13 +10,13 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Event, Lock
 import math
-import time
 from typing import Any
 
 import cv2
 import numpy as np
 
 from .types import Frame
+from .clock import HOST_CLOCK_DOMAIN, host_now_s
 
 BACKENDS = {"auto": cv2.CAP_ANY, "dshow": cv2.CAP_DSHOW,
             "msmf": cv2.CAP_MSMF, "v4l2": cv2.CAP_V4L2,
@@ -154,6 +154,7 @@ class OpenCVSource(FrameSource):
             "controls": self.controls,
             "global_shutter_verified": False,
             "timestamp_kind": "host_receive" if self.is_live else "paced_video_presentation",
+            "host_clock_domain": HOST_CLOCK_DOMAIN,
             "exposure_native": _finite(self.cap.get(cv2.CAP_PROP_EXPOSURE)),
             "gain_native": _finite(self.cap.get(cv2.CAP_PROP_GAIN)),
         }
@@ -172,7 +173,7 @@ class OpenCVSource(FrameSource):
         if self._closed or self._stop.is_set():
             return None
         ok, raw = self.cap.read()
-        arrived = time.monotonic()
+        arrived = host_now_s()
         if not ok or raw is None:
             if not self.is_live:
                 self.eof = True
@@ -196,9 +197,10 @@ class OpenCVSource(FrameSource):
         self.seq += 1
         return Frame(to_bgr(raw, self.ir_bit_depth), timestamp, self.seq, str(self.device),
                      metadata={"simulated": False, "is_live": self.is_live,
+                               "host_clock_domain": HOST_CLOCK_DOMAIN,
                                "video_pts_s": None if self.is_live else pts_s,
                                "timestamp_kind": self._report["timestamp_kind"]},
-                     received_monotonic_s=time.monotonic())
+                     received_monotonic_s=host_now_s())
 
     def capabilities(self) -> dict:
         return dict(self._report)
@@ -259,6 +261,7 @@ class PylonSource(FrameSource):
                      "camera_id": f"basler:{selected[0].GetSerialNumber()}", "identity_strength": "serial",
                      "backend": "pylon", "is_live": True, "global_shutter_verified": False,
                      "requested_width": width, "requested_height": height, "requested_fps": fps,
+                     "host_clock_domain": HOST_CLOCK_DOMAIN,
                      "timestamp_kind": "host_receive; hardware ticks reported separately"}
         try:
             self.cam.Open()
@@ -365,13 +368,14 @@ class PylonSource(FrameSource):
             else:
                 converted = self.converter.Convert(result)
                 bgr = to_bgr(converted.Array)
-            arrived = time.monotonic()
+            arrived = host_now_s()
             ticks = int(getattr(result, "TimeStamp", 0))
         finally:
             result.Release()
         self.seq += 1
         return Frame(bgr, arrived, self.seq, self.info["serial"],
                      metadata={"hardware_ticks": ticks, "simulated": self._sdk_emulator,
+                               "host_clock_domain": HOST_CLOCK_DOMAIN,
                                "synthetic": self._sdk_emulator, "sdk_emulator": self._sdk_emulator,
                                "hardware_clock_synchronized": False},
                      received_monotonic_s=arrived)
@@ -448,13 +452,13 @@ class SyntheticEyeSource(FrameSource):
             self.eof = True
             return None
         if self._origin is None:
-            self._origin = time.monotonic()
+            self._origin = host_now_s()
         stamp = self._origin + elapsed
-        now = time.monotonic()
+        now = host_now_s()
         if self.realtime and now - stamp > max(.25, 5 / self.fps):
             self._origin += now - stamp
             stamp = now
-        if self.realtime and self._stop.wait(max(0.0, stamp - time.monotonic())):
+        if self.realtime and self._stop.wait(max(0.0, stamp - host_now_s())):
             return None
         with self._target_lock:
             target = self._target
@@ -465,9 +469,10 @@ class SyntheticEyeSource(FrameSource):
         self.seq += 1
         return Frame(image, stamp, self.seq, "synthetic:eyes-v2",
                      metadata={"simulated": True, "synthetic": True, "target_normalized": [tx, ty],
+                               "host_clock_domain": HOST_CLOCK_DOMAIN,
                                "pupils_ground_truth_px": pupil_xy, "blink": is_blink,
                                "video_pts_s": elapsed, "timestamp_kind": "synthetic_presentation"},
-                     received_monotonic_s=time.monotonic())
+                     received_monotonic_s=host_now_s())
 
     def render_target(self, x: float, y: float) -> np.ndarray:
         """Render a labeled synthetic frame for a known generator target."""
@@ -511,6 +516,7 @@ class SyntheticEyeSource(FrameSource):
     def capabilities(self) -> dict:
         return {"source": "synthetic", "camera_id": "synthetic:eyes-v2", "backend": "synthetic",
                 "width": self.width, "height": self.height, "fps_reported": self.fps,
+                "host_clock_domain": HOST_CLOCK_DOMAIN,
                 "simulated": True, "synthetic": True, "is_live": False, "roi_normalized": self.roi_normalized,
                 "global_shutter_verified": False}
 
