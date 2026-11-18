@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QGridLayout, QFormLayout, QLineEdit, QComboBox, QSpinBox,
     QDoubleSpinBox, QCheckBox, QStackedWidget, QScrollArea, QFileDialog,
     QTableWidget, QTableWidgetItem, QHeaderView, QListWidget, QPlainTextEdit,
-    QSlider, QSplitter, QMessageBox, QDialog, QDialogButtonBox, QProgressBar)
+    QSlider, QSplitter, QMessageBox, QDialog, QDialogButtonBox, QProgressBar, QSizePolicy)
 from .. import __version__
 from ..capture import create_source, list_cameras, list_basler_cameras, SyntheticEyeSource
 from ..vision import GazeTracker
@@ -114,7 +114,11 @@ class MainWindow(QMainWindow):
     def _build_ui(self):
         root=QWidget();root.setObjectName('root');self.setCentralWidget(root)
         main=QHBoxLayout(root);main.setContentsMargins(0,0,0,0);main.setSpacing(0)
-        sidebar=QFrame();sidebar.setObjectName('sidebar');sidebar.setFixedWidth(220)
+        sidebar=QFrame();sidebar.setObjectName('sidebar');sidebar.setMinimumWidth(220)
+        # Let the layout's font/style-aware size hint determine the width.
+        # A hard 220-pixel cap clips labels with Windows/high-DPI font metrics
+        # and cannot respond to font changes after the window is shown.
+        sidebar.setSizePolicy(QSizePolicy.Policy.Fixed,QSizePolicy.Policy.Expanding)
         nav=QVBoxLayout(sidebar);nav.setContentsMargins(19,26,19,22);nav.setSpacing(7)
         nav.addWidget(label('G A Z E S P A C E','eyebrow'))
         nav.addWidget(label('Vision Studio','section'))

@@ -47,6 +47,25 @@ def test_navigation_and_surface_editor_validation(desktop):
     assert errors==[]
 
 
+def test_navigation_resizes_after_enlarged_font_without_clipping(desktop):
+    app,w,errors=desktop
+    first=w.nav_buttons[0]
+    before_text=first.fontMetrics().horizontalAdvance(first.text())
+    before_sidebar=first.parentWidget().width()
+    # Apply after showing the real window: DPI/font changes must invalidate
+    # layout hints, not merely work when a large font is present at startup.
+    w.setStyleSheet(w.styleSheet()+'\nQPushButton#nav { font-size:30px; }')
+    pump(app,lambda:first.fontMetrics().horizontalAdvance(first.text())>before_text
+         and first.parentWidget().width()>before_sidebar)
+    for i,button in enumerate(w.nav_buttons):
+        button.click();app.processEvents()
+        assert w.pages.currentIndex()==i
+        # Preserve both 14-pixel horizontal padding areas in the actual theme.
+        assert button.fontMetrics().horizontalAdvance(button.text())<button.width()-28
+        assert button.geometry().right()<button.parentWidget().width()
+    assert errors==[]
+
+
 def test_fullscreen_collector_uses_current_targets():
     app=QApplication.instance() or QApplication([])
     source=SyntheticEyeSource(realtime=False)
