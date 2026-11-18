@@ -367,7 +367,12 @@ def export_csv(session_or_path: SessionData | str | Path, output: str | Path) ->
 
 
 class SessionReplay:
-    """Deterministic metadata replay. No output is sent to input devices."""
+    """Deterministic metadata replay. No output is sent to input devices.
+
+    Recorded ``session_time_s`` is already relative to recording start. Preserve
+    its initial gap so slider positions, exported times and video references
+    share that timeline. Only legacy source-only rows are rebased to zero.
+    """
 
     def __init__(self, records_or_session, *, max_gap_s: float = 0.25):
         if not math.isfinite(max_gap_s) or max_gap_s <= 0:
@@ -381,15 +386,22 @@ class SessionReplay:
             records = records_or_session
         self.records = [_validate_record(r) for r in records]
         if self.records:
-            raw = [float(r.get("session_time_s", r["timestamp_s"])) for r in self.records]
+            has_session_time = ["session_time_s" in r for r in self.records]
+            if any(has_session_time) and not all(has_session_time):
+                raise ValueError("replay records cannot mix session and source timestamp timelines")
+            explicit_session_time = all(has_session_time)
+            key = "session_time_s" if explicit_session_time else "timestamp_s"
+            raw = [float(r[key]) for r in self.records]
+            if explicit_session_time and any(t < 0 for t in raw):
+                raise ValueError("session replay timestamps must be nonnegative")
             if any(b < a for a, b in zip(raw, raw[1:])):
                 raise ValueError("replay records must be ordered by timestamp")
-            self._times = [t - raw[0] for t in raw]
+            self._times = raw if explicit_session_time else [t - raw[0] for t in raw]
         else:
             self._times = []
         self.duration_s = self._times[-1] if self._times else 0.0
         self.position_s = 0.0
-        self.index = 0 if self.records else -1
+        self.index = bisect_right(self._times, self.position_s) - 1
 
     @property
     def finished(self) -> bool:
@@ -418,7 +430,7 @@ class SessionReplay:
         if not math.isfinite(seconds):
             raise ValueError("seek position must be finite")
         self.position_s = max(0.0, min(float(seconds), self.duration_s))
-        self.index = max(0, bisect_right(self._times, self.position_s) - 1) if self._times else -1
+        self.index = bisect_right(self._times, self.position_s) - 1
         return self.current()
 
     def advance(self, delta_s: float) -> dict | None:

@@ -40,8 +40,10 @@ def test_record_replay_export_roundtrip_keeps_source_and_session_time(tmp_path):
     assert data.manifest['physical_accuracy_verified'] is False
     assert list_sessions(tmp_path)[0]['path']==str(path)
     replay=SessionReplay(data)
-    assert replay.current()['timestamp_s']==10
-    assert replay.seek(.21)['timestamp_s']==.1
+    assert replay.current() is None  # no observation during initial delivery gap
+    assert replay.seek(.11)['timestamp_s']==10
+    assert replay.seek(.21)['timestamp_s']==10.1
+    assert replay.seek(.31)['timestamp_s']==.1
     assert replay.current()['replay'] is True
     assert replay.advance(100.)['timestamp_s']==.2
     output=export_csv(data,tmp_path/'export.csv')
@@ -192,3 +194,35 @@ def test_replay_blanks_gaze_between_widely_separated_frames():
     assert stale['gaze_screen_px'] is None
     assert stale['reason']=='replay_gap_no_fresh_sample'
     assert replay.seek(10.)['valid'] is True
+
+
+def test_replay_preserves_recording_timeline_and_initial_delivery_gap():
+    # A slow first delivery used to rebase 3.0/3.1/3.2 into 0/.1/.2,
+    # making the UI/exported middle time 3.1 seconds impossible to reach.
+    records=[row(100,session_time_s=3.0,video_frame=0),
+             row(.1,session_time_s=3.1,video_frame=1),
+             row(.2,session_time_s=3.2,video_frame=2)]
+    replay=SessionReplay(records)
+    assert replay.duration_s==3.2
+    assert replay.current() is None
+    assert replay.seek(2.999) is None
+    assert replay.seek(3.0)['video_frame']==0
+    assert replay.seek(3.1)['video_frame']==1
+    assert replay.advance(.05)['replay_position_s']==pytest.approx(3.15)
+    assert replay.seek(3.2)['video_frame']==2
+    assert replay.finished
+    assert replay.seek(0) is None
+    assert not replay.finished
+    assert replay.advance(3.1)['video_frame']==1
+    assert records[1]['timestamp_s']==.1  # preserve a restarted source clock
+
+
+def test_replay_legacy_source_timestamps_are_rebased_without_mixing_clocks():
+    replay=SessionReplay([row(100),row(100.1),row(100.2)])
+    assert replay.duration_s==pytest.approx(.2)
+    assert replay.current()['timestamp_s']==100
+    assert replay.seek(.15)['timestamp_s']==100.1
+    with pytest.raises(ValueError,match='cannot mix'):
+        SessionReplay([row(100,session_time_s=3.),row(100.1)])
+    with pytest.raises(ValueError,match='nonnegative'):
+        SessionReplay([row(100,session_time_s=-.1)])

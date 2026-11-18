@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 import json
 import hashlib
+import math
 import os
 import sys
 from pathlib import Path
@@ -1042,8 +1043,14 @@ class MainWindow(QMainWindow):
     def load_session_path(self,path):
         try:
             self.pause_replay();data=load_session(path);self.current_session=data;self.replay=SessionReplay(data.records)
-            self.replay_slider.setRange(0,max(1,round(self.replay.duration_s*1000)))
-            self.replay_slider.setValue(0);self.replay_map.trail=[]
+            blocked=self.replay_slider.blockSignals(True)
+            try:
+                # Ceiling lets the integer-millisecond slider reach the final
+                # sub-millisecond sample; SessionReplay clamps to exact time.
+                self.replay_slider.setRange(0,max(1,math.ceil(self.replay.duration_s*1000)))
+                self.replay_slider.setValue(0)
+            finally:self.replay_slider.blockSignals(blocked)
+            self.replay_map.trail=[]
             self.replay_map.caption='Recorded screen coordinates'+(' · synthetic fixture' if data.manifest.get('metadata',{}).get('synthetic') else '')
             self._replay_index=-1
             self.replay_video._image=None;self.replay_video.result={};self.replay_video.update()
@@ -1056,8 +1063,15 @@ class MainWindow(QMainWindow):
 
     def _show_replay_record(self,record):
         if not record:
+            # Seeking before the first delivered frame must not show a later
+            # frame or gaze trail left over from the previous replay position.
+            self.replay_map.trail=[]
             self.replay_map.set_gaze(None,False)
             self.replay_caption.setText('No recorded sample at this time')
+            self._replay_index=-1
+            self.replay_video._image=None;self.replay_video._bgr=None
+            self.replay_video.result={};self.replay_video.observation=None
+            self.replay_video.update()
             return
         self.replay_map.set_gaze(record.get('gaze_screen_normalized'),record.get('valid',False))
         t=record.get('session_time_s',0);self.replay_caption.setText(f"{t:.2f}s · {record.get('reason','')} · quality {record.get('quality',0):.2f}")
@@ -1073,11 +1087,18 @@ class MainWindow(QMainWindow):
                 self._replay_index=index
 
     def seek_replay(self,value):
-        if self.replay:self._show_replay_record(self.replay.seek(value/1000))
+        if self.replay:
+            self.replay_map.trail=[]
+            self._show_replay_record(self.replay.seek(value/1000))
+            # A seek while playing starts a fresh elapsed interval; time spent
+            # before that seek must not be added to the selected position.
+            if self._replay_clock is not None:self._replay_clock=host_now_s()
 
     def play_replay(self):
         if not self.replay:return
-        if getattr(self.replay,'position_s',0)>=self.replay.duration_s:self.replay.seek(0)
+        if getattr(self.replay,'position_s',0)>=self.replay.duration_s:
+            self.seek_replay(0)
+            self.replay_slider.setValue(0)
         self._replay_clock=host_now_s();self.replay_button.setText('Playing…')
 
     def pause_replay(self):

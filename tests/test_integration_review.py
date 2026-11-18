@@ -14,7 +14,7 @@ import pytest
 pytest.importorskip("PySide6", reason="native desktop review requires the desktop extra")
 from PySide6.QtWidgets import QApplication
 
-from gazespace.sessions import list_sessions, load_session
+from gazespace.sessions import SessionRecorder, list_sessions, load_session
 from gazespace.ui.main_window import MainWindow
 
 
@@ -127,3 +127,74 @@ def test_wrong_subject_cannot_reuse_demo_profile(reviewed_window):
     assert "subject_id" in snapshot["last_error"]
     assert not snapshot.get("latest") or snapshot["latest"]["valid"] is False
     assert window.stop_tracking()
+
+
+def test_replay_delayed_first_frame_seek_play_and_initial_gap_are_consistent(
+        reviewed_window, monkeypatch):
+    """Exercise native replay deterministically, independent of runner speed."""
+    import numpy as np
+    import gazespace.ui.main_window as desktop
+
+    app, window, errors=reviewed_window
+    window.timer.stop()  # drive the real poll handler with an explicit clock
+    now=[100.0]
+    with SessionRecorder(window.workspace/'sessions',
+                         {'provenance':'synthetic','synthetic':True,'screen_size':[101,101]},
+                         record_video=True,clock=lambda:now[0]) as recorder:
+        for index,elapsed in enumerate((3.0,3.1004,3.2004)):
+            now[0]=100.+elapsed
+            recorder.append({'timestamp_s':10.+index/10,'valid':True,
+                             'screen_valid':True,'spatial_valid':False,'quality':.9,
+                             'reason':'synthetic_fixture','source':'synthetic',
+                             'gaze_screen_px':[25.+index,50.],
+                             'gaze_screen_normalized':[(25.+index)/100.,.5]},
+                            np.full((120,160,3),index*50,np.uint8))
+    window.load_session_path(recorder.path)
+    assert window.replay.duration_s==pytest.approx(3.2004)
+    assert window.replay_slider.maximum()==3201
+    assert window.replay.current() is None
+    assert window.replay_map.position is None
+    assert window.replay_video._image is None
+
+    # The rounded seek begins before the middle observation. One deterministic
+    # timer tick must cross its actual recording-relative time, without a sleep.
+    middle=window.current_session.records[1]
+    window.replay_slider.setValue(round(middle['session_time_s']*1000))
+    assert window._replay_index==0
+    monkeypatch.setattr(desktop,'host_now_s',lambda:now[0])
+    window.play_replay()
+    now[0]+=.01
+    window.poll()
+    assert window.replay.position_s>=middle['session_time_s']
+    assert window._replay_index==1
+    assert window.replay_video._image is not None
+    assert window.replay_map.position is not None
+    window.pause_replay()
+
+    # Scrubbing backwards must remove the future frame, overlay and trail, then
+    # revisiting that same frame must reload it instead of using an old index.
+    window.replay_slider.setValue(1000)
+    assert window.replay.current() is None
+    assert window._replay_index==-1
+    assert window.replay_video._image is None
+    assert window.replay_video._bgr is None
+    assert not window.replay_video.result
+    assert window.replay_video.observation is None
+    assert window.replay_map.position is None
+    assert window.replay_map.trail==[]
+    window.replay_slider.setValue(3101)
+    assert window._replay_index==1
+    assert window.replay_video._image is not None
+    assert window.replay_map.position is not None
+
+    # The final slider step must reach a sub-millisecond final observation.
+    window.replay_slider.setValue(window.replay_slider.maximum())
+    assert window.replay.finished
+    assert window._replay_index==2
+    window.play_replay()
+    assert window.replay.position_s==0
+    assert window.replay.current() is None
+    assert window.replay_video._image is None
+    window.pause_replay()
+    assert window._replay_clock is None
+    assert not errors,errors
