@@ -1,0 +1,1748 @@
+GAZESPACE STUDIO — AUDIT PART 3: REMAINING CODE
+Source repository: https://github.com/adnanPBI/gazespace-studio (private)
+Exact source commit: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+Contains 11 complete files: remaining validation/vision/workflows, entry scripts, Windows launcher and example spatial JSON.
+All content is provided in full, without truncation. BEGIN/END markers and original Git blob SHA are included for each file.
+
+===== BEGIN FILE: src/gazespace/validation.py =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: fc35abc5f59342f23efabca68f982f4b01bfb426
+
+"""Independent measurements for camera geometry and gaze-model software output."""
+from __future__ import annotations
+from datetime import datetime, timezone
+from collections import Counter
+import hashlib
+import json
+import numpy as np
+import cv2
+from .types import CameraIntrinsics, CameraExtrinsics
+from .calibration import chessboard_points, find_board, GazeModel, _error_metrics, CONTEXT_KEYS
+from .geometry import world_to_camera_point
+from .vision import FEATURE_NAMES
+
+
+def image_digest(image: np.ndarray) -> str:
+    if image is None:
+        raise ValueError('Cannot fingerprint an unreadable image')
+    h=hashlib.sha256()
+    h.update(str((image.shape,str(image.dtype))).encode())
+    h.update(np.ascontiguousarray(image).tobytes())
+    return h.hexdigest()
+
+
+def camera_training_evidence(images: list[np.ndarray], *, cols=9, rows=6, square_mm=24.0) -> dict:
+    return {'image_sha256':[image_digest(im) for im in images],
+            'board':{'cols':cols,'rows':rows,'square_mm':square_mm},
+            'created_utc':datetime.now(timezone.utc).isoformat()}
+
+
+def validate_camera_images(images: list[np.ndarray], intrinsics: CameraIntrinsics, *,
+                           cols=9,rows=6,square_mm=24.0,training_hashes=None,min_views=3) -> dict:
+    intrinsics.validate()
+    if intrinsics.source not in ('measured','factory'):
+        raise ValueError('Camera validation requires measured or factory intrinsics')
+    points=chessboard_points(cols,rows,square_mm)
+    banned=set(training_hashes or [])
+    seen=set();views=[];errors=[];rejected=[]
+    for index,image in enumerate(images):
+        digest=image_digest(image)
+        if digest in banned:
+            raise ValueError('A held-out image was already used for intrinsic training; collect new views')
+        if digest in seen:
+            raise ValueError('Independent validation images contain a duplicate')
+        seen.add(digest)
+        if (image.shape[1],image.shape[0])!=(intrinsics.width,intrinsics.height):
+            raise ValueError('Validation image resolution differs from camera calibration')
+        corners=find_board(image,cols,rows)
+        if corners is None:
+            rejected.append({'index':index,'reason':'board_not_detected'});continue
+        ok,rvec,tvec=cv2.solvePnP(points,corners,intrinsics.camera_matrix,intrinsics.distortion)
+        if not ok or tvec[2,0]<=0:
+            rejected.append({'index':index,'reason':'board_pose_failed'});continue
+        projected,_=cv2.projectPoints(points,rvec,tvec,intrinsics.camera_matrix,intrinsics.distortion)
+        per_point=np.linalg.norm(projected.reshape(-1,2)-corners,axis=1)
+        if not np.isfinite(per_point).all():raise ValueError('Nonfinite reprojection error')
+        errors.extend(per_point.tolist())
+        views.append({'index':index,'image_sha256':digest,'rms_px':float(np.sqrt(np.mean(per_point**2))),
+                      'p95_px':float(np.percentile(per_point,95))})
+    if len(views)<min_views:raise ValueError(f'Need {min_views} fresh detected board views; got {len(views)}')
+    values=np.asarray(errors)
+    return {'created_utc':datetime.now(timezone.utc).isoformat(),'views':views,'rejected':rejected,
+            'independent_of_training_images':bool(training_hashes),
+            'intrinsics_refitted':False,
+            'reprojection_error_px':{'median':float(np.median(values)),'p95':float(np.percentile(values,95)),
+                                     'rms':float(np.sqrt(np.mean(values**2))),'max':float(np.max(values))},
+            'note':'Fixed intrinsics; each new board view has an independently estimated pose. Correct physical square measurements remain required.'}
+
+
+def _same_context_value(left, right) -> bool:
+    try:
+        return json.dumps(left, sort_keys=True, allow_nan=False) == json.dumps(right, sort_keys=True, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise ValueError('Validation context must contain finite JSON-compatible values') from exc
+
+
+def _gaze_coverage(labels, targets, kind) -> dict:
+    """Minimum acquisition evidence, not user/hardware accuracy thresholds.
+
+    Counts and geometric coverage follow the existing fitting protocol. A
+    caller may still calculate raw error for a smaller diagnostic sample.
+    """
+    counts = Counter(labels)
+    centroids = []
+    for label in counts:
+        selected = targets[np.asarray(labels) == label]
+        if kind == 'screen' and not np.allclose(selected, selected[0], atol=1e-9, rtol=0):
+            raise ValueError(f'Conflicting screen target coordinates within target_id {label}')
+        centroids.append(np.mean(selected, axis=0))
+    centroids = np.asarray(centroids)
+    distinct = len(np.unique(np.round(centroids, 5), axis=0))
+    singular = np.linalg.svd(centroids - centroids.mean(axis=0), compute_uv=False)
+    issues = []
+    if len(counts) < 9 or distinct < 9:
+        issues.append('fewer_than_nine_distinct_targets')
+    if min(counts.values()) < 4:
+        issues.append('fewer_than_four_samples_per_target')
+    spread_minimum = .05 if kind == 'screen' else .01
+    if len(singular) < 2 or singular[1] < spread_minimum:
+        issues.append('targets_lack_two_dimensional_coverage')
+    report = {'target_sample_counts': dict(counts), 'distinct_target_geometry': distinct,
+              'spread_singular_values': singular.tolist(),
+              'minimum_targets': 9, 'minimum_samples_per_target': 4,
+              'second_spread_singular_value_minimum': spread_minimum,
+              'policy_basis': 'minimum software acquisition protocol; not an accuracy acceptance criterion'}
+    if kind == 'screen':
+        span = np.ptp(centroids, axis=0)
+        area = float(cv2.contourArea(cv2.convexHull(centroids.astype(np.float32))))
+        report.update(normalized_span=span.tolist(), normalized_hull_area=area,
+                      minimum_normalized_span=[.4, .35], minimum_normalized_hull_area=.12)
+        if span[0] < .4 or span[1] < .35 or area < .12:
+            issues.append('targets_cover_too_little_of_the_display')
+    report.update(sufficient=not issues, issues=issues)
+    return report
+
+
+def validate_gaze_records(model:GazeModel,records:list[dict], *, context:dict,session_id:str,
+                          extrinsics:CameraExtrinsics|None=None) -> dict:
+    """Measure fresh target observations without inventing an acceptance pass.
+
+    Corrupt/conflicting data and an exact reuse of the fitted feature/target
+    arrays raise ValueError. Valid but undersampled/unprovenanced input retains
+    raw errors with a diagnostic-only status. A changed session label alone
+    never establishes independence. Even complete acquisition metadata cannot
+    prove a person's fixation or detect every possible partial training reuse.
+    """
+    if not records:
+        raise ValueError('Independent validation requires recorded observations')
+    if not isinstance(session_id, str) or not session_id.strip():
+        raise ValueError('Validation requires a nonempty acquisition session_id')
+    if session_id == model.metadata.get('session_id'):
+        raise ValueError('Do not reuse the model training session for validation')
+    if not isinstance(context, dict):
+        raise ValueError('Validation requires actual capture context')
+    mismatches = model.context_mismatches(context, require_present=True)
+    if mismatches:
+        raise ValueError('Validation configuration mismatch: ' + ', '.join(mismatches))
+    model.validate()
+    labels, row_contexts = [], []
+    seen_context = {}
+    for index, record in enumerate(records):
+        if not isinstance(record, dict) or record.get('target_id') is None or not str(record['target_id']).strip():
+            raise ValueError(f'Validation record {index} needs a target_id')
+        labels.append(str(record['target_id']))
+        if 'session_id' in record and record['session_id'] != session_id:
+            raise ValueError(f'Validation record {index} conflicts with the acquisition session_id')
+        row_context = record.get('context', {})
+        if not isinstance(row_context, dict):
+            raise ValueError(f'Validation record {index} context must be an object')
+        row_contexts.append(row_context)
+        for key in (*CONTEXT_KEYS, 'screen_size'):
+            if key not in row_context:
+                continue
+            for observed in (context, seen_context):
+                if key in observed and not _same_context_value(row_context[key], observed[key]):
+                    raise ValueError(f'Validation record {index} has conflicting context: {key}')
+            seen_context[key] = row_context[key]
+        row_mismatches = model.context_mismatches({**context, **row_context}, require_present=True)
+        if row_mismatches:
+            raise ValueError(f'Validation record {index} configuration mismatch: ' + ', '.join(row_mismatches))
+    try:
+        x = np.asarray([r['features'] for r in records], dtype=float)
+        y = np.asarray([r['target'] for r in records], dtype=float)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError('Invalid validation feature/target records') from exc
+    dimensions = 2 if model.kind == 'screen' else 3
+    if (x.shape != (len(records), len(FEATURE_NAMES)) or y.shape != (len(records), dimensions)
+            or not np.isfinite(x).all() or not np.isfinite(y).all()):
+        raise ValueError('Validation needs finite feature vectors and matching target dimensions')
+    if model.kind == 'screen':
+        if np.any(y < 0) or np.any(y > 1):
+            raise ValueError('Validation screen targets must be normalized within [0,1]')
+    else:
+        lengths = np.linalg.norm(y, axis=1)
+        if np.any(lengths < 1e-6):
+            raise ValueError('Validation spatial target directions cannot be zero')
+        y = y / lengths[:, None]
+    # This matches fit_gaze_model's float feature/normalized-target digest.
+    # Target IDs, session labels, timestamps and extra metadata cannot conceal
+    # reuse of the same ordered fitting arrays.
+    digest = hashlib.sha256(x.tobytes() + y.tobytes()).hexdigest()
+    training_digest = model.metadata.get('training_digest')
+    digest_available = (isinstance(training_digest, str) and len(training_digest) == 64
+                        and all(c in '0123456789abcdef' for c in training_digest.lower()))
+    if digest_available and digest == training_digest.lower():
+        raise ValueError('Validation reuses the exact model training observations; collect a new session')
+
+    coverage = _gaze_coverage(labels, y, model.kind)
+    provenance_issues = []
+    if not model.metadata.get('session_id'):
+        provenance_issues.append('model_training_session_not_recorded')
+    if not digest_available:
+        provenance_issues.append('model_training_digest_unavailable')
+    row_sessions_complete = all(r.get('session_id') == session_id for r in records)
+    if not row_sessions_complete:
+        provenance_issues.append('per_record_acquisition_session_missing')
+    contexts_complete = all(bool(c) for c in row_contexts)
+    if not contexts_complete:
+        provenance_issues.append('per_record_tracking_context_missing')
+    times_present = all('time_s' in r for r in records)
+    timestamps = None
+    if any('time_s' in r for r in records):
+        try:
+            available_times = np.asarray([r['time_s'] for r in records if 'time_s' in r], float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError('Invalid validation observation timestamps') from exc
+        if not np.isfinite(available_times).all() or np.any(np.diff(available_times) <= 0):
+            raise ValueError('Validation timestamps must be finite, unique and increasing')
+        if times_present:
+            timestamps = available_times
+    if not times_present:
+        provenance_issues.append('acquisition_timestamps_missing')
+    settled = True
+    for record in records:
+        acquisition = record.get('acquisition')
+        try:
+            sufficient = (isinstance(acquisition, dict)
+                          and np.isfinite(float(acquisition.get('settle_seconds', np.nan)))
+                          and float(acquisition['settle_seconds']) >= .5
+                          and np.isfinite(float(acquisition.get('stable_duration_s', np.nan)))
+                          and float(acquisition['stable_duration_s']) >= .1 - 1e-9
+                          and acquisition.get('target_assumption') == 'user_instructed_fixation')
+        except (KeyError, TypeError, ValueError):
+            sufficient = False
+        # np.isfinite may short-circuit to numpy.bool_ for malformed metadata.
+        # Diagnostic reports must remain strict-JSON serializable on all hosts.
+        settled = bool(settled and sufficient)
+    if not settled:
+        provenance_issues.append('settled_target_acquisition_not_recorded')
+    durations = {}
+    if timestamps is not None:
+        for label in dict.fromkeys(labels):
+            target_times = timestamps[np.asarray(labels) == label]
+            durations[label] = float(target_times[-1] - target_times[0])
+            if durations[label] < .1 - 1e-9:
+                coverage['issues'].append('target_observation_duration_below_collector_minimum')
+            if len(target_times) > 1 and np.max(np.diff(target_times)) > .25 + 1e-9:
+                coverage['issues'].append('target_observations_are_not_contiguous')
+            for record in (r for r in records if str(r['target_id']) == label):
+                acquisition = record.get('acquisition')
+                if not isinstance(acquisition, dict):
+                    continue
+                try:
+                    declared_duration = float(acquisition['stable_duration_s'])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if np.isfinite(declared_duration) and abs(declared_duration-durations[label]) > 1e-6:
+                    provenance_issues.append('acquisition_duration_conflicts_with_observation_timestamps')
+        coverage['issues'] = list(dict.fromkeys(coverage['issues']))
+        coverage['sufficient'] = not coverage['issues']
+    coverage.update(target_observation_duration_s=durations,
+                    minimum_target_duration_s=.1, maximum_within_target_gap_s=.25)
+    if model.kind == 'screen' and 'screen_size' not in context:
+        provenance_issues.append('actual_display_dimensions_not_supplied')
+    provenance_issues = list(dict.fromkeys(provenance_issues))
+
+    predictions = model.predict(x)
+    errors = _error_metrics(predictions, y, model.kind, model.metadata.get('screen_size'))
+    outside = [i for i, row in enumerate(x) if model.outside_envelope(row)]
+    synthetic = any(bool(c.get('synthetic') or c.get('simulated'))
+                    or c.get('backend') == 'synthetic' or c.get('eye_origin_source') == 'synthetic_fixture'
+                    for c in [model.metadata, context, *records, *row_contexts])
+    independent = coverage['sufficient'] and not provenance_issues
+    eligibility_issues = list(coverage['issues']) + list(provenance_issues)
+    if outside:
+        eligibility_issues.append('observations_outside_calibrated_operating_envelope')
+    if synthetic:
+        eligibility_issues.append('synthetic_data_cannot_establish_physical_acceptance')
+    if not isinstance(context.get('subject_id'), str) or not context['subject_id'].strip():
+        eligibility_issues.append('operator_identity_not_recorded')
+    report = {
+        'session_id': session_id, 'created_utc': datetime.now(timezone.utc).isoformat(),
+        'independent_session': independent, 'model_fingerprint': model.fingerprint,
+        'sample_count': len(records), 'target_count': len(set(labels)),
+        'out_of_envelope_samples': len(outside), 'in_envelope_fraction': (len(records)-len(outside))/len(records),
+        'screen_error' if model.kind == 'screen' else 'angular_error': errors,
+        'raw_metrics_computed': True, 'coverage': coverage,
+        'provenance': {
+            'declared_session_differs_from_training': True,
+            'per_record_session_consistent': row_sessions_complete,
+            'per_record_context_available': contexts_complete,
+            'timestamps_present_and_ordered': times_present,
+            'settled_acquisition_recorded': settled,
+            'training_digest_available': digest_available,
+            'validation_digest': digest,
+            'exact_training_digest_reused': False if digest_available else None,
+            'issues': provenance_issues,
+            'limitation': 'An aggregate digest checks exact ordered training-array reuse, not all partial or reordered overlap; capture metadata is supplied evidence, not proof of physical fixation.',
+        },
+        'independence_basis': 'consistent per-record acquisition metadata, sufficient target coverage and nonreused aggregate training digest' if independent else 'independence not established from the available evidence',
+        'synthetic': synthetic, 'measurement_provenance': 'synthetic_software_fixture' if synthetic else 'user_supplied_target_acquisition',
+        'measurement_basis': 'user-instructed fixation targets, not an independent ground-truth eye tracker',
+        'physical_accuracy_verified': False,
+        'acceptance_criteria': None, 'acceptance_passed': None,
+        'acceptance_note': 'No user-agreed accuracy, precision, drift or hardware criteria were supplied; these measurements are not an acceptance pass.',
+    }
+    if model.kind == 'spatial':
+        geometry_complete = extrinsics is not None and all('target_world_m' in r and 'eye_origin_camera_m' in r for r in records)
+        report['spatial_geometry_complete'] = geometry_complete
+        if not geometry_complete:
+            eligibility_issues.append('spatial_target_or_eye_origin_geometry_missing')
+        if extrinsics is not None:
+            extrinsics.validate()
+            misses, ranges, world_points = [], [], {}
+            behind = 0
+            for index, (pred, record) in enumerate(zip(predictions, records)):
+                if 'target_world_m' not in record or 'eye_origin_camera_m' not in record:
+                    continue
+                origin = np.asarray(record['eye_origin_camera_m'], float)
+                point = np.asarray(record['target_world_m'], float)
+                if origin.shape != (3,) or point.shape != (3,) or not np.isfinite(origin).all() or not np.isfinite(point).all():
+                    raise ValueError('Spatial validation geometry must contain finite XYZ vectors')
+                label = labels[index]
+                if label in world_points and not np.allclose(point, world_points[label], atol=1e-9, rtol=0):
+                    raise ValueError(f'Conflicting physical target coordinates within target_id {label}')
+                world_points[label] = point
+                target = world_to_camera_point(point, extrinsics)
+                difference = target - origin
+                distance = float(np.linalg.norm(difference))
+                if distance < .05 or not np.allclose(difference / distance, y[index], atol=1e-6, rtol=0):
+                    raise ValueError('Spatial validation direction conflicts with its measured target and eye origin')
+                along = float(np.dot(difference, pred))
+                if along <= 0:
+                    behind += 1
+                    continue
+                misses.append(float(np.linalg.norm(difference-along*pred))*1000)
+                ranges.append(distance)
+            report['targets_behind_predicted_ray'] = behind
+            if misses:
+                report['target_ray_perpendicular_miss_mm'] = {'median': float(np.median(misses)),
+                    'p95': float(np.percentile(misses, 95)), 'max': float(np.max(misses)), 'count': len(misses)}
+                report['target_distance_range_m'] = [min(ranges), max(ranges)]
+            if world_points:
+                points = np.asarray(list(world_points.values()))
+                distinct_world = len(np.unique(np.round(points, 6), axis=0))
+                rank = int(np.linalg.matrix_rank(points-points.mean(axis=0), tol=1e-6))
+                report['coverage']['distinct_physical_targets'] = distinct_world
+                report['coverage']['world_target_rank'] = rank
+                report['coverage']['volumetric_target_coverage'] = rank == 3
+                if distinct_world < 9:
+                    issue = 'fewer_than_nine_distinct_physical_targets'
+                    report['coverage']['issues'].append(issue)
+                    report['coverage']['sufficient'] = False
+                    eligibility_issues.append(issue)
+                if rank < 3:
+                    eligibility_issues.append('physical_targets_do_not_cover_a_three_dimensional_volume')
+        report['spatial_limit'] = 'Perpendicular ray miss is not depth fixation accuracy; an approximate eye origin affects these measurements.'
+    independent = report['coverage']['sufficient'] and not provenance_issues
+    report['independent_session'] = independent
+    if not independent:
+        report['independence_basis'] = 'independence not established from the available evidence'
+    report['validation_status'] = 'independent_measurements_available' if independent else 'diagnostic_only'
+    report['acceptance_eligible'] = not eligibility_issues
+    report['acceptance_issues'] = list(dict.fromkeys(eligibility_issues))
+    report['acceptance_status'] = ('pending_user_agreed_criteria' if report['acceptance_eligible']
+                                   else 'synthetic_software_only' if synthetic and independent
+                                   else 'not_eligible_for_acceptance')
+    return report
+
+
+def write_checkerboard_svg(path,cols=9,rows=6,square_mm=24.0,margin_mm=15.0):
+    """Create an exact-size vector pattern, intended for printing at 100% scale."""
+    from pathlib import Path
+    chessboard_points(cols,rows,square_mm)
+    if margin_mm<10:raise ValueError('Use a margin of at least 10 mm')
+    width=(cols+1)*square_mm+2*margin_mm;height=(rows+1)*square_mm+2*margin_mm+12
+    parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}mm" height="{height}mm" viewBox="0 0 {width} {height}">',
+           f'<rect width="{width}" height="{height}" fill="white"/>']
+    for row in range(rows+1):
+        for col in range(cols+1):
+            if (row+col)%2==0:
+                parts.append(f'<rect x="{margin_mm+col*square_mm}" y="{margin_mm+row*square_mm}" width="{square_mm}" height="{square_mm}" fill="black"/>')
+    parts.append(f'<text x="{margin_mm}" y="{height-9}" font-family="sans-serif" font-size="3.3" fill="black">GazeSpace | {cols} x {rows} internal corners | square {square_mm} mm | print 100%, measure after printing</text>')
+    parts.append(f'<text x="{margin_mm}" y="{margin_mm-5}" font-family="sans-serif" font-size="3.3" fill="black">TOP / preserve this board orientation for world calibration</text></svg>')
+    output=Path(path);output.parent.mkdir(parents=True,exist_ok=True);output.write_text('\n'.join(parts),encoding='utf-8')
+    return output
+
+===== END FILE: src/gazespace/validation.py =====
+
+===== BEGIN FILE: src/gazespace/vision.py =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: c439c373a6c8e5d70577c60d1c548946f6274c2b
+
+"""Facial/iris landmarks, IR fallback pupil tracking, approximate head pose.
+
+MediaPipe iris landmarks DO NOT independently estimate where a person looks:
+all gaze estimation is explicitly supervised and user-calibrated elsewhere.
+"""
+from __future__ import annotations
+import hashlib
+import json
+from pathlib import Path
+import numpy as np
+import cv2
+from .types import Observation, CameraIntrinsics
+from .geometry import approximate_intrinsics, estimate_head_pose, eye_origin_from_pose, HEAD_MODEL_VERSION
+from .pupil import detect_pupil, preprocess_ir
+
+RIGHT_CORNERS = (33, 133)
+LEFT_CORNERS = (362, 263)
+RIGHT_LIDS = (159, 145)
+LEFT_LIDS = (386, 374)
+RIGHT_IRIS = 468
+LEFT_IRIS = 473
+FEATURE_NAMES = ("right_iris_x", "right_iris_y", "left_iris_x", "left_iris_y",
+                 "yaw_45", "pitch_45", "roll_45", "nose_x", "nose_y", "depth_m")
+FEATURE_VERSION = 2
+
+
+def validate_rois(rois):
+    if rois is None:
+        return None
+    if set(rois) != {"left", "right"}:
+        raise ValueError("both left and right normalized eye ROIs are required")
+    result = {}
+    for side, rect in rois.items():
+        values = np.asarray(rect, dtype=float)
+        if values.shape != (4,) or not np.isfinite(values).all():
+            raise ValueError("ROI must be finite normalized x,y,width,height")
+        x, y, w, h = values
+        if min(x, y) < 0 or min(w, h) <= 0 or x + w > 1 or y + h > 1:
+            raise ValueError("normalized ROI must fit inside the image")
+        result[side] = tuple(float(v) for v in values)
+    return result
+
+
+def eye_aspect_ratio(lm: dict[int, tuple[float, float]], side: str) -> float:
+    indices = (33, 160, 158, 133, 153, 144) if side == "right" else (362, 385, 387, 263, 373, 380)
+    if any(i not in lm for i in indices):
+        return 0.0
+    p = [np.array(lm[i]) for i in indices]
+    return float((np.linalg.norm(p[1] - p[5]) + np.linalg.norm(p[2] - p[4])) /
+                 max(1e-6, 2 * np.linalg.norm(p[0] - p[3])))
+
+
+def eye_rel_pos(iris, c0, c1, top, bottom) -> tuple[float, float]:
+    """Eye-frame coordinates; vertical displacement uses eye width, not lid opening.
+
+    Normalizing vertical position by a closing lid gap produced large false gaze
+    jumps. Version 2 uses stable corner distance on both axes, with neutral .5.
+    """
+    ir, a, b, top, bottom = (np.asarray(p, dtype=float) for p in (iris, c0, c1, top, bottom))
+    horizontal = b - a
+    width = float(np.linalg.norm(horizontal))
+    if width < 4:
+        raise ValueError("insufficient eye pixel resolution")
+    axis = horizontal / width
+    vertical = np.array([-axis[1], axis[0]])
+    if vertical @ (bottom - top) < 0:
+        vertical *= -1
+    x = float((ir - a) @ axis / width)
+    y = float(0.5 + (ir - (top + bottom) / 2) @ vertical / width)
+    return x, y
+
+
+def observation_from_landmarks(lm: dict[int, tuple[float, float]], image_size: tuple[int, int],
+                               timestamp_s: float, intrinsics: CameraIntrinsics | None = None,
+                               ir_image: np.ndarray | None = None, pupil_polarity: str = "dark") -> Observation:
+    w, h = image_size
+    ob = Observation(timestamp_s, image_size, landmarks_px=lm, face_detected=True)
+    needed = (RIGHT_IRIS, LEFT_IRIS, *RIGHT_CORNERS, *LEFT_CORNERS,
+              *RIGHT_LIDS, *LEFT_LIDS, 1)
+    if any(i not in lm for i in needed):
+        ob.message = "missing_iris_landmarks"
+        return ob
+    if not all(np.isfinite(lm[i]).all() for i in needed):
+        ob.message = "nonfinite_landmarks"
+        return ob
+    ear_r, ear_l = eye_aspect_ratio(lm, "right"), eye_aspect_ratio(lm, "left")
+    ob.quality_metrics.update({"right_ear": ear_r, "left_ear": ear_l})
+    ob.blink = (ear_r < 0.13 or ear_l < 0.13)
+    ob.eyes_open = not ob.blink
+    if ob.blink:
+        ob.message = "blink_or_occluded_eye"
+        return ob
+    p_r, p_l = lm[RIGHT_IRIS], lm[LEFT_IRIS]
+    quality = 0.95
+    for side, center, corners, lids in (("right", p_r, RIGHT_CORNERS, RIGHT_LIDS),
+                                       ("left", p_l, LEFT_CORNERS, LEFT_LIDS)):
+        if ir_image is not None:
+            # restrict ellipse fit to eye region; do not mistake cheek/nose shadows for pupil
+            pts = np.array([lm[i] for i in (*corners, *lids)], float)
+            left, top = pts.min(axis=0)
+            right, bottom = pts.max(axis=0)
+            padding_x = max(4, (right - left) * 0.18)
+            padding_y = max(4, (bottom - top) * 0.9)
+            roi = (int(left-padding_x), int(top-padding_y),
+                   int((right-left)+2*padding_x), int((bottom-top)+2*padding_y))
+            pupil = detect_pupil(ir_image, roi, polarity=pupil_polarity)
+            if pupil is None or pupil.confidence < 0.4:
+                ob.message = f"ir_pupil_unavailable_{side}"
+                return ob
+            center = pupil.xy
+            quality = min(quality, pupil.confidence)
+            ob.quality_metrics[f"{side}_pupil_confidence"] = pupil.confidence
+        ob.pupils_px[side] = (float(center[0]), float(center[1]))
+    try:
+        right_xy = eye_rel_pos(ob.pupils_px["right"], lm[33], lm[133], lm[159], lm[145])
+        left_xy = eye_rel_pos(ob.pupils_px["left"], lm[362], lm[263], lm[386], lm[374])
+    except ValueError:
+        ob.message = "insufficient_eye_resolution"
+        return ob
+    if any(not 0 <= value <= 1 for value in (*right_xy, *left_xy)):
+        ob.message = "pupil_outside_eye_geometry"
+        return ob
+    intr = intrinsics if intrinsics is not None else approximate_intrinsics(w, h)
+    pose = estimate_head_pose(lm, intr)
+    ob.head_pose = pose
+    if pose is None:
+        ob.message = "head_pose_unavailable"
+        return ob
+    if abs(pose.yaw_deg) > 65 or abs(pose.pitch_deg) > 60 or abs(pose.roll_deg) > 60:
+        ob.message = "head_pose_outside_operating_range"
+        return ob
+    yaw, pitch, roll, depth = (pose.yaw_deg / 45.0, pose.pitch_deg / 45.0,
+                               pose.roll_deg / 45.0, float(pose.translation_m[2]))
+    ob.eye_origin_camera_m = eye_origin_from_pose(pose)
+    ob.eye_origin_source = "generic_face_pnp"
+    ob.warnings.append("eye_origin_uses_generic_anatomy")
+    if intr.source == "approximate":
+        ob.warnings.append("approximate_camera_intrinsics")
+    eye_span = float(np.linalg.norm(np.array(lm[33]) - np.array(lm[263])))
+    reprojection_limit = max(6.0, eye_span * 0.12)
+    ob.quality_metrics["head_reprojection_px"] = pose.reprojection_px
+    if pose.reprojection_px > reprojection_limit:
+        ob.message = "head_pose_reprojection_too_large"
+        return ob
+    quality *= float(np.clip(1.0 - pose.reprojection_px / (2 * reprojection_limit), 0, 1))
+    ob.features = np.asarray([*right_xy, *left_xy, yaw, pitch, roll,
+                               lm[1][0] / (w-1), lm[1][1] / (h-1), depth], dtype=float)
+    ob.quality = quality
+    ob.pupil_method = "iris_landmarks" if ir_image is None else "landmark_roi_ir_ellipse"
+    ob.message = "ok" if ob.quality >= 0.30 else "low_quality_landmarks"
+    return ob
+
+
+def observation_from_rois(image: np.ndarray, timestamp_s: float,
+                          roi_normalized: dict[str, tuple[float, float, float, float]],
+                          polarity: str = "dark", min_radius: float = 3,
+                          max_radius: float = 40) -> Observation:
+    h, w = image.shape[:2]
+    ob = Observation(timestamp_s, (w, h), pupil_method="ir_manual_roi")
+    try:
+        roi_normalized = validate_rois(roi_normalized)
+    except ValueError:
+        ob.message = "invalid_roi"
+        return ob
+    if roi_normalized is None:
+        ob.message = "roi_missing"
+        return ob
+    ob.warnings.append("static_eye_rois_require_stable_head_position")
+    vals = []
+    scores = []
+    for side in ("right", "left"):
+        if side not in roi_normalized:
+            ob.message = "roi_missing"
+            return ob
+        rect = roi_normalized[side]
+        if len(rect) != 4 or not all(np.isfinite(v) for v in rect):
+            ob.message = "invalid_roi"
+            return ob
+        x,y,rw,rh = rect
+        if rw <= 0 or rh <= 0:
+            ob.message = "invalid_roi"
+            return ob
+        px_rect = (round(x*w), round(y*h), round(rw*w), round(rh*h))
+        pupil = detect_pupil(image, px_rect, polarity, min_radius, max_radius)
+        if pupil is None or pupil.confidence < 0.30:
+            ob.message = f"pupil_missing_{side}"
+            return ob
+        ob.pupils_px[side] = pupil.xy
+        vals.extend(((pupil.xy[0]-px_rect[0])/px_rect[2],
+                     (pupil.xy[1]-px_rect[1])/px_rect[3]))
+        scores.append(pupil.confidence)
+        ob.quality_metrics[f"{side}_pupil_confidence"] = pupil.confidence
+    ob.eyes_open, ob.blink = True, False
+    ob.quality = float(min(scores))
+    ob.features = np.array([*vals, 0, 0, 0, 0.5, 0.5, 0], dtype=float)
+    ob.message = "ok" if ob.quality >= 0.30 else "low_quality_pupil"
+    return ob
+
+
+class FaceLandmarkDetector:
+    """MediaPipe legacy mesh or Tasks FaceLandmarker (with a supplied model)."""
+    def __init__(self, task_model: str | None = None, confidence: float = 0.5):
+        try:
+            import mediapipe as mp
+        except ImportError as e:
+            raise RuntimeError("Face tracking needs 'pip install gazespace[face]' or --face-model .task") from e
+        self.mp = mp
+        self.task_model = task_model
+        self.previous_timestamp_ms = -1
+        if task_model:
+            from mediapipe.tasks import python
+            from mediapipe.tasks.python import vision
+            self.vision = vision
+            options = vision.FaceLandmarkerOptions(
+                base_options=python.BaseOptions(model_asset_path=task_model),
+                running_mode=vision.RunningMode.VIDEO,
+                num_faces=1, min_face_detection_confidence=confidence,
+                min_tracking_confidence=confidence)
+            self.worker = vision.FaceLandmarker.create_from_options(options)
+            self.kind = "tasks"
+        elif hasattr(mp, "solutions") and hasattr(mp.solutions, "face_mesh"):
+            self.worker = mp.solutions.face_mesh.FaceMesh(
+                static_image_mode=False, max_num_faces=1, refine_landmarks=True,
+                min_detection_confidence=confidence, min_tracking_confidence=confidence)
+            self.kind = "legacy"
+        else:
+            raise RuntimeError("Installed MediaPipe has no legacy FaceMesh. Supply --face-model /path/to/face_landmarker.task")
+
+    def detect(self, image_bgr: np.ndarray, timestamp_s: float,
+               ir_mode: bool = False) -> dict[int, tuple[float, float]] | None:
+        h, w = image_bgr.shape[:2]
+        if ir_mode:
+            enhanced = preprocess_ir(image_bgr)
+            image_bgr = cv2.cvtColor(enhanced, cv2.COLOR_GRAY2BGR)
+        rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        if self.kind == "tasks":
+            stamp = max(self.previous_timestamp_ms + 1, int(timestamp_s * 1000))
+            self.previous_timestamp_ms = stamp
+            result = self.worker.detect_for_video(
+                self.mp.Image(image_format=self.mp.ImageFormat.SRGB, data=rgb), stamp)
+            faces = result.face_landmarks
+        else:
+            result = self.worker.process(rgb)
+            faces = [f.landmark for f in result.multi_face_landmarks] if result.multi_face_landmarks else []
+        if not faces:
+            return None
+        return {i: (float(p.x * w), float(p.y * h)) for i, p in enumerate(faces[0])}
+
+    def close(self):
+        self.worker.close()
+
+
+class GazeTracker:
+    def __init__(self, intrinsics: CameraIntrinsics | None = None,
+                 mode: str = "rgb", face_model: str | None = None,
+                 roi_normalized: dict[str, tuple[float, float, float, float]] | None = None,
+                 pupil_polarity: str = "dark", min_quality: float = 0.30,
+                 detector: FaceLandmarkDetector | None = None):
+        if mode not in ("rgb", "ir", "ir-roi"):
+            raise ValueError("mode must be rgb, ir or ir-roi")
+        if pupil_polarity not in ("dark", "bright"):
+            raise ValueError("pupil polarity must be dark or bright")
+        if intrinsics is not None:
+            intrinsics.validate()
+        self.intrinsics, self.mode = intrinsics, mode
+        self.roi_normalized, self.pupil_polarity = validate_rois(roi_normalized), pupil_polarity
+        self.face_model_sha256 = hashlib.sha256(Path(face_model).read_bytes()).hexdigest() if face_model else "mediapipe-legacy-0.10.21"
+        self.min_quality = min_quality
+        if mode == "ir-roi" and self.roi_normalized is None:
+            raise ValueError("ir-roi mode needs manually specified eye ROIs")
+        self.detector = detector if detector is not None else (
+            None if mode == "ir-roi" else FaceLandmarkDetector(task_model=face_model))
+
+    def context(self, image_size=None) -> dict:
+        context = {"feature_version": FEATURE_VERSION, "tracking_mode": self.mode,
+                   "pupil_polarity": self.pupil_polarity, "head_model": HEAD_MODEL_VERSION,
+                   "roi_normalized": {key:list(value) for key,value in self.roi_normalized.items()} if self.roi_normalized else None,
+                   "feature_method": {"rgb":"iris_landmarks", "ir":"landmark_roi_ir_ellipse", "ir-roi":"ir_manual_roi"}[self.mode]}
+        context["intrinsics_fingerprint"] = (hashlib.sha256(json.dumps(self.intrinsics.to_dict(), sort_keys=True).encode()).hexdigest()
+                                              if self.intrinsics is not None else "approximate")
+        if self.mode != "ir-roi":
+            context["face_model_sha256"] = self.face_model_sha256
+        if image_size is not None:
+            context["image_size"] = list(image_size)
+        return context
+
+    def process(self, image_bgr: np.ndarray, timestamp_s: float) -> Observation:
+        if image_bgr is None or image_bgr.ndim != 3 or image_bgr.shape[2] != 3 or image_bgr.dtype != np.uint8:
+            raise ValueError("tracker expects uint8 BGR image")
+        if not np.isfinite(timestamp_s):
+            raise ValueError("capture timestamp must be finite")
+        h,w = image_bgr.shape[:2]
+        if self.intrinsics and (self.intrinsics.width != w or self.intrinsics.height != h):
+            return Observation(timestamp_s, (w, h), message="intrinsics_resolution_mismatch")
+        if self.mode == "ir-roi":
+            ob = observation_from_rois(image_bgr, timestamp_s, self.roi_normalized, self.pupil_polarity)
+        elif self.detector is not None:
+            lm = self.detector.detect(image_bgr, timestamp_s, ir_mode=self.mode == "ir")
+            if lm:
+                ob = observation_from_landmarks(lm, (w,h), timestamp_s, self.intrinsics,
+                                                ir_image=image_bgr if self.mode == "ir" else None,
+                                                pupil_polarity=self.pupil_polarity)
+            else:
+                ob = Observation(timestamp_s, (w, h), message="face_or_iris_not_detected")
+        else:
+            ob = Observation(timestamp_s, (w, h), message="detector_unavailable")
+        # Never switch calibrated feature semantics or bypass a blink with ROI fallback.
+        ob.context = self.context((w, h))
+        ob.context["eye_origin_source"] = ob.eye_origin_source
+        return ob
+
+    def close(self):
+        if self.detector is not None:
+            self.detector.close()
+
+===== END FILE: src/gazespace/vision.py =====
+
+===== BEGIN FILE: src/gazespace/workflows.py =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: bf014b381a4f4144613091dd6dcee9bc65b61b14
+
+"""Guided calibration and validation workflows using settled target acquisition.
+
+Camera/tracker resources are owned by the caller. Tk is only a presentation
+layer; ``ScreenSession.prepare`` and ``consume_frame`` also work headlessly.
+"""
+from __future__ import annotations
+
+from copy import deepcopy
+from datetime import datetime, timezone
+import json
+from pathlib import Path
+import time
+import uuid
+import numpy as np
+import cv2
+
+from .acquisition import TargetCollector
+from .clock import host_now_s
+from .analytics import compare_anchors
+from .capture import FrameSource
+from .vision import GazeTracker
+from .calibration import (GazeModel, fit_gaze_model, load_profile, update_profile,
+                          new_profile, profile_geometry_hash)
+from .validation import validate_gaze_records
+from .geometry import world_to_camera_point
+from .types import CameraExtrinsics, CameraIntrinsics, Frame
+
+
+def _display_size(size):
+    if len(size) != 2 or any(int(v) != v or v < 2 for v in size):
+        raise ValueError("display dimensions must be integers >=2")
+    return int(size[0]), int(size[1])
+
+
+def grid_targets(size: tuple[int, int], cols: int = 4, rows: int | None = None):
+    rows = rows or cols
+    if cols < 3 or rows < 3:
+        raise ValueError("calibration grid needs at least 3x3 targets")
+    width, height = np.asarray(_display_size(size), float) - 1
+    xs, ys = np.linspace(.09, .91, cols), np.linspace(.18, .82, rows)
+    return [(f"{r}-{c}", (float(x * width), float(y * height)))
+            for r, y in enumerate(ys)
+            for c, x in (enumerate(xs) if r % 2 == 0 else reversed(list(enumerate(xs))))]
+
+
+def offset_validation_targets(size: tuple[int, int]):
+    width, height = np.asarray(_display_size(size), float) - 1
+    return [(f"validation-{i}", (x * width, y * height)) for i, (x, y) in enumerate([
+        (.25, .20), (.75, .20), (.50, .35), (.20, .65), (.80, .65), (.50, .80),
+        (.32, .50), (.68, .50), (.50, .50)])]
+
+
+def _capabilities(source):
+    getter = getattr(source, "capabilities", None)
+    return dict(getter() or {}) if getter else {}
+
+
+def _tracking_context(profile, tracker, source, image_size=None, camera_id=None):
+    """Build current context from actual inputs, not the saved model's identity."""
+    context = deepcopy(tracker.context(image_size))
+    caps = _capabilities(source)
+    explicit_id = camera_id if camera_id is not None else (
+        getattr(source, "device", None) if getattr(source, "device", None) is not None
+        else caps.get("source", caps.get("serial")))
+    if explicit_id is not None:
+        context["camera_id"] = str(explicit_id)
+    backend = caps.get("requested_backend", caps.get("backend"))
+    if backend is not None:
+        context["backend"] = str(backend).lower()
+        context["camera_backend"] = str(backend).lower()
+    context["subject_id"] = profile.get("subject_id", profile.get("context", {}).get("subject_id"))
+    context["mirror"] = False  # CLI paths do not mirror acquisition frames.
+    # Requested controls, when present, match GUI setting semantics. A driver
+    # readback is separately reported by the source; do not pretend it is the
+    # user's requested value when a backend expresses exposure differently.
+    context.update({"exposure_native": None, "exposure_us": None, "gain": None, "ir_bit_depth": None})
+    controls = caps.get("controls", {})
+    for source_key, key in (("exposure_native", "exposure_native"),
+                            ("ExposureTime", "exposure_us"),
+                            ("gain_native", "gain"), ("Gain", "gain")):
+        if source_key in controls and "requested" in controls[source_key]:
+            context[key] = controls[source_key]["requested"]
+    if hasattr(source, "ir_bit_depth"):
+        context["ir_bit_depth"] = source.ir_bit_depth
+    return context
+
+
+def _bind_observation(observation, profile, tracker, source, camera_id=None):
+    context = _tracking_context(profile, tracker, source, observation.image_size, camera_id)
+    context.update(deepcopy(observation.context))
+    context["image_size"] = list(observation.image_size)
+    observation.context = context
+    return observation
+
+
+def _validate_context(model, context, profile):
+    mismatch = model.context_mismatches(context, require_present=True)
+    if mismatch:
+        raise ValueError("calibration profile does not match current tracking configuration: " + ", ".join(mismatch))
+    expected_hash = model.metadata.get("calibration_context_hash")
+    if expected_hash and expected_hash != profile_geometry_hash(profile):
+        raise ValueError("camera/user/world geometry changed; recalibrate before validation")
+
+
+def _ensure_profile_unchanged(path, baseline):
+    if not Path(path).exists():
+        if baseline.get("screen_model") or baseline.get("spatial_model") or baseline.get("intrinsics"):
+            raise ValueError("calibration profile was removed during acquisition")
+        return
+    current = load_profile(path)
+    if profile_geometry_hash(current) != profile_geometry_hash(baseline):
+        raise ValueError("calibration profile geometry changed during acquisition; restart the session")
+    for field in ("screen_model", "spatial_model"):
+        if json.dumps(current.get(field), sort_keys=True) != json.dumps(baseline.get(field), sort_keys=True):
+            raise ValueError("a gaze model changed during acquisition; restart the session")
+
+
+def _validation_report(model, records, kind, screen_size=None, session_id=None, *,
+                       context=None, extrinsics=None):
+    if kind != model.kind:
+        raise ValueError("validation kind differs from the fitted model")
+    actual = deepcopy(context if context is not None else records[0].get("context", {}))
+    if kind == "screen" and screen_size is not None:
+        actual["screen_size"] = list(_display_size(screen_size))
+    report = validate_gaze_records(model, records, context=actual,
+                                   session_id=session_id, extrinsics=extrinsics)
+    # Retain the established CLI field names while using the same evidence gates
+    # as the desktop and public SDK validator.
+    report.update(timestamp_utc=report["created_utc"],
+                  outside_training_envelope_samples=report["out_of_envelope_samples"],
+                  outside_training_envelope_fraction=1-report["in_envelope_fraction"],
+                  prediction_method="unfiltered predictions on recorded target observations",
+                  target_ground_truth="user_instructed_fixation_on_measured_targets",
+                  notes=("Screen pixel errors depend on the user's actual fixation; primary-display identity is not independently verified."
+                         if kind == "screen" else
+                         "Angular error uses the configured eye-origin estimate, which may use generic facial anatomy; validate physical surface hits independently."))
+    return report
+
+
+class ScreenSession:
+    def __init__(self, source: FrameSource, tracker: GazeTracker, profile_path: str,
+                 samples_per_target: int = 16, grid: int = 4, validate: bool = False,
+                 camera_id: str | None = None, max_seconds_per_target: float = 10,
+                 drift: bool = False):
+        if samples_per_target < 4:
+            raise ValueError("need >=4 samples per target")
+        if max_seconds_per_target <= 1.2:
+            raise ValueError("allow more than 1.2 seconds for settling and target acquisition")
+        self.source, self.tracker, self.profile_path = source, tracker, profile_path
+        self.samples_per_target, self.grid = int(samples_per_target), int(grid)
+        self.validate, self.drift = bool(validate or drift), bool(drift)
+        self.camera_id = camera_id
+        self.max_seconds_per_target = float(max_seconds_per_target)
+        self.samples = []
+        self.index = 0
+        self.collecting = False
+        self.collect_started = 0.0
+        self.accepted = 0
+        self.aborted = self.completed = False
+        self.last_error = ""
+        self.session_id = uuid.uuid4().hex
+        self.collector: TargetCollector | None = None
+        self.profile = None
+        self.model = None
+        self.actual_context = None
+        self._observer = None
+
+    def prepare(self, screen_size: tuple[int, int]):
+        """Initialize display targets and profile checks without creating a GUI."""
+        self.size = _display_size(screen_size)
+        self.profile = load_profile(self.profile_path) if Path(self.profile_path).exists() else new_profile()
+        if self.validate:
+            if not self.profile.get("screen_model"):
+                raise ValueError("first calibrate a compatible version-2 screen model")
+            self.model = GazeModel.from_dict(self.profile["screen_model"])
+            if tuple(self.model.metadata["screen_size"]) != self.size:
+                raise ValueError("screen resolution changed; recalibrate before validation")
+            preliminary = _tracking_context(self.profile, self.tracker, self.source, camera_id=self.camera_id)
+            mismatch = self.model.context_mismatches(preliminary)
+            if mismatch:
+                raise ValueError("profile configuration mismatch: " + ", ".join(mismatch))
+        center = tuple((np.asarray(self.size, float) - 1) / 2)
+        self.targets = ([("anchor_initial", center), ("anchor_repeat", center)] if self.drift else
+                        offset_validation_targets(self.size) if self.validate else grid_targets(self.size, self.grid))
+        # Use the same depth-aware observation path as live tracking. This engine
+        # is deliberately uncalibrated and does not own/close the caller's tracker.
+        from .engine import GazeEngine
+        self._observer = GazeEngine(self.tracker)
+        return self.targets
+
+    def run(self) -> dict | None:
+        import tkinter as tk
+        import sys
+        if sys.platform == "win32":
+            try:
+                import ctypes
+                ctypes.windll.user32.SetProcessDPIAware()
+            except (OSError, AttributeError):
+                pass
+        self.root = tk.Tk()
+        try:
+            self.root.title("GazeSpace — " + ("drift check" if self.drift else "gaze calibration"))
+            self.root.configure(bg="#09111e")
+            self.root.attributes("-fullscreen", True)
+            self.root.attributes("-topmost", True)
+            self.root.focus_force()
+            self.prepare((self.root.winfo_screenwidth(), self.root.winfo_screenheight()))
+            self.canvas = tk.Canvas(self.root, highlightthickness=0, bg="#09111e")
+            self.canvas.pack(fill="both", expand=True)
+            self.root.bind("<space>", lambda _: self.start_target())
+            self.root.bind("<Return>", lambda _: self.start_target())
+            self.root.bind("<Escape>", lambda _: self.abort())
+            self.root.protocol("WM_DELETE_WINDOW", self.abort)
+            self.draw()
+            self.root.after(30, self.tick)
+            self.root.mainloop()
+        finally:
+            # No camera/tracker close here: callers may reuse the existing app's
+            # camera and are responsible for releasing their own resources.
+            try:
+                self.root.destroy()
+            except tk.TclError:
+                pass
+        if self.aborted or not self.completed:
+            return None
+        return self.finish()
+
+    def start_target(self):
+        if self.completed or self.collecting or self.aborted:
+            return
+        if not hasattr(self, "targets"):
+            raise RuntimeError("prepare a screen size before starting acquisition")
+        target_id, target_px = self.targets[self.index]
+        norm = np.asarray(target_px, float) / (np.asarray(self.size, float) - 1)
+        self.collector = TargetCollector(target_id, norm, min_samples=self.samples_per_target,
+                                         max_seconds=self.max_seconds_per_target,
+                                         session_id=self.session_id)
+        self.collector.start()
+        self.collecting = True
+        self.collect_started = host_now_s()
+        self.accepted = 0
+        self.last_error = "Allow fixation to settle before samples are collected"
+        self.draw()
+
+    def abort(self):
+        self.aborted = True
+        self.collecting = False
+        if self.collector:
+            self.collector.cancel()
+        if hasattr(self, "root"):
+            self.root.destroy()
+
+    def consume_frame(self, frame: Frame | None):
+        """Process one frame; return collector progress, or None when idle."""
+        if self.completed or self.aborted:
+            return None
+        if frame is None:
+            self.last_error = "Camera frame missing or source ended"
+            if self.collecting and host_now_s() - self.collect_started > self.max_seconds_per_target:
+                self.collector.cancel()
+                self.collecting = False
+                self.accepted = 0
+                self.last_error = "Camera timeout; reconnect, then press SPACE to retry this target"
+            return self.collector.progress() if self.collector else None
+        self._observer.process_frame(frame)
+        observation = self._observer.last_observation
+        _bind_observation(observation, self.profile, self.tracker, self.source, self.camera_id)
+        # Bind to actual frame size/method/origin even for validation. An invalid
+        # detection can lack an eye-origin source; its data will be rejected by
+        # acquisition rather than masquerading as a different calibrated method.
+        if observation.features is not None and observation.eyes_open and not observation.blink:
+            if self.model is not None:
+                _validate_context(self.model, observation.context, self.profile)
+            if self.actual_context is None:
+                self.actual_context = deepcopy(observation.context)
+            elif observation.context != self.actual_context:
+                raise ValueError("tracking context changed during acquisition; restart calibration")
+        if not self.collecting:
+            return None
+        self.collector.add(observation)
+        state = self.collector.progress()
+        self.accepted = state["accepted"]
+        self.last_error = state["reason"].replace("_", " ")
+        if self.collector.complete:
+            self.samples.extend(self.collector.records(screen_size=self.size))
+            self.collecting = False
+            self.index += 1
+            self.last_error = "Target captured; look at the next dot, then press SPACE"
+            if hasattr(self, "canvas"):
+                self.canvas.bell()
+            if self.index >= len(self.targets):
+                self.completed = True
+                if hasattr(self, "root"):
+                    self.root.destroy()
+        elif state["state"] in ("timeout", "incompatible"):
+            self.collecting = False
+            self.accepted = 0
+            self.last_error = "Target not saved: " + state["reason"].replace("_", " ") + "; press SPACE to retry"
+        return state
+
+    def finish(self):
+        """Fit or validate after all targets; usable by headless integrations."""
+        if not self.completed or not self.samples or self.actual_context is None:
+            raise ValueError("all targets must be acquired before finishing")
+        _ensure_profile_unchanged(self.profile_path, self.profile)
+        if self.validate:
+            _validate_context(self.model, self.actual_context, self.profile)
+            if self.drift:
+                report = evaluate_drift(self.samples, self.model, self.size)
+                report.update({"session_id": self.session_id, "model_fingerprint": self.model.fingerprint,
+                               "timestamp_utc": datetime.now(timezone.utc).isoformat()})
+                update_profile(self.profile_path, drift_validation=report)
+            else:
+                report = _validation_report(self.model, self.samples, "screen", self.size, self.session_id,
+                                            context=self.actual_context)
+                update_profile(self.profile_path, screen_validation=report)
+            return report
+        model = fit_gaze_model(self.samples, "screen", screen_size=self.size,
+                               context=self.actual_context, session_id=self.session_id)
+        update_profile(self.profile_path, screen_model=model.to_dict(),
+                       camera_id=self.actual_context.get("camera_id", self.camera_id),
+                       context=self.actual_context)
+        return model.report
+
+    def draw(self):
+        if not hasattr(self, "canvas"):
+            return
+        self.canvas.delete("all")
+        width, height = self.size
+        title = "ANCHOR DRIFT CHECK" if self.drift else "INDEPENDENT VALIDATION" if self.validate else "SCREEN CALIBRATION"
+        self.canvas.create_text(width / 2, 40, text="GAZESPACE · " + title,
+                                fill="#eff7ff", font=("Segoe UI", 24, "bold"))
+        if self.collecting:
+            state = self.collector.progress()
+            subtitle = f'{state["state"].title()} · {state["accepted"]}/{self.samples_per_target} samples · {state["stable_duration_s"]:.1f}s stable'
+        elif self.drift and self.index == 1:
+            subtitle = "Wait and move naturally between anchors, then look at the center and press SPACE"
+        else:
+            subtitle = "Look directly at the dot, hold head naturally, press SPACE to collect"
+        self.canvas.create_text(width / 2, 84, text=f"Target {min(self.index + 1, len(self.targets))}/{len(self.targets)}  |  " + subtitle,
+                                fill="#93adc5", font=("Segoe UI", 16))
+        if self.index < len(self.targets):
+            _, (x, y) = self.targets[self.index]
+            for radius, color, stroke in ((25, "#21436a", 3), (10, "#40dfc0", 4), (3, "#ffffff", 0)):
+                self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius,
+                                        outline=color if stroke else "", fill=color if not stroke else "", width=stroke)
+        self.canvas.create_text(width / 2, height - 40, text=f"ESC: cancel  |  SPACE: sample  |  {self.last_error}",
+                                fill="#f6a67a", font=("Segoe UI", 13))
+
+    def tick(self):
+        if self.aborted or self.completed:
+            return
+        try:
+            self.consume_frame(self.source.read())
+        except (ValueError, RuntimeError, OSError, cv2.error) as exc:
+            self.last_error = f"{type(exc).__name__}: {str(exc)[:130]}"
+            if self.collector:
+                self.collector.cancel()
+            self.collecting = False
+            self.accepted = 0
+        if not self.completed and not self.aborted:
+            self.draw()
+            self.root.after(30, self.tick)
+
+
+def evaluate_drift(samples: list[dict], model: GazeModel, screen_size: tuple[int, int]) -> dict:
+    initial = [row for row in samples if row["target_id"] == "anchor_initial"]
+    repeated = [row for row in samples if row["target_id"] == "anchor_repeat"]
+    if len(initial) < 4 or len(repeated) < 4:
+        raise ValueError("drift check needs >=4 samples at each repeated fixation")
+    try:
+        timestamps = np.asarray([row["time_s"] for row in samples], float)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("drift check requires acquisition timestamps") from exc
+    if not np.isfinite(timestamps).all() or np.any(np.diff(timestamps) <= 0):
+        raise ValueError("drift timestamps must be finite, unique and increasing")
+    if repeated[0]["time_s"] <= initial[-1]["time_s"]:
+        raise ValueError("repeat fixation must follow the initial fixation")
+    extent = np.asarray(_display_size(screen_size), float) - 1
+    first = model.predict(np.asarray([r["features"] for r in initial], float)) * extent
+    last = model.predict(np.asarray([r["features"] for r in repeated], float)) * extent
+    # In v2 the actual center is halfway between pixel 0 and pixel width-1.
+    target = extent / 2
+    report = compare_anchors(first, last, target_px=target)
+    # compare_anchors also supports a caller-selected diagnostic threshold. This
+    # workflow has not collected any agreed threshold, so do not present its
+    # library default as a selected limit or as an acceptance result.
+    report["threshold_px"] = None
+    report["outcome"] = "measurement_only_no_agreed_criteria"
+    provenance = [getattr(model, "metadata", {}), *samples,
+                  *(row.get("context", {}) for row in samples)]
+    synthetic = any(isinstance(value, dict) and (
+        bool(value.get("synthetic") or value.get("simulated"))
+        or value.get("backend") == "synthetic"
+        or value.get("eye_origin_source") == "synthetic_fixture") for value in provenance)
+    report.update({"first_mean_px": report["first"]["mean_xy"],
+                   "repeat_mean_px": report["repeat"]["mean_xy"],
+                   "first_anchor_error_px": float(np.linalg.norm(np.mean(first, axis=0) - target)),
+                   "repeat_anchor_error_px": float(np.linalg.norm(np.mean(last, axis=0) - target)),
+                   # Historical field names retained, but now hold a correct
+                   # RMS measure rather than std(radial distance).
+                   "first_jitter_std_px": report["first"]["radial_rms"],
+                   "repeat_jitter_std_px": report["repeat"]["radial_rms"],
+                   "first_jitter_rms_px": report["first"]["radial_rms"],
+                   "repeat_jitter_rms_px": report["repeat"]["radial_rms"],
+                   "first_jitter_std_xy_px": report["first"]["std_xy"],
+                   "repeat_jitter_std_xy_px": report["repeat"]["std_xy"],
+                   "elapsed_s": float(repeated[-1]["time_s"] - initial[0]["time_s"]),
+                   "synthetic": synthetic,
+                   "measurement_provenance": "synthetic_software_fixture" if synthetic else "user_supplied_repeated_anchors",
+                   "physical_accuracy_verified": False,
+                   "acceptance_eligible": False,
+                   "acceptance_status": "synthetic_software_only" if synthetic else "not_evaluated",
+                   "acceptance_criteria": None, "acceptance_passed": None,
+                   "acceptance_note": "Repeated center anchors alone do not establish global gaze accuracy; baseline error, drift and operating duration need agreed limits.",
+                   "method": "two instructed center fixations; radial RMS and mean offset in calibrated pixels",
+                   "warning": "Drift alone does not establish accuracy. Recalibrate if baseline target error or drift is excessive."})
+    return report
+
+
+def read_spatial_targets(path: str) -> list[dict]:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, list) or len(payload) < 9:
+        raise ValueError("spatial target file must be a list of >=9 measured targets")
+    keys = set()
+    points = []
+    for row in payload:
+        if not isinstance(row, dict) or "id" not in row or "xyz_m" not in row:
+            raise ValueError("each target needs id and finite xyz_m [x,y,z]")
+        try:
+            point = np.asarray(row["xyz_m"], float)
+        except (ValueError, TypeError) as exc:
+            raise ValueError("each target needs finite xyz_m [x,y,z]") from exc
+        if point.shape != (3,) or not np.isfinite(point).all() or not str(row["id"]).strip():
+            raise ValueError("each target needs id and finite xyz_m [x,y,z]")
+        if str(row["id"]) in keys:
+            raise ValueError("target ids must be unique")
+        keys.add(str(row["id"]))
+        points.append(point)
+    array = np.asarray(points)
+    if len(np.unique(np.round(array, 5), axis=0)) != len(array):
+        raise ValueError("target coordinates must be distinct; different labels cannot duplicate a fixation")
+    singular = np.linalg.svd(array - np.mean(array, axis=0), compute_uv=False)
+    if singular[1] < .005:
+        raise ValueError("target geometry is collinear or has insufficient horizontal/vertical spread")
+    return payload
+
+
+def _check_spatial_geometry(targets, extrinsics, require_multidepth):
+    world = np.asarray([row["xyz_m"] for row in targets], float)
+    camera = np.asarray([world_to_camera_point(point, extrinsics) for point in world])
+    if np.any(camera[:, 2] <= .02):
+        raise ValueError("physical targets must lie in front of the calibrated camera")
+    depth_span = float(np.ptp(camera[:, 2]))
+    singular = np.linalg.svd(world - world.mean(axis=0), compute_uv=False)
+    if require_multidepth and (depth_span < .02 or singular[2] < .005):
+        raise ValueError("volumetric calibration needs a nonplanar target arrangement and >=20 mm depth spread in CAMERA coordinates; use single-depth mode only for planar experiments")
+    return {"camera_depth_span_m": depth_span, "target_rank": int(np.count_nonzero(singular > .005)),
+            "volumetric_target_coverage": bool(depth_span >= .02 and singular[2] >= .005)}
+
+
+def spatial_session(source: FrameSource, tracker: GazeTracker, profile_path: str, targets_path: str,
+                    samples_per_target: int = 16, validate: bool = False,
+                    max_seconds: float = 15, require_multidepth: bool = True) -> dict:
+    profile = load_profile(profile_path)
+    if not profile.get("intrinsics") or not profile.get("extrinsics"):
+        raise ValueError("need calibrated intrinsic and board-to-world extrinsic profile")
+    if CameraIntrinsics.from_dict(profile["intrinsics"]).source not in ("measured", "factory"):
+        raise ValueError("physical workspace calibration cannot use approximate focal length")
+    extrinsics = CameraExtrinsics.from_dict(profile["extrinsics"])
+    targets = read_spatial_targets(targets_path)
+    geometry = _check_spatial_geometry(targets, extrinsics, require_multidepth)
+    if samples_per_target < 4:
+        raise ValueError("need >=4 samples per target")
+    if max_seconds <= 1.2:
+        raise ValueError("allow more than 1.2 seconds for each physical target")
+    model = None
+    if validate:
+        if not profile.get("spatial_model"):
+            raise ValueError("first calibrate a compatible spatial gaze model")
+        model = GazeModel.from_dict(profile["spatial_model"])
+        mismatch = model.context_mismatches(_tracking_context(profile, tracker, source))
+        if mismatch:
+            raise ValueError("spatial profile configuration mismatch: " + ", ".join(mismatch))
+    from .engine import GazeEngine
+    observer = GazeEngine(tracker)
+    records, actual_context = [], None
+    session_id = uuid.uuid4().hex
+    for index, target in enumerate(targets):
+        print(f"\n[{index + 1}/{len(targets)}] Look at physical target {target['id']} at {target['xyz_m']} meters. "
+              "Hold a steady fixation; press Enter to start or q to cancel.")
+        if input("Target ready? ").strip().lower() == "q":
+            raise KeyboardInterrupt("spatial calibration cancelled")
+        collector = TargetCollector(str(target["id"]), target["xyz_m"], "spatial",
+                                     min_samples=samples_per_target, max_seconds=max_seconds,
+                                     session_id=session_id)
+        collector.start()
+        started = host_now_s()
+        while not collector.complete and host_now_s() - started <= max_seconds:
+            frame = source.read()
+            if frame is None:
+                if getattr(source, "eof", False):
+                    raise RuntimeError("video ended during spatial target acquisition")
+                time.sleep(.02)
+                continue
+            observer.process_frame(frame)
+            observation = observer.last_observation
+            _bind_observation(observation, profile, tracker, source)
+            if observation.features is not None and observation.eyes_open and not observation.blink:
+                if model:
+                    _validate_context(model, observation.context, profile)
+                if actual_context is None:
+                    actual_context = deepcopy(observation.context)
+                elif observation.context != actual_context:
+                    raise ValueError("tracking context changed during physical target acquisition")
+            collector.add(observation)
+            if collector.state in ("timeout", "incompatible"):
+                break
+        if not collector.complete:
+            raise RuntimeError(f"Target {target['id']} not saved: {collector.reason}; check pupil visibility, head stability, camera and pose")
+        records.extend(collector.records(extrinsics=extrinsics))
+        print(f"  Captured {len(collector.observations)} settled samples over {collector.progress()['stable_duration_s']:.2f} seconds")
+    _ensure_profile_unchanged(profile_path, profile)
+    if validate:
+        report = _validation_report(model, records, "spatial", session_id=session_id,
+                                    context=actual_context, extrinsics=extrinsics)
+        report["target_geometry"] = geometry
+        update_profile(profile_path, spatial_validation=report)
+        return report
+    model = fit_gaze_model(records, "spatial", context=actual_context, session_id=session_id)
+    model.report["target_geometry"] = geometry
+    update_profile(profile_path, spatial_model=model.to_dict(), context=actual_context,
+                   camera_id=actual_context.get("camera_id", profile.get("camera_id")))
+    return model.report
+
+===== END FILE: src/gazespace/workflows.py =====
+
+===== BEGIN FILE: scripts/capture_desktop_evidence.py =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: 756c9e7ff744e2cc17f4a100c7e4821356dbf07c
+
+"""Capture the actual native application running an explicitly synthetic source.
+
+No screenshots are painted separately or reconstructed from design mockups.
+The GIF consists of successive QWidget.grab() frames from the running app.
+"""
+from __future__ import annotations
+import argparse
+from datetime import datetime,timezone
+from io import BytesIO
+import json
+import os
+from pathlib import Path
+import socket
+import tempfile
+import time
+import urllib.request
+
+os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
+from PySide6.QtCore import QBuffer,QIODevice
+from PySide6.QtWidgets import QApplication
+from PIL import Image
+from gazespace.ui.main_window import MainWindow
+from gazespace.sessions import load_session
+
+
+def pump(app,condition=lambda:False,timeout=0.2,required=False):
+    deadline=time.monotonic()+timeout
+    while time.monotonic()<deadline:
+        app.processEvents()
+        if condition():return
+        time.sleep(.01)
+    if required:raise AssertionError('Native application did not reach the expected state')
+
+
+def gif_frame(window):
+    buffer=QBuffer();buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+    assert window.grab().save(buffer,'PNG')
+    return Image.open(BytesIO(bytes(buffer.data()))).convert('RGB')
+
+
+def capture(output,workspace):
+    output=Path(output).resolve();output.mkdir(parents=True,exist_ok=True)
+    app=QApplication.instance() or QApplication([])
+    window=MainWindow(workspace=workspace,interactive_errors=False)
+    errors=[];window.error_reported.connect(errors.append)
+    window.resize(1440,1000);window.show();app.processEvents()
+    images=[];screenshots=[]
+    try:
+        window.open_demo()
+        pump(app,lambda:window.runtime is not None and
+             bool((window.snapshot().get('latest') or {}).get('spatial_valid')) and not window._jobs,
+             timeout=20,required=True)
+        window.record_video.setChecked(True);window.toggle_record()
+        assert window.recorder is not None
+        session_path=window.recorder.path
+        for index in range(36):
+            if index%12==0:
+                window.runtime.set_synthetic_target(*[(.24,.30),(.74,.65),(.48,.45)][index//12])
+            pump(app,timeout=1/6)
+            images.append(gif_frame(window))
+        assert window.grab().save(str(output/'desktop_live.png'))
+        screenshots.append('desktop_live.png')
+        window.stop_recording()
+        session=load_session(session_path)
+        assert len(session.records)>90 and any(r.get('spatial_valid') for r in session.records)
+        window.load_session_path(session_path);window.add_aoi();window.analyze_current_session()
+        window.export_session_report();pump(app,lambda:not window._jobs,timeout=10,required=True)
+        for page,name in ((1,'cameras'),(2,'calibration'),(3,'workspace'),(4,'sessions'),(5,'diagnostics')):
+            window.set_page(page);pump(app,timeout=.25)
+            if page==3:
+                window.world_view.yaw+=.18;window.world_view.update();app.processEvents()
+            if page==4:
+                window.replay_slider.setValue(round(window.replay.duration_s*500));pump(app,timeout=.2)
+            filename=f'desktop_{name}.png'
+            assert window.grab().save(str(output/filename));screenshots.append(filename)
+        # Open the real local ASGI server, authenticate and consume its current
+        # calibrated gaze. The receipt never includes its short-lived token.
+        with socket.socket() as probe:
+            probe.bind(('127.0.0.1',0));port=probe.getsockname()[1]
+        window.port_spin.setValue(port);window.toggle_api()
+        pump(app,lambda:window._api_server is not None and window._api_server.started,
+             timeout=8,required=True)
+        request=urllib.request.Request(f'http://127.0.0.1:{port}/v1/gaze',
+                   headers={'Authorization':'Bearer '+window._api_token})
+        with urllib.request.urlopen(request,timeout=3) as response:
+            payload=json.loads(response.read());http_status=response.status
+        window.set_page(6);pump(app,timeout=.2)
+        assert window.grab().save(str(output/'desktop_integration.png'))
+        screenshots.append('desktop_integration.png')
+        runtime=window.runtime.telemetry()
+        window.stop_api();window.export_diagnostics()
+        assert not errors,errors
+        images[0].save(output/'desktop_live.gif',save_all=True,append_images=images[1:],
+                       duration=167,loop=0,optimize=True)
+        report={'status':'passed','verified_at_utc':datetime.now(timezone.utc).isoformat(),
+            'rendering':'Actual PySide6 widgets, native offscreen rendering; screenshots captured with QWidget.grab',
+            'source':'Generated pupil camera fixture processed by the actual detector, screen fit and spatial fit',
+            'synthetic':True,'physical_hardware_validated':False,'human_gaze_accuracy_validated':False,
+            'window_size':[1440,1000],'pages_captured':7,'screenshots':screenshots,
+            'gif':{'path':'desktop_live.gif','frame_count':len(images),'interval_ms':167},
+            'session_records':len(session.records),'recorded_video_frames':session.manifest['counts']['video_frames'] if 'counts' in session.manifest else session.manifest.get('video_frames'),
+            'session_path':str(session_path),'native_ui_errors':errors,
+            'real_loopback_http_status':http_status,'real_loopback_gaze_response':payload,
+            'runtime_metrics':runtime['metrics']}
+        (output/'desktop_verification.json').write_text(json.dumps(report,indent=2,allow_nan=False)+'\n',encoding='utf-8')
+        return report
+    finally:
+        window.stop_tracking();window.close();app.processEvents()
+        window.pool.waitForDone(5000)
+
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output',required=True);parser.add_argument('--workspace')
+    args=parser.parse_args()
+    if args.workspace:
+        result=capture(args.output,args.workspace)
+    else:
+        with tempfile.TemporaryDirectory(prefix='gazespace-evidence-') as workspace:
+            result=capture(args.output,workspace)
+    print(json.dumps(result,indent=2,allow_nan=False))
+
+===== END FILE: scripts/capture_desktop_evidence.py =====
+
+===== BEGIN FILE: scripts/gazespace_entry.py =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: 6c45177bce30b489c074bd0810033419323b191f
+
+"""Console entrypoint used by the Windows CLI distribution."""
+from multiprocessing import freeze_support
+import sys
+
+if __name__ == '__main__':
+    freeze_support()
+    if sys.argv[1:2] == ['camera-soak']:
+        from camera_acceptance import main as acceptance_main
+        raise SystemExit(acceptance_main(sys.argv[2:]))
+    if sys.argv[1:2] == ['environment-probe']:
+        from environment_acceptance import main as environment_main
+        raise SystemExit(environment_main(sys.argv[2:]))
+    if sys.argv[1:2] == ['face-smoke']:
+        from verify_face_inference import main as face_main
+        raise SystemExit(face_main(sys.argv[2:]))
+    from gazespace.cli import main
+    raise SystemExit(main())
+
+===== END FILE: scripts/gazespace_entry.py =====
+
+===== BEGIN FILE: scripts/gazespace_studio_entry.py =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: 5d5d08c527a895a41f7320e79aa6886a0e0380d1
+
+"""Windowed distribution entrypoint with an actionable startup error log."""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from multiprocessing import freeze_support
+import os
+from pathlib import Path
+import sys
+import traceback
+
+
+def smoke_test(receipt_path: str) -> int:
+    """Initialize and paint the real bundled Qt UI without selecting a camera."""
+    import json
+    import platform
+    from tempfile import TemporaryDirectory
+
+    from PySide6.QtWidgets import QApplication
+    from gazespace import __version__
+    from gazespace.ui.main_window import MainWindow
+    from gazespace.ui.fonts import configure_app_fonts, verify_font_rendering
+
+    path = Path(receipt_path).resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    frozen = bool(getattr(sys, 'frozen', False))
+    bundled_guides_present = None
+    if frozen:
+        app_directory = Path(sys.executable).resolve().parent
+        bundled_guides_present = all((app_directory / item).is_file() for item in ('README.md', 'docs/USER_GUIDE.md'))
+        if not bundled_guides_present:
+            raise RuntimeError('Packaged Studio is missing README.md or docs/USER_GUIDE.md beside its executable')
+    app = QApplication.instance() or QApplication(sys.argv[:1])
+    configure_app_fonts(app)
+    app.setApplicationName('GazeSpace Studio packaging verification')
+    errors: list[str] = []
+    with TemporaryDirectory(prefix='gazespace_studio_smoke_') as workspace:
+        window = MainWindow(workspace=workspace, interactive_errors=False)
+        window.error_reported.connect(errors.append)
+        window.show()
+        pages_painted = 0
+        try:
+            app.processEvents()
+            font_verification = verify_font_rendering(
+                window.nav_buttons[0].font(), output_png=path.with_name(path.stem + '_font_probe.png'))
+            for index in range(window.pages.count()):
+                window.pages.setCurrentIndex(index)
+                app.processEvents()
+                if window.grab().isNull():
+                    raise RuntimeError(f'Qt page {index} failed to paint')
+                pages_painted += 1
+            window.pages.setCurrentIndex(0)
+            app.processEvents()
+            if errors:
+                raise RuntimeError('; '.join(errors))
+            image_path = path.with_suffix('.png')
+            if not window.grab().save(str(image_path)):
+                raise RuntimeError('Unable to write the native Qt smoke screenshot')
+        finally:
+            window.close()
+            app.processEvents()
+        if window.isVisible():
+            raise RuntimeError('Studio did not close cleanly after the packaging smoke check')
+    report = {
+        'status': 'passed',
+        'verified_at_utc': datetime.now(timezone.utc).isoformat(),
+        'version': __version__,
+        'platform': platform.platform(),
+        'frozen_executable': frozen,
+        'bundled_guides_present': bundled_guides_present,
+        'qt_platform': app.platformName(),
+        'native_ui_pages_painted': pages_painted,
+        'font_verification': font_verification,
+        'screenshot': image_path.name,
+        'camera_opened': False,
+        'interactive_windows_monitor_acceptance': False,
+    }
+    path.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    return 0
+
+
+def run() -> int:
+    # pythonw/PyInstaller windowed mode has no console streams. Native/model
+    # libraries may still write log messages, so supply a writable sink.
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, 'w', encoding='utf-8')
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, 'w', encoding='utf-8')
+    try:
+        if '--smoke-test' in sys.argv[1:]:
+            import argparse
+            parser = argparse.ArgumentParser(description='Verify the packaged native Studio UI')
+            parser.add_argument('--smoke-test', required=True, metavar='RECEIPT_JSON')
+            args = parser.parse_args()
+            return smoke_test(args.smoke_test)
+        from gazespace.desktop import main
+        return int(main() or 0)
+    except Exception as exc:
+        folder = Path(os.environ.get('LOCALAPPDATA', str(Path.home()))) / 'GazeSpace' / 'logs'
+        path = folder / 'startup_error.log'
+        detail = traceback.format_exc()
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+            with path.open('a', encoding='utf-8') as stream:
+                stream.write('\n' + datetime.now(timezone.utc).isoformat() + '\n' + detail)
+            message = f'GazeSpace could not start:\n{type(exc).__name__}: {exc}\n\nDetails: {path}'
+        except OSError:
+            message = f'GazeSpace could not start:\n{type(exc).__name__}: {exc}\n\nRun GazeSpaceCLI doctor for dependency information.'
+        if sys.platform == 'win32' and '--smoke-test' not in sys.argv[1:]:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(None, message, 'GazeSpace startup error', 0x10)
+        else:
+            print(message, file=sys.stderr)
+        return 2
+
+
+if __name__ == '__main__':
+    freeze_support()
+    raise SystemExit(run())
+
+===== END FILE: scripts/gazespace_studio_entry.py =====
+
+===== BEGIN FILE: scripts/run_windows.bat =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: 3097db940cd571a4c186af93b0b9f40c64d3fdcb
+
+@echo off
+setlocal
+cd /d "%~dp0.."
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup_windows.ps1" %*
+set "GAZESPACE_EXIT=%ERRORLEVEL%"
+if not "%GAZESPACE_EXIT%"=="0" (
+    echo GazeSpace setup did not complete. Review the error above.
+    pause
+)
+exit /b %GAZESPACE_EXIT%
+
+===== END FILE: scripts/run_windows.bat =====
+
+===== BEGIN FILE: scripts/verify_face_inference.py =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: c7cd5faf77da139ab27ea09c714da6815c73a86b
+
+"""Verify actual bundled face/iris inference on the attributed reference photo.
+
+This is an inference integration check. The image has no gaze or pose ground
+truth and cannot establish live-camera, head-angle or gaze accuracy.
+"""
+from __future__ import annotations
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import importlib.metadata
+import json
+from pathlib import Path
+import platform
+import sys
+import cv2
+import numpy as np
+from gazespace.vision import GazeTracker
+from gazespace import __version__
+
+
+def verify(image_path, output=None):
+    image_path=Path(image_path)
+    image=cv2.imread(str(image_path))
+    if image is None:
+        raise ValueError('Reference photograph could not be decoded')
+    tracker=GazeTracker(mode='rgb')
+    try:
+        ob=tracker.process(image,1.0)
+        if not ob.face_detected or len(ob.landmarks_px) != 478:
+            raise RuntimeError('Reference photograph must produce a face with 478 refined facial/iris landmarks')
+        if len(ob.pupils_px) != 2:
+            raise RuntimeError('Reference photograph must produce both iris/pupil observations')
+        if ob.features is None or not np.isfinite(ob.features).all():
+            raise RuntimeError('Face inference did not produce finite tracking features')
+        if ob.head_pose is None:
+            raise RuntimeError('Face inference did not produce a head-pose estimate')
+        pose=ob.head_pose
+        report={'status':'passed','verified_at_utc':datetime.now(timezone.utc).isoformat(),
+            'source':'NASA astronaut photograph distributed by scikit-image; still photo without gaze ground truth',
+            'source_reference':'https://scikit-image.org/docs/stable/api/skimage.data.html#skimage.data.astronaut',
+            'image_sha256':hashlib.sha256(image_path.read_bytes()).hexdigest(),
+            'environment':{'python':platform.python_version(),'platform':platform.platform(),
+                           'mediapipe':importlib.metadata.version('mediapipe'),
+                           'application_version':__version__},
+            'frozen_executable':bool(getattr(sys,'frozen',False)),
+            'face_detected':ob.face_detected,'iris_count':len(ob.pupils_px),
+            'landmark_count':len(ob.landmarks_px),'features_finite':bool(np.isfinite(ob.features).all()),
+            'quality':ob.quality,'message':ob.message,
+            'head_pose_estimate':{'yaw_deg':pose.yaw_deg,'pitch_deg':pose.pitch_deg,
+                                  'roll_deg':pose.roll_deg,'reprojection_px':pose.reprojection_px},
+            'hardware_validated':False,'gaze_accuracy_validated':False,'head_angle_accuracy_validated':False,
+            'human_gaze_accuracy_measured':False}
+        if output:
+            path=Path(output);path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_text(json.dumps(report,indent=2,allow_nan=False)+'\n',encoding='utf-8')
+        return report
+    finally:
+        tracker.close()
+
+
+def main(argv=None):
+    parser=argparse.ArgumentParser(description=__doc__)
+    root=Path(sys.executable).resolve().parent if getattr(sys,'frozen',False) else Path(__file__).resolve().parents[1]
+    parser.add_argument('--image',default=str(root/'examples'/'reference_face_nasa.png'))
+    parser.add_argument('--output')
+    args=parser.parse_args(argv)
+    try:
+        print(json.dumps(verify(args.image,args.output),indent=2,allow_nan=False))
+    except Exception as exc:
+        print(f'Face/iris inference verification failed: {type(exc).__name__}: {exc}',file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__=='__main__':
+    raise SystemExit(main())
+
+===== END FILE: scripts/verify_face_inference.py =====
+
+===== BEGIN FILE: scripts/verify_release.py =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: 7de458cbb21edcba01fc90347f48a79c5c80c2bb
+
+"""Reproduce the software release gate in the active installed environment."""
+from __future__ import annotations
+import argparse
+from datetime import datetime,timezone
+import importlib.metadata
+import json
+import os
+from pathlib import Path
+import platform
+import subprocess
+import sys
+import time
+import xml.etree.ElementTree as ET
+
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output',default='release_evidence')
+    parser.add_argument('--basler-emulator',action='store_true')
+    args=parser.parse_args()
+    project=Path(__file__).resolve().parents[1]
+    output=Path(args.output).resolve();output.mkdir(parents=True,exist_ok=True)
+    env=os.environ.copy();env.update(QT_QPA_PLATFORM='offscreen',QT_API='pyside6',MPLBACKEND='Agg')
+    if args.basler_emulator:env['GAZESPACE_TEST_PYLON_EMULATOR']='1'
+    steps=[('dependencies',['-m','pip','check'],{}),
+        ('pytest',['-m','pytest','-q','--junitxml='+str(output/'pytest.xml')],{}),
+        ('doctor',['-m','gazespace','doctor'],{}),
+        ('face_inference',['scripts/verify_face_inference.py','--output',str(output/'mediapipe_inference_photo.json')],{}),
+        ('simulation',['-m','gazespace','simulate','--output',str(output/'simulation'),'--seconds','8','--record-video'],{}),
+        ('studio_smoke',['scripts/gazespace_studio_entry.py','--smoke-test',str(output/'studio_smoke.json')],{})]
+    if args.basler_emulator:
+        steps.append(('pypylon_sdk_emulator',['scripts/verify_pypylon_emulator.py','--output',str(output/'pypylon_sdk_emulator.json')],{'PYLON_CAMEMU':'1'}))
+    report={'version':importlib.metadata.version('gazespace'),'verified_at_utc':datetime.now(timezone.utc).isoformat(),
+        'environment':{'python':platform.python_version(),'platform':platform.platform(),
+                       'isolated_environment':sys.prefix!=sys.base_prefix,
+                       'packages':{name:importlib.metadata.version(name) for name in ('numpy','opencv-contrib-python','scipy','mediapipe','PySide6','fastapi','pytest')}},
+        'status':'running','steps':[],
+        'real_hardware_validated':False,'human_gaze_accuracy_validated':False,
+        'windows_runtime_validated':False,'client_application_integration_validated':False}
+    for name,command,overrides in steps:
+        started=time.monotonic()
+        completed=subprocess.run([sys.executable,*command],cwd=project,env={**env,**overrides},
+                     capture_output=True,text=True,errors='replace',timeout=300)
+        (output/(name+'.log')).write_text(completed.stdout+completed.stderr,encoding='utf-8')
+        result={'name':name,'status':'passed' if completed.returncode==0 else 'failed',
+                'exit_code':completed.returncode,'duration_s':round(time.monotonic()-started,3),
+                'command':['python',*command],'log':name+'.log'}
+        report['steps'].append(result)
+        print(json.dumps(result),flush=True)
+        if completed.returncode:
+            report['status']='failed'
+            (output/'release_verification.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+            return completed.returncode
+    root=ET.parse(output/'pytest.xml').getroot()
+    suites=root.findall('testsuite') if root.tag=='testsuites' else [root]
+    report['tests']={key:sum(int(s.attrib.get(key,0)) for s in suites) for key in ('tests','failures','errors','skipped')}
+    report['tests']['passed']=report['tests']['tests']-sum(report['tests'][k] for k in ('failures','errors','skipped'))
+    report['status']='passed'
+    report['windows_runtime_validated']=platform.system()=='Windows'
+    (output/'release_verification.json').write_text(json.dumps(report,indent=2,allow_nan=False)+'\n',encoding='utf-8')
+    print(json.dumps({'status':report['status'],'tests':report['tests']},indent=2))
+    return 0
+
+
+if __name__=='__main__':
+    raise SystemExit(main())
+
+===== END FILE: scripts/verify_release.py =====
+
+===== BEGIN FILE: examples/spatial_targets_TEMPLATE.json =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: 5bad9a7463972aa2a6e524e0a01d83166555602f
+
+[
+  {"id":"near_top_left","xyz_m":[0.1,0.1,0.0]},
+  {"id":"near_top_mid","xyz_m":[0.3,0.1,0.0]},
+  {"id":"near_top_right","xyz_m":[0.5,0.1,0.0]},
+  {"id":"near_mid_left","xyz_m":[0.1,0.3,0.0]},
+  {"id":"near_center","xyz_m":[0.3,0.3,0.0]},
+  {"id":"near_mid_right","xyz_m":[0.5,0.3,0.0]},
+  {"id":"far_bottom_left","xyz_m":[0.1,0.5,0.2]},
+  {"id":"far_bottom_mid","xyz_m":[0.3,0.5,0.2]},
+  {"id":"far_bottom_right","xyz_m":[0.5,0.5,0.2]},
+  {"id":"far_center","xyz_m":[0.3,0.3,0.2]},
+  {"id":"far_top_left","xyz_m":[0.1,0.1,0.2]},
+  {"id":"far_top_right","xyz_m":[0.5,0.1,0.2]}
+]
+
+===== END FILE: examples/spatial_targets_TEMPLATE.json =====
+
+===== BEGIN FILE: examples/surfaces.json =====
+SOURCE_COMMIT: 244880d609e1cbeb7b57c8fe7674f3a1b07478be
+SOURCE_BLOB_SHA: 814b93e9ab4429715301ead7a9f4c29390dc5bde
+
+[
+  {
+    "name": "workspace_screen_A",
+    "origin_world_m": [0.15, 0.0, 0.0],
+    "u_vector": [1.0, 0.0, 0.0],
+    "v_vector": [0.0, 1.0, 0.0],
+    "width_m": 0.53,
+    "height_m": 0.30,
+    "pixel_size": [1920, 1080]
+  },
+  {
+    "name": "inspection_bench",
+    "origin_world_m": [0.10, 0.20, 0.35],
+    "u_vector": [1.0, 0.0, 0.0],
+    "v_vector": [0.0, 0.0, 1.0],
+    "width_m": 0.65,
+    "height_m": 0.40,
+    "pixel_size": null
+  }
+]
+
+===== END FILE: examples/surfaces.json =====
+
