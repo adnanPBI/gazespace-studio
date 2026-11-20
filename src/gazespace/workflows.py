@@ -55,7 +55,7 @@ def _capabilities(source):
     return dict(getter() or {}) if getter else {}
 
 
-def _tracking_context(profile, tracker, source, image_size=None, camera_id=None):
+def _tracking_context(profile, tracker, source, image_size=None, camera_id=None, subject_id=None):
     """Build current context from actual inputs, not the saved model's identity."""
     context = deepcopy(tracker.context(image_size))
     caps = _capabilities(source)
@@ -68,7 +68,8 @@ def _tracking_context(profile, tracker, source, image_size=None, camera_id=None)
     if backend is not None:
         context["backend"] = str(backend).lower()
         context["camera_backend"] = str(backend).lower()
-    context["subject_id"] = profile.get("subject_id", profile.get("context", {}).get("subject_id"))
+    context["subject_id"] = (subject_id if subject_id is not None else
+                             profile.get("subject_id", profile.get("context", {}).get("subject_id")))
     context["mirror"] = False  # CLI paths do not mirror acquisition frames.
     # Requested controls, when present, match GUI setting semantics. A driver
     # readback is separately reported by the source; do not pretend it is the
@@ -76,8 +77,8 @@ def _tracking_context(profile, tracker, source, image_size=None, camera_id=None)
     context.update({"exposure_native": None, "exposure_us": None, "gain": None, "ir_bit_depth": None})
     controls = caps.get("controls", {})
     for source_key, key in (("exposure_native", "exposure_native"),
-                            ("ExposureTime", "exposure_us"),
-                            ("gain_native", "gain"), ("Gain", "gain")):
+                            ("ExposureTime", "exposure_us"), ("ExposureTimeAbs", "exposure_us"),
+                            ("gain_native", "gain"), ("Gain", "gain"), ("GainRaw", "gain")):
         if source_key in controls and "requested" in controls[source_key]:
             context[key] = controls[source_key]["requested"]
     if hasattr(source, "ir_bit_depth"):
@@ -85,8 +86,9 @@ def _tracking_context(profile, tracker, source, image_size=None, camera_id=None)
     return context
 
 
-def _bind_observation(observation, profile, tracker, source, camera_id=None):
-    context = _tracking_context(profile, tracker, source, observation.image_size, camera_id)
+def _bind_observation(observation, profile, tracker, source, camera_id=None, subject_id=None):
+    context = _tracking_context(profile, tracker, source, observation.image_size,
+                                camera_id=camera_id, subject_id=subject_id)
     context.update(deepcopy(observation.context))
     context["image_size"] = list(observation.image_size)
     observation.context = context
@@ -141,7 +143,7 @@ class ScreenSession:
     def __init__(self, source: FrameSource, tracker: GazeTracker, profile_path: str,
                  samples_per_target: int = 16, grid: int = 4, validate: bool = False,
                  camera_id: str | None = None, max_seconds_per_target: float = 10,
-                 drift: bool = False):
+                 drift: bool = False, subject_id: str | None = None):
         if samples_per_target < 4:
             raise ValueError("need >=4 samples per target")
         if max_seconds_per_target <= 1.2:
@@ -149,7 +151,7 @@ class ScreenSession:
         self.source, self.tracker, self.profile_path = source, tracker, profile_path
         self.samples_per_target, self.grid = int(samples_per_target), int(grid)
         self.validate, self.drift = bool(validate or drift), bool(drift)
-        self.camera_id = camera_id
+        self.camera_id, self.subject_id = camera_id, subject_id
         self.max_seconds_per_target = float(max_seconds_per_target)
         self.samples = []
         self.index = 0
@@ -175,7 +177,8 @@ class ScreenSession:
             self.model = GazeModel.from_dict(self.profile["screen_model"])
             if tuple(self.model.metadata["screen_size"]) != self.size:
                 raise ValueError("screen resolution changed; recalibrate before validation")
-            preliminary = _tracking_context(self.profile, self.tracker, self.source, camera_id=self.camera_id)
+            preliminary = _tracking_context(self.profile, self.tracker, self.source,
+                                            camera_id=self.camera_id, subject_id=self.subject_id)
             mismatch = self.model.context_mismatches(preliminary)
             if mismatch:
                 raise ValueError("profile configuration mismatch: " + ", ".join(mismatch))
@@ -189,6 +192,7 @@ class ScreenSession:
         return self.targets
 
     def run(self) -> dict | None:
+        import threading
         import tkinter as tk
         import sys
         if sys.platform == "win32":
@@ -197,6 +201,26 @@ class ScreenSession:
                 ctypes.windll.user32.SetProcessDPIAware()
             except (OSError, AttributeError):
                 pass
+        self._frame_lock = threading.Lock()
+        self._latest_frame, self._reader_error = None, None
+        self._reader_eof = False
+        self._reader_stop = threading.Event()
+
+        def reader():
+            while not self._reader_stop.is_set():
+                try:
+                    frame = self.source.read()
+                except Exception as exc:
+                    with self._frame_lock:
+                        self._reader_error = exc
+                    break
+                with self._frame_lock:
+                    self._latest_frame = (True, frame)
+                    self._reader_eof = frame is None
+                if frame is None:
+                    break
+
+        self._reader_thread = threading.Thread(target=reader, name="gazespace-tk-capture", daemon=True)
         self.root = tk.Tk()
         try:
             self.root.title("GazeSpace — " + ("drift check" if self.drift else "gaze calibration"))
@@ -211,12 +235,14 @@ class ScreenSession:
             self.root.bind("<Return>", lambda _: self.start_target())
             self.root.bind("<Escape>", lambda _: self.abort())
             self.root.protocol("WM_DELETE_WINDOW", self.abort)
+            self._reader_thread.start()
             self.draw()
             self.root.after(30, self.tick)
             self.root.mainloop()
         finally:
-            # No camera/tracker close here: callers may reuse the existing app's
-            # camera and are responsible for releasing their own resources.
+            self._reader_stop.set()
+            if self._reader_thread.is_alive():
+                self._reader_thread.join(timeout=1.0)
             try:
                 self.root.destroy()
             except tk.TclError:
@@ -264,7 +290,8 @@ class ScreenSession:
             return self.collector.progress() if self.collector else None
         self._observer.process_frame(frame)
         observation = self._observer.last_observation
-        _bind_observation(observation, self.profile, self.tracker, self.source, self.camera_id)
+        _bind_observation(observation, self.profile, self.tracker, self.source,
+                          camera_id=self.camera_id, subject_id=self.subject_id)
         # Bind to actual frame size/method/origin even for validation. An invalid
         # detection can lack an eye-origin source; its data will be rejected by
         # acquisition rather than masquerading as a different calibrated method.
@@ -317,9 +344,12 @@ class ScreenSession:
             return report
         model = fit_gaze_model(self.samples, "screen", screen_size=self.size,
                                context=self.actual_context, session_id=self.session_id)
-        update_profile(self.profile_path, screen_model=model.to_dict(),
+        updates = dict(screen_model=model.to_dict(),
                        camera_id=self.actual_context.get("camera_id", self.camera_id),
                        context=self.actual_context)
+        if self.actual_context.get("subject_id") is not None:
+            updates["subject_id"] = self.actual_context["subject_id"]
+        update_profile(self.profile_path, **updates)
         return model.report
 
     def draw(self):
@@ -351,7 +381,19 @@ class ScreenSession:
         if self.aborted or self.completed:
             return
         try:
-            self.consume_frame(self.source.read())
+            if hasattr(self, "_frame_lock"):
+                with self._frame_lock:
+                    err, item = self._reader_error, self._latest_frame
+                    eof = self._reader_eof
+                    self._reader_error, self._latest_frame = None, None
+                if err is not None:
+                    raise err
+                if item is not None:
+                    self.consume_frame(item[1])
+                elif eof:
+                    self.consume_frame(None)
+            else:
+                self.consume_frame(self.source.read())
         except (ValueError, RuntimeError, OSError, cv2.error) as exc:
             self.last_error = f"{type(exc).__name__}: {str(exc)[:130]}"
             if self.collector:
@@ -461,7 +503,8 @@ def _check_spatial_geometry(targets, extrinsics, require_multidepth):
 
 def spatial_session(source: FrameSource, tracker: GazeTracker, profile_path: str, targets_path: str,
                     samples_per_target: int = 16, validate: bool = False,
-                    max_seconds: float = 15, require_multidepth: bool = True) -> dict:
+                    max_seconds: float = 15, require_multidepth: bool = True,
+                    camera_id: str | None = None, subject_id: str | None = None) -> dict:
     profile = load_profile(profile_path)
     if not profile.get("intrinsics") or not profile.get("extrinsics"):
         raise ValueError("need calibrated intrinsic and board-to-world extrinsic profile")
@@ -479,7 +522,8 @@ def spatial_session(source: FrameSource, tracker: GazeTracker, profile_path: str
         if not profile.get("spatial_model"):
             raise ValueError("first calibrate a compatible spatial gaze model")
         model = GazeModel.from_dict(profile["spatial_model"])
-        mismatch = model.context_mismatches(_tracking_context(profile, tracker, source))
+        mismatch = model.context_mismatches(_tracking_context(
+            profile, tracker, source, camera_id=camera_id, subject_id=subject_id))
         if mismatch:
             raise ValueError("spatial profile configuration mismatch: " + ", ".join(mismatch))
     from .engine import GazeEngine
@@ -491,6 +535,15 @@ def spatial_session(source: FrameSource, tracker: GazeTracker, profile_path: str
               "Hold a steady fixation; press Enter to start or q to cancel.")
         if input("Target ready? ").strip().lower() == "q":
             raise KeyboardInterrupt("spatial calibration cancelled")
+        prompt_done = host_now_s()
+        if getattr(source, "is_live", False):
+            for _ in range(5):
+                stale = source.read()
+                if stale is None:
+                    break
+                recv = getattr(stale, "received_monotonic_s", None)
+                if recv is None or recv >= prompt_done:
+                    break
         collector = TargetCollector(str(target["id"]), target["xyz_m"], "spatial",
                                      min_samples=samples_per_target, max_seconds=max_seconds,
                                      session_id=session_id)
@@ -505,7 +558,8 @@ def spatial_session(source: FrameSource, tracker: GazeTracker, profile_path: str
                 continue
             observer.process_frame(frame)
             observation = observer.last_observation
-            _bind_observation(observation, profile, tracker, source)
+            _bind_observation(observation, profile, tracker, source,
+                              camera_id=camera_id, subject_id=subject_id)
             if observation.features is not None and observation.eyes_open and not observation.blink:
                 if model:
                     _validate_context(model, observation.context, profile)
@@ -529,6 +583,12 @@ def spatial_session(source: FrameSource, tracker: GazeTracker, profile_path: str
         return report
     model = fit_gaze_model(records, "spatial", context=actual_context, session_id=session_id)
     model.report["target_geometry"] = geometry
-    update_profile(profile_path, spatial_model=model.to_dict(), context=actual_context,
+    from .calibration import DISPLAY_CONTEXT_KEYS
+    merged = {**{k:v for k,v in (profile.get("context") or {}).items() if k in DISPLAY_CONTEXT_KEYS},
+              **{k:v for k,v in actual_context.items() if k not in DISPLAY_CONTEXT_KEYS}}
+    updates = dict(spatial_model=model.to_dict(), context=merged,
                    camera_id=actual_context.get("camera_id", profile.get("camera_id")))
+    if actual_context.get("subject_id") is not None:
+        updates["subject_id"] = actual_context["subject_id"]
+    update_profile(profile_path, **updates)
     return model.report

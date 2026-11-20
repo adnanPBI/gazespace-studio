@@ -11,14 +11,14 @@ from .types import CameraIntrinsics, CameraExtrinsics, HeadPose, Surface
 FACE_INDICES = (1, 152, 33, 263, 61, 291)
 FACE_TEMPLATE_M = np.array([
     (0.000, 0.000, 0.000),       # nose
-    (0.000, 0.0636, 0.0125),    # chin, below and behind nose
+    (0.000, 0.0675, 0.0260),    # chin, below and behind nose
     (-0.0433, -0.0327, 0.0260), # subject's right / image-left outer eye corner
     (0.0433, -0.0327, 0.0260),  # subject's left / image-right outer eye corner
     (-0.0289, 0.0289, 0.0241),
     (0.0289, 0.0289, 0.0241),
 ], dtype=np.float64)
-EYE_MIDPOINT_HEAD_M = np.array([0.0, -0.031, 0.018], dtype=np.float64)
-HEAD_MODEL_VERSION = "generic-camera-facing-v2"
+EYE_MIDPOINT_HEAD_M = np.array([0.0, -0.031, 0.022], dtype=np.float64)
+HEAD_MODEL_VERSION = "generic-camera-facing-v2.1"
 
 
 def finite_vector(value, name="vector") -> np.ndarray:
@@ -48,33 +48,46 @@ def approximate_intrinsics(width: int, height: int) -> CameraIntrinsics:
 
 
 def estimate_head_pose(points: dict[int, tuple[float, float]],
-                       intr: CameraIntrinsics) -> HeadPose | None:
+                       intr: CameraIntrinsics,
+                       max_reprojection_px: float | None = None) -> HeadPose | None:
+    """Estimate geometric head pose and reject implausible 2D fit residuals.
+
+    This is a generic anatomical template, not subject-calibrated ground truth.
+    """
     intr.validate()
     if any(i not in points for i in FACE_INDICES):
         return None
     img = np.array([points[i] for i in FACE_INDICES], dtype=np.float64)
-    if not np.all(np.isfinite(img)):
+    if not np.isfinite(img).all():
         return None
-    # Refuse insufficient spatial extent and mirrored/unordered eye corners.
-    if img[2, 0] >= img[3, 0] or np.linalg.norm(img[3] - img[2]) < 12:
+    eye_span = float(np.linalg.norm(img[3] - img[2]))
+    if img[2, 0] >= img[3, 0] or eye_span < 12:
         return None
-    try:
-        ok, rvec, tvec = cv2.solvePnP(FACE_TEMPLATE_M, img, intr.camera_matrix,
-                                    intr.distortion, flags=cv2.SOLVEPNP_ITERATIVE)
-    except cv2.error:
-        return None
-    if not ok:
-        return None
-    rotation, _ = cv2.Rodrigues(rvec)
-    projected, _ = cv2.projectPoints(FACE_TEMPLATE_M, rvec, tvec,
-                                     intr.camera_matrix, intr.distortion)
-    rms = float(np.sqrt(np.mean(np.sum((projected.reshape(-1, 2) - img) ** 2, axis=1))))
-    if not np.isfinite(rms) or not np.isfinite(tvec).all() or not 0.10 < tvec[2, 0] < 5.0:
-        return None
-    angles, *_ = cv2.RQDecomp3x3(rotation)
-    pitch, yaw, roll = (float(v) for v in angles)
-    return HeadPose(rotation, tvec.reshape(3), yaw, pitch, roll, rms)
-
+    for flag in (getattr(cv2, "SOLVEPNP_SQPNP", cv2.SOLVEPNP_ITERATIVE),
+                 cv2.SOLVEPNP_ITERATIVE):
+        try:
+            ok, rvec, tvec = cv2.solvePnP(FACE_TEMPLATE_M, img, intr.camera_matrix,
+                                           intr.distortion, flags=flag)
+            if not ok or not np.isfinite(tvec).all() or not .10 < float(tvec[2, 0]) < 5:
+                continue
+            try:
+                rvec, tvec = cv2.solvePnPRefineLM(
+                    FACE_TEMPLATE_M, img, intr.camera_matrix, intr.distortion, rvec, tvec)
+            except cv2.error:
+                pass
+            rotation, _ = cv2.Rodrigues(rvec)
+            projected, _ = cv2.projectPoints(FACE_TEMPLATE_M, rvec, tvec,
+                                             intr.camera_matrix, intr.distortion)
+            rms = float(np.sqrt(np.mean(np.sum((projected.reshape(-1, 2) - img) ** 2, axis=1))))
+            limit = max(12.0, eye_span*.20) if max_reprojection_px is None else float(max_reprojection_px)
+            if not np.isfinite(rms) or rms > limit or not np.isfinite(tvec).all() or not .10 < float(tvec[2, 0]) < 5:
+                continue
+            angles, *_ = cv2.RQDecomp3x3(rotation)
+            pitch, yaw, roll = (float(z) for z in angles)
+            return HeadPose(rotation, tvec.reshape(3), yaw, pitch, roll, rms)
+        except (cv2.error, ValueError, FloatingPointError):
+            continue
+    return None
 
 def eye_origin_from_pose(pose: HeadPose) -> np.ndarray:
     return finite_vector(pose.rotation @ EYE_MIDPOINT_HEAD_M + pose.translation_m, "eye origin")
@@ -107,7 +120,8 @@ def ray_surface_intersection(origin: np.ndarray, direction: np.ndarray,
     """Returns dict containing distance, metric uv and pixel uv, or None.
 
     Rectangular axes must be orthogonal; they are normalized before mapping.
-    Surface.two_sided=False accepts only rays arriving against cross(u,v).
+    With U right and V down, front-facing surface normal is cross(v,u).
+    Surface.two_sided=False accepts rays traveling with cross(u,v).
     Pixel centers span 0..width-1 and 0..height-1, including boundary hits.
     """
     surface.validate()
@@ -127,7 +141,7 @@ def ray_surface_intersection(origin: np.ndarray, direction: np.ndarray,
     denom = float(np.dot(n, d))
     if abs(denom) < 1e-8:
         return None
-    if not surface.two_sided and denom >= 0:
+    if not surface.two_sided and denom <= 0:
         return None
     t = float(np.dot(n, p0 - origin) / denom)
     if t < min_t_m:

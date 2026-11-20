@@ -16,14 +16,42 @@ from .clock import HOST_CLOCK_DOMAIN, host_now_s
 from .types import CameraIntrinsics, Frame
 
 
+SUPPORTED_DEPTH_DISTORTIONS = ("none", "brown_conrady", "inverse_brown_conrady")
+
+
+def _deproject_pixel(x: float, y: float, z: float, intrinsics: CameraIntrinsics,
+                     distortion_model: str = "brown_conrady") -> np.ndarray:
+    """Use the inverse polynomial only for RealSense inverse Brown-Conrady models."""
+    if distortion_model == "inverse_brown_conrady":
+        fx, fy = float(intrinsics.camera_matrix[0, 0]), float(intrinsics.camera_matrix[1, 1])
+        ppx, ppy = float(intrinsics.camera_matrix[0, 2]), float(intrinsics.camera_matrix[1, 2])
+        coeffs = np.asarray(intrinsics.distortion, dtype=float).ravel()
+        k1, k2, p1, p2, k3 = (float(coeffs[i]) if i < len(coeffs) else 0.0 for i in range(5))
+        nx, ny = (x - ppx) / fx, (y - ppy) / fy
+        r2 = nx*nx + ny*ny
+        radial = 1 + k1*r2 + k2*r2*r2 + k3*r2*r2*r2
+        ux = nx*radial + 2*p1*nx*ny + p2*(r2 + 2*nx*nx)
+        uy = ny*radial + 2*p2*nx*ny + p1*(r2 + 2*ny*ny)
+        return np.array([ux*z, uy*z, z], dtype=float)
+    if distortion_model in ("none", "brown_conrady"):
+        distortion = np.zeros_like(intrinsics.distortion) if distortion_model == "none" else intrinsics.distortion
+        uv = cv2.undistortPoints(np.array([[[x, y]]], dtype=float),
+                                intrinsics.camera_matrix, distortion).reshape(2)
+        return np.array([uv[0]*z, uv[1]*z, z], dtype=float)
+    raise ValueError(f"Unsupported depth distortion model: {distortion_model}")
+
+
 def sample_depth_point(depth_m: np.ndarray, xy_px: tuple[float, float],
                        intrinsics: CameraIntrinsics, *, radius: int = 2,
                        min_depth_m: float = .10, max_depth_m: float = 3.0,
-                       max_patch_spread_m: float = .03) -> np.ndarray | None:
-    """Robust small-patch median followed by calibrated pinhole deprojection."""
+                       max_patch_spread_m: float = .03,
+                       distortion_model: str = "brown_conrady") -> np.ndarray | None:
+    """Robust patch median followed by calibrated, distortion-aware deprojection."""
     if (depth_m.ndim != 2 or depth_m.shape != (intrinsics.height, intrinsics.width) or
             intrinsics.source not in ("measured", "factory")):
         raise ValueError("Aligned depth must match measured intrinsics and image resolution")
+    if distortion_model not in SUPPORTED_DEPTH_DISTORTIONS:
+        raise ValueError(f"Unsupported depth distortion model: {distortion_model}")
     if radius < 0 or min_depth_m <= 0 or max_depth_m <= min_depth_m:
         raise ValueError("Invalid depth sampling limits")
     if not np.isfinite(xy_px).all():
@@ -39,23 +67,17 @@ def sample_depth_point(depth_m: np.ndarray, xy_px: tuple[float, float],
         return None
     if float(np.percentile(values, 90) - np.percentile(values, 10)) > max_patch_spread_m:
         return None
-    z = float(np.median(values))
-    uv = cv2.undistortPoints(np.array([[[x, y]]], dtype=float), intrinsics.camera_matrix,
-                              intrinsics.distortion).reshape(2)
-    return np.array([uv[0] * z, uv[1] * z, z], dtype=float)
+    return _deproject_pixel(x, y, float(np.median(values)), intrinsics, distortion_model)
 
 
 def eye_origin_from_depth(depth_m: np.ndarray, pupils_px: dict,
-                          intrinsics: CameraIntrinsics) -> np.ndarray | None:
-    """Approximate eye-surface midpoint from two valid aligned depth patches.
-
-    This is a measured surface point, not the optical eyeball rotation center.
-    Both samples must exist and agree in depth; a single patch is insufficient.
-    """
+                          intrinsics: CameraIntrinsics, *,
+                          distortion_model: str = "brown_conrady") -> np.ndarray | None:
+    """Approximate visible eye surface midpoint; NOT the eye rotation center."""
     if not all(side in pupils_px for side in ("right", "left")):
         return None
-    points = [sample_depth_point(depth_m, pupils_px[side], intrinsics)
-              for side in ("right", "left")]
+    points = [sample_depth_point(depth_m, pupils_px[side], intrinsics,
+                                 distortion_model=distortion_model) for side in ("right", "left")]
     if any(point is None for point in points):
         return None
     right, left = points
@@ -65,7 +87,6 @@ def eye_origin_from_depth(depth_m: np.ndarray, pupils_px: dict,
     if not .025 <= separation <= .10:
         return None
     return (right + left) / 2
-
 
 class RealSenseSource(FrameSource):
     is_live = True
@@ -95,11 +116,14 @@ class RealSenseSource(FrameSource):
             self.depth_scale = float(device.first_depth_sensor().get_depth_scale())
             actual_serial = device.get_info(rs.camera_info.serial_number)
             color = profile.get_stream(rs.stream.color).as_video_stream_profile().get_intrinsics()
-            # RealSense inverse Brown-Conrady coefficients are not equivalent to
-            # OpenCV's forward distortion. Only known forward/no-distortion models
-            # are safely accepted here; other models require SDK deprojection.
-            valid_models = (rs.distortion.none, rs.distortion.brown_conrady)
-            self._cv_depth_supported = color.model in valid_models
+            distortion_map = {
+                rs.distortion.none: "none",
+                rs.distortion.brown_conrady: "brown_conrady",
+                rs.distortion.inverse_brown_conrady: "inverse_brown_conrady",
+            }
+            self._distortion_model = distortion_map.get(color.model, "unsupported")
+            self._cv_depth_supported = self._distortion_model in SUPPORTED_DEPTH_DISTORTIONS
+            self._opencv_intrinsics_compatible = self._distortion_model in ("none", "brown_conrady")
             distortion = np.zeros(5) if color.model == rs.distortion.none else np.asarray(color.coeffs, float)
             self.intrinsics = CameraIntrinsics(color.width, color.height,
                 np.array([[color.fx, 0, color.ppx], [0, color.fy, color.ppy], [0, 0, 1]], dtype=float),
@@ -111,6 +135,8 @@ class RealSenseSource(FrameSource):
                          "host_clock_domain": HOST_CLOCK_DOMAIN,
                          "intrinsics": self.intrinsics.to_dict(), "depth_scale_m": self.depth_scale,
                          "depth_deprojection_supported": self._cv_depth_supported,
+                         "depth_distortion_model": self._distortion_model,
+                         "opencv_factory_intrinsics_supported": self._opencv_intrinsics_compatible,
                          "global_shutter_verified": False}
         except Exception:
             self.close()
@@ -133,6 +159,8 @@ class RealSenseSource(FrameSource):
                                "host_clock_domain": HOST_CLOCK_DOMAIN,
                                "depth_intrinsics": self.intrinsics.to_dict(),
                                "depth_deprojection_supported": self._cv_depth_supported,
+                               "depth_distortion_model": self._distortion_model,
+                               "opencv_factory_intrinsics_supported": self._opencv_intrinsics_compatible,
                                "hardware_clock_synchronized": False},
                      received_monotonic_s=received,
                      hardware_timestamp_s=float(color.get_timestamp()) / 1000.0,

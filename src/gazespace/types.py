@@ -76,6 +76,8 @@ class GazeResult:
     spatial_valid: bool = False
     eye_origin_source: str = "unavailable"
     model_fingerprint: str | None = None
+    screen_model_fingerprint: str | None = None
+    spatial_model_fingerprint: str | None = None
     tracking_context: dict[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:

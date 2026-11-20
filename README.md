@@ -1,6 +1,6 @@
-# GazeSpace Studio 0.2.1
+# GazeSpace Studio 0.2.2 — Software Release Candidate
 
-**A working Python desktop workspace for pupil/iris tracking, calibrated gaze estimation, 3D workspace mapping, camera integration and local session analysis.** Release date: **18 November 2026**.
+**A working Python desktop workspace for pupil/iris tracking, calibrated gaze estimation, 3D workspace mapping, camera integration and local session analysis.** Release candidate: **20 November 2026**. Hardware and client-host acceptance remain pending.
 
 This version completes the operator workflows around the original SDK: a seven-section native desktop interface, threaded capture and inference, stable target acquisition, independent validation, recording and replay, heatmaps, diagnostics and an authenticated local API. The tracking engine can also run inside an existing Windows Python application.
 
@@ -148,3 +148,12 @@ Python wheel/source distributions are placed under `dist\python_packages`. With 
 A pupil/iris location becomes a gaze estimate only after appropriate calibration. A generic facial model produces an approximate eye origin; aligned depth estimates the visible eye surface, not the optical eyeball center. Stereo triangulation reconstructs matched image points, not a person's fixation automatically. A complete pupil-center/corneal-reflection optical model, controlled emitter geometry and independent physical user trials are outside the current verified implementation.
 
 All processing is local after dependencies and selected models are installed. Gaze recording is an explicit action, raw video is separately opt-in, and the local API publishes metadata rather than camera images. Existing host applications remain responsible for consent, access, retention and any actions triggered from gaze.
+
+
+### Windows embedding and physical acceptance
+
+In-process embedding requires **Python >=3.11,<3.13**. Other host runtimes
+should use the authenticated localhost API or a separate compatible worker.
+The software/SDK-emulator tests do not establish physical IR/global-shutter
+camera performance, measured human gaze error, or client-host integration.
+These remain independent hardware-in-the-loop/client acceptance requirements.

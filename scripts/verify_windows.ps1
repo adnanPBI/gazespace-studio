@@ -39,14 +39,17 @@ $PriorQtPlatform = $env:QT_QPA_PLATFORM
 $PriorQtApi = $env:QT_API
 $PriorEmulatorOptIn = $env:GAZESPACE_TEST_PYLON_EMULATOR
 $PriorPylonEmulator = $env:PYLON_CAMEMU
+$PriorPytestEvidenceDir = $env:GAZESPACE_PYTEST_EVIDENCE_DIR
 try {
     $env:QT_QPA_PLATFORM = 'offscreen'
     $env:QT_API = 'pyside6'
     if ($BaslerEmulator) {
         $env:GAZESPACE_TEST_PYLON_EMULATOR = '1'
         $env:PYLON_CAMEMU = '1'
+        $env:GAZESPACE_PYTEST_EVIDENCE_DIR = $EvidenceDirectory
     } else {
         Remove-Item Env:GAZESPACE_TEST_PYLON_EMULATOR -ErrorAction SilentlyContinue
+        Remove-Item Env:GAZESPACE_PYTEST_EVIDENCE_DIR -ErrorAction SilentlyContinue
     }
     Invoke-Checked -Executable $PythonExecutable -Arguments @('-m', 'pip', 'check')
     if (-not $SkipTests) {
@@ -164,4 +167,5 @@ try {
     $env:QT_API = $PriorQtApi
     $env:GAZESPACE_TEST_PYLON_EMULATOR = $PriorEmulatorOptIn
     $env:PYLON_CAMEMU = $PriorPylonEmulator
+    $env:GAZESPACE_PYTEST_EVIDENCE_DIR = $PriorPytestEvidenceDir
 }

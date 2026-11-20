@@ -88,13 +88,15 @@ def _origin_allowed(value: str | None) -> bool:
 
 
 def create_api(service: GazeService | TrackingRuntime, *, token: str | None = None,
-               manage_lifecycle: bool = False):
+               manage_lifecycle: bool = False, stream_hz: float = 20.0):
     try:
         from fastapi import FastAPI, WebSocket, Request
         from fastapi.responses import JSONResponse
         from starlette.websockets import WebSocketDisconnect
     except ImportError as exc:
         raise RuntimeError("API mode requires pip install 'gazespace[api]'") from exc
+    if not 1.0 <= float(stream_hz) <= 120.0:
+        raise ValueError("stream_hz must be between 1 and 120")
     if token is not None and len(token) < 16:
         raise ValueError("API bearer tokens must contain at least 16 characters")
 
@@ -120,7 +122,7 @@ def create_api(service: GazeService | TrackingRuntime, *, token: str | None = No
             if manage_lifecycle:
                 service.stop()
 
-    app = FastAPI(title="GazeSpace local telemetry", version="0.2.1", lifespan=lifespan,
+    app = FastAPI(title="GazeSpace local telemetry", version="0.2.2", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
 
     @app.middleware("http")
@@ -164,7 +166,7 @@ def create_api(service: GazeService | TrackingRuntime, *, token: str | None = No
         try:
             while True:
                 await ws.send_json(snapshot())
-                await asyncio.sleep(.05)
+                await asyncio.sleep(1.0 / stream_hz)
         except (WebSocketDisconnect, RuntimeError, OSError):
             return
     stream.__annotations__["ws"] = WebSocket

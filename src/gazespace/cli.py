@@ -87,7 +87,7 @@ def verify_camera_profile_source(args):
 def source_context(args):
     context={"camera_id":str(args.source),"backend":args.backend,
              "exposure_native":args.exposure_native,"exposure_us":args.exposure_us,
-             "gain":args.gain,"ir_bit_depth":args.ir_bit_depth or 8}
+             "gain":args.gain,"ir_bit_depth":args.ir_bit_depth}
     if getattr(args,"subject_id",None):context["subject_id"]=args.subject_id
     return context
 
@@ -198,7 +198,7 @@ def cmd_screen(args):
         tracker=make_tracker(args)
         session=ScreenSession(source,tracker,args.profile,args.samples,args.grid,
                               validate=args.command in ("validate-screen","drift-check"),camera_id=str(args.source),
-                              drift=args.command=="drift-check")
+                              drift=args.command=="drift-check", subject_id=args.subject_id)
         try:
             report=session.run()
         finally:
@@ -219,7 +219,8 @@ def cmd_spatial(args):
         try:
             report=spatial_session(source,tracker,args.profile,args.targets,args.samples,
                                    validate=args.command=="validate-spatial",
-                                   require_multidepth=not args.allow_single_depth)
+                                   require_multidepth=not args.allow_single_depth,
+                                   camera_id=str(args.source), subject_id=args.subject_id)
         finally:
             tracker.close()
     json_print(report)
@@ -309,7 +310,7 @@ def cmd_calibrate_world(args):
     if image is None:
         raise ValueError("cannot read board image")
     ext=solve_world_board_extrinsics(image,intr,args.cols,args.rows,args.square_mm)
-    update_profile(args.profile,extrinsics=ext.to_dict(),screen_model=None,spatial_model=None,surfaces=[])
+    update_profile(args.profile,extrinsics=ext.to_dict(),spatial_model=None,surfaces=[])
     json_print({"extrinsics":ext.to_dict(),
                 "world_axes":"board first internal corner=origin, X across board, Y down board, Z right-handed",
                 "invalidated":"old screen/spatial models and surfaces; camera geometry may have changed"})

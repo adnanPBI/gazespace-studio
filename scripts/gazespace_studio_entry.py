@@ -81,10 +81,14 @@ def smoke_test(receipt_path: str) -> int:
 def run() -> int:
     # pythonw/PyInstaller windowed mode has no console streams. Native/model
     # libraries may still write log messages, so supply a writable sink.
-    if sys.stdout is None:
-        sys.stdout = open(os.devnull, 'w', encoding='utf-8')
-    if sys.stderr is None:
-        sys.stderr = open(os.devnull, 'w', encoding='utf-8')
+    # Windowed PyInstaller may have no console; preserve errors in user logs.
+    if sys.stdout is None or sys.stderr is None:
+        log_dir = Path(os.environ.get('LOCALAPPDATA', str(Path.home()))) / 'GazeSpace' / 'logs'
+        log_dir.mkdir(parents=True, exist_ok=True)
+        if sys.stdout is None:
+            sys.stdout = (log_dir / 'studio_stdout.log').open('a', encoding='utf-8')
+        if sys.stderr is None:
+            sys.stderr = (log_dir / 'studio_stderr.log').open('a', encoding='utf-8')
     try:
         if '--smoke-test' in sys.argv[1:]:
             import argparse

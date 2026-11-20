@@ -19,7 +19,7 @@ class GazeEngine:
                  extrinsics: CameraExtrinsics | None = None,
                  surfaces: list[Surface] | None = None,
                  min_quality: float = 0.35, filter_min_cutoff: float = 1.2,
-                 filter_beta: float = 0.015, source_context: dict | None = None):
+                 filter_beta: float = 2.5, source_context: dict | None = None):
         if not np.isfinite(min_quality) or not 0 <= min_quality <= 1:
             raise ValueError("minimum quality must be in [0,1]")
         self.tracker = tracker
@@ -33,6 +33,7 @@ class GazeEngine:
             surface.validate()
         self.last_capture_timestamp = None
         self.screen_filter = OneEuro(min_cutoff=filter_min_cutoff, beta=filter_beta)
+        self.origin_filter = OneEuro(min_cutoff=filter_min_cutoff, beta=filter_beta)
         self.direction_filter = OneEuro(min_cutoff=filter_min_cutoff, beta=filter_beta)
         self.recent_times = deque(maxlen=250)
         self.total, self.valid, self.rejected, self.blinks = 0, 0, 0, 0
@@ -109,7 +110,13 @@ class GazeEngine:
         else:
             from .depth import eye_origin_from_depth
             intrinsics = CameraIntrinsics.from_dict(raw_intrinsics)
-            point = eye_origin_from_depth(frame.depth_m, ob.pupils_px, intrinsics)
+            distortion_model = metadata.get("depth_distortion_model", "brown_conrady")
+            try:
+                point = eye_origin_from_depth(frame.depth_m, ob.pupils_px, intrinsics,
+                                              distortion_model=distortion_model)
+            except ValueError:
+                point = None
+                ob.warnings.append("depth_alignment_or_intrinsics_unavailable")
             if point is None:
                 ob.eye_origin_camera_m = None
                 ob.eye_origin_source = "depth_unavailable"
@@ -125,6 +132,7 @@ class GazeEngine:
 
     def invalidate(self, reason: str, timestamp_s: float | None = None) -> GazeResult:
         self.screen_filter.reset()
+        self.origin_filter.reset()
         self.direction_filter.reset()
         self.last_observation = None
         self.last_capture_timestamp = None
@@ -161,6 +169,7 @@ class GazeEngine:
         if self.last_capture_timestamp is not None and ob.timestamp_s <= self.last_capture_timestamp:
             result.reason = "duplicate_or_reversed_capture_timestamp"
             self.screen_filter.reset()
+            self.origin_filter.reset()
             self.direction_filter.reset()
             self.rejected += 1
             return result
@@ -172,6 +181,7 @@ class GazeEngine:
             elif not ob.eyes_open:
                 result.reason = ob.message if ob.blink else "eyes_not_confirmed_open"
             self.screen_filter.reset()
+            self.origin_filter.reset()
             self.direction_filter.reset()
             self.rejected += 1
             return result
@@ -192,7 +202,11 @@ class GazeEngine:
                 result.warnings.append("Outside learned range: " + ", ".join(outside))
                 return False
             if hasattr(model, "fingerprint"):
-                result.model_fingerprint = model.fingerprint
+                if model.kind == "screen":
+                    result.screen_model_fingerprint = model.fingerprint
+                elif model.kind == "spatial":
+                    result.spatial_model_fingerprint = model.fingerprint
+                result.model_fingerprint = result.model_fingerprint or model.fingerprint
             return True
 
         if model_ready(self.screen_model):
@@ -218,14 +232,19 @@ class GazeEngine:
             self.screen_filter.reset()
         if model_ready(self.spatial_model):
             if self.extrinsics is None or ob.eye_origin_camera_m is None:
+                self.origin_filter.reset()
+                self.direction_filter.reset()
                 result.warnings.append("world_geometry_unavailable_for_this_frame")
             else:
                 try:
-                    predicted_cam = self.spatial_model.predict(ob.features)[0]
+                    rotation = ob.head_pose.rotation if ob.head_pose is not None else None
+                    predicted_cam = (self.spatial_model.predict_camera_direction(ob.features, rotation)[0]
+                                     if hasattr(self.spatial_model, "predict_camera_direction")
+                                     else self.spatial_model.predict(ob.features)[0])
                     origin = camera_to_world_point(ob.eye_origin_camera_m, self.extrinsics)
+                    origin = self.origin_filter.update(origin, ob.timestamp_s)
                     direction = camera_to_world_direction(predicted_cam, self.extrinsics)
-                    direction = self.direction_filter.update(direction, ob.timestamp_s)
-                    direction = unit_vector(direction)
+                    direction = unit_vector(self.direction_filter.update(direction, ob.timestamp_s))
                     result.ray_origin_world_m = tuple(float(x) for x in origin)
                     result.ray_direction_world = tuple(float(x) for x in direction)
                     hit = first_surface_hit(origin, direction, self.surfaces)
@@ -241,10 +260,12 @@ class GazeEngine:
                         if not result.valid:
                             result.valid = True
                             result.reason = "spatial_ray_only_no_surface_hit"
-                except (ValueError, FloatingPointError, np.linalg.LinAlgError) as e:
+                except (ValueError, FloatingPointError, np.linalg.LinAlgError) as exc:
+                    self.origin_filter.reset()
                     self.direction_filter.reset()
-                    result.warnings.append(f"invalid_spatial_ray: {e}")
+                    result.warnings.append(f"invalid_spatial_ray: {exc}")
         elif self.spatial_model is not None:
+            self.origin_filter.reset()
             self.direction_filter.reset()
         if self.screen_model is None and self.spatial_model is None:
             result.reason = "tracking_only_uncalibrated"

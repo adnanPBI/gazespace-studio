@@ -1,3 +1,13 @@
+## 0.2.2 candidate — awaiting its exact Windows release CI
+
+The 0.2.1 Windows receipts are historical and do not certify 0.2.2. This candidate
+changes generic head-pose assumptions and spatial training frames: create new
+profiles and independent validation, rather than reusing 0.2.1 fits. Physical
+IR/global-shutter USB hardware, clinical/human accuracy, sensor-to-display
+latency, eye-safe IR illumination and original-client application integration
+remain unverified. Software CI/synthetic/SDK emulator evidence must not be
+represented as physical acceptance.
+
 # Acceptance status — GazeSpace Studio 0.2.1
 
 **Status snapshot: 2026-11-18 UTC.**
