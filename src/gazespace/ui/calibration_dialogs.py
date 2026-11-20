@@ -62,7 +62,7 @@ class TargetSessionDialog(QWidget):
         if self._active or self.index >= len(self.targets):
             return
         tid, xy = self.targets[self.index]
-        self.collector = TargetCollector(tid, xy, kind='screen', **self.options)
+        self.collector = TargetCollector(tid, xy, kind='screen', **{**self.options, 'session_id': self.session_id})
         self.collector.start()
         self.wall_started=host_now_s()
         self._active = True
@@ -186,7 +186,7 @@ class SpatialSessionDialog(QDialog):
 
     def collect(self):
         target = self.targets[self.index]
-        self.collector = TargetCollector(str(target['id']),target['xyz_m'],kind='spatial')
+        self.collector = TargetCollector(str(target['id']), target['xyz_m'], kind='spatial', session_id=self.session_id)
         self.collector.start()
         self.wall_started = host_now_s()
         self.button.setEnabled(False)

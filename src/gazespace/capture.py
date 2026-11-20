@@ -267,18 +267,24 @@ class PylonSource(FrameSource):
             self.cam.Open()
             if exposure_us is not None:
                 auto_ok = self._set_node("ExposureAuto", "Off")
+                node, _ = self._read_node("ExposureTime", "ExposureTimeAbs")
+                node = node or "ExposureTime"
                 if auto_ok:
-                    self._set_node("ExposureTime", exposure_us)
+                    self._set_node(node, exposure_us)
                 else:
-                    self.controls["ExposureTime"] = {"requested": exposure_us, "applied": False,
-                                                       "error": "Could not disable ExposureAuto"}
+                    self.controls[node] = {"requested": exposure_us, "applied": False,
+                                           "readback_matches": False,
+                                           "error": "Could not disable ExposureAuto"}
             if gain is not None:
                 auto_ok = self._set_node("GainAuto", "Off")
+                node, _ = self._read_node("Gain", "GainRaw")
+                node = node or "Gain"
                 if auto_ok:
-                    self._set_node("Gain", gain)
+                    self._set_node(node, int(round(gain)) if node == "GainRaw" else gain)
                 else:
-                    self.controls["Gain"] = {"requested": gain, "applied": False,
-                                             "error": "Could not disable GainAuto"}
+                    self.controls[node] = {"requested": gain, "applied": False,
+                                           "readback_matches": False,
+                                           "error": "Could not disable GainAuto"}
             for name, value in (("PixelFormat", pixel_format), ("TriggerMode", trigger_mode),
                                 ("TriggerSource", trigger_source)):
                 if value is not None:
@@ -357,14 +363,17 @@ class PylonSource(FrameSource):
                 code = getattr(result, "ErrorCode", "unknown")
                 desc = getattr(result, "ErrorDescription", "grab failed")
                 raise OSError(f"Basler grab failed {code}: {desc}")
+            mono_bits = {
+                getattr(self.pylon, "PixelType_Mono10", None): 10,
+                getattr(self.pylon, "PixelType_Mono12", None): 12,
+                getattr(self.pylon, "PixelType_Mono14", None): 14,
+                getattr(self.pylon, "PixelType_Mono16", None): 16,
+            }
+            mono_bits.pop(None, None)
             if result.PixelType == self.pylon.PixelType_Mono8:
                 bgr = to_bgr(result.Array)
-            elif self.ir_bit_depth and result.PixelType in {
-                    getattr(self.pylon, name, None) for name in
-                    ("PixelType_Mono10", "PixelType_Mono12", "PixelType_Mono14", "PixelType_Mono16")}:
-                # Only unpacked monochrome data uses this direct uint16 path;
-                # packed/Bayer types go through the vendor converter below.
-                bgr = to_bgr(result.Array, self.ir_bit_depth)
+            elif result.PixelType in mono_bits and result.Array.dtype == np.uint16:
+                bgr = to_bgr(result.Array, mono_bits[result.PixelType])
             else:
                 converted = self.converter.Convert(result)
                 bgr = to_bgr(converted.Array)
