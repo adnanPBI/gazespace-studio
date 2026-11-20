@@ -170,7 +170,7 @@ class GazeEngine:
             result.reason = "duplicate_or_reversed_capture_timestamp"
             self.screen_filter.reset()
             self.origin_filter.reset()
-        self.direction_filter.reset()
+            self.direction_filter.reset()
             self.rejected += 1
             return result
         self.last_capture_timestamp = ob.timestamp_s
@@ -182,7 +182,7 @@ class GazeEngine:
                 result.reason = ob.message if ob.blink else "eyes_not_confirmed_open"
             self.screen_filter.reset()
             self.origin_filter.reset()
-        self.direction_filter.reset()
+            self.direction_filter.reset()
             self.rejected += 1
             return result
 
