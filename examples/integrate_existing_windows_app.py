@@ -163,8 +163,11 @@ class ExistingAppGazeAdapter:
             differences = []
             for model in (self._engine.screen_model, self._engine.spatial_model):
                 if model is not None:
-                    differences.extend(model.context_mismatches(
-                        result.tracking_context, require_present=True))
+                    mismatches = model.context_mismatches(
+                        result.tracking_context, require_present=True)
+                    if not result.valid and result.reason != "calibration_context_mismatch":
+                        mismatches = [key for key in mismatches if key != "eye_origin_source"]
+                    differences.extend(mismatches)
             if differences:
                 value = self.invalidate("calibration_context_mismatch")
                 value["context_mismatches"] = sorted(set(differences))
