@@ -203,6 +203,7 @@ class ScreenSession:
                 pass
         self._frame_lock = threading.Lock()
         self._latest_frame, self._reader_error = None, None
+        self._reader_eof = False
         self._reader_stop = threading.Event()
 
         def reader():
@@ -214,7 +215,8 @@ class ScreenSession:
                         self._reader_error = exc
                     break
                 with self._frame_lock:
-                    self._latest_frame = frame
+                    self._latest_frame = (True, frame)
+                    self._reader_eof = frame is None
                 if frame is None:
                     break
 
@@ -381,12 +383,15 @@ class ScreenSession:
         try:
             if hasattr(self, "_frame_lock"):
                 with self._frame_lock:
-                    err, frame = self._reader_error, self._latest_frame
+                    err, item = self._reader_error, self._latest_frame
+                    eof = self._reader_eof
                     self._reader_error, self._latest_frame = None, None
                 if err is not None:
                     raise err
-                if frame is not None:
-                    self.consume_frame(frame)
+                if item is not None:
+                    self.consume_frame(item[1])
+                elif eof:
+                    self.consume_frame(None)
             else:
                 self.consume_frame(self.source.read())
         except (ValueError, RuntimeError, OSError, cv2.error) as exc:
