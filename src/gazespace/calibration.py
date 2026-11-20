@@ -27,6 +27,7 @@ CONTEXT_KEYS = ("tracking_mode", "pupil_polarity", "image_size", "roi_normalized
                 "subject_id", "camera_id", "camera_backend", "backend", "mirror", "source_identity",
                 "eye_origin_source", "exposure_native", "exposure_us", "gain", "ir_bit_depth",
                 "monitor", "monitor_serial", "monitor_origin_px", "monitor_dpr", "intrinsics_fingerprint")
+DISPLAY_CONTEXT_KEYS = frozenset({"monitor", "monitor_serial", "monitor_origin_px", "monitor_dpr", "screen_size"})
 
 
 def chessboard_points(cols: int, rows: int, square_mm: float) -> np.ndarray:
@@ -221,6 +222,27 @@ class GazeModel:
             return pred / denom
         return pred
 
+    def predict_camera_direction(self, features: np.ndarray,
+                                 head_rotation: np.ndarray | None = None) -> np.ndarray:
+        if self.kind != "spatial":
+            raise ValueError("predict_camera_direction requires a spatial model")
+        pred = self.predict(features)
+        if self.metadata.get("spatial_frame") != "head":
+            return pred
+        if head_rotation is None:
+            raise ValueError("head-frame spatial gaze requires current head rotation")
+        rotation = np.asarray(head_rotation, dtype=float)
+        if rotation.shape == (3, 3) and np.isfinite(rotation).all():
+            transformed = pred @ rotation.T
+        elif rotation.shape == (len(pred), 3, 3) and np.isfinite(rotation).all():
+            transformed = np.einsum("nij,nj->ni", rotation, pred)
+        else:
+            raise ValueError("invalid head rotation dimensions")
+        norm = np.linalg.norm(transformed, axis=1, keepdims=True)
+        if np.any(norm < 1e-6):
+            raise ValueError("zero rotated direction")
+        return transformed / norm
+
     def to_dict(self) -> dict:
         self.validate()
         return {"kind": self.kind, "coeff": self.coeff.tolist(),
@@ -344,28 +366,48 @@ def fit_gaze_model(samples: list[dict], kind: str = "screen", ridge: float = 1.0
     context.setdefault("head_model", HEAD_MODEL_VERSION)
     if context["feature_version"] != FEATURE_VERSION:
         raise ValueError("calibration feature version mismatch")
-    coeff,mean,std = _fit_ridge(X,Y,ridge)
-    margins = np.maximum(np.ptp(X, axis=0) * 0.25,
-                         np.array([.05, .035, .05, .035, .12, .12, .12, .035, .035, .06]))
-    model = GazeModel(kind,coeff,mean,std,ridge,{},
-                      {**context, "calibrated_utc": datetime.now(timezone.utc).isoformat(),
-                       "target_groups": len(groups), "observations": len(samples),
-                       "session_id": session_id or uuid.uuid4().hex,
-                       "training_digest": hashlib.sha256(X.tobytes() + Y.tobytes()).hexdigest(),
-                       "training_envelope": {"lower": (X.min(axis=0)-margins).tolist(),
-                                             "upper": (X.max(axis=0)+margins).tolist()},
-                       "screen_size": list(screen_size) if screen_size else None})
-    train = _error_metrics(model.predict(X),Y,kind,screen_size)
+    spatial_frame = "camera"
+    rotations = None
+    Y_fit = Y
+    if kind == "spatial" and all(row.get("head_rotation") is not None for row in samples):
+        rotations = np.asarray([row["head_rotation"] for row in samples], dtype=float)
+        if rotations.shape != (len(samples), 3, 3) or not np.isfinite(rotations).all():
+            raise ValueError("head_rotation must be finite 3x3 matrices")
+        for rotation in rotations:
+            if (not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-4)
+                    or not np.isclose(np.linalg.det(rotation), 1.0, atol=1e-4)):
+                raise ValueError("head_rotation must be an orthonormal proper rotation")
+        Y_fit = np.einsum("nij,nj->ni", rotations.transpose(0, 2, 1), Y)
+        Y_fit = Y_fit / np.linalg.norm(Y_fit, axis=1, keepdims=True)
+        spatial_frame = "head"
+    coeff, mean, std = _fit_ridge(X, Y_fit, ridge)
+    margins = np.maximum(np.ptp(X, axis=0) * .25,
+                         np.array([.06,.045,.06,.045,.35,.35,.35,.12,.12,.15]))
+    metadata = {**context, "calibrated_utc": datetime.now(timezone.utc).isoformat(),
+                "target_groups": len(groups), "observations": len(samples),
+                "session_id": session_id or uuid.uuid4().hex,
+                "training_digest": hashlib.sha256(X.tobytes()+Y.tobytes()).hexdigest(),
+                "training_envelope": {"lower": (X.min(axis=0)-margins).tolist(),
+                                      "upper": (X.max(axis=0)+margins).tolist()},
+                "screen_size": list(screen_size) if screen_size else None}
+    if kind == "spatial":
+        metadata["spatial_frame"] = spatial_frame
+    model = GazeModel(kind, coeff, mean, std, ridge, {}, metadata)
+    train_pred = (model.predict_camera_direction(X, rotations)
+                  if kind == "spatial" and spatial_frame == "head" else model.predict(X))
+    train = _error_metrics(train_pred, Y, kind, screen_size)
     crossval = None
     if do_group_validation and len(groups) >= min_targets:
-        # One-target-out validation is a diagnostic, NOT a substitute for a fresh held-out session.
         cv_preds = np.zeros_like(Y)
         for group in groups:
             train_mask, test_mask = (labels != group), (labels == group)
-            c,mu,sig = _fit_ridge(X[train_mask], Y[train_mask],ridge)
-            cv_model = GazeModel(kind,c,mu,sig,ridge,{},model.metadata)
-            cv_preds[test_mask] = cv_model.predict(X[test_mask])
-        crossval = _error_metrics(cv_preds,Y,kind,screen_size)
+            c, mu, sig = _fit_ridge(X[train_mask], Y_fit[train_mask], ridge)
+            cv_model = GazeModel(kind, c, mu, sig, ridge, {}, model.metadata)
+            if kind == "spatial" and spatial_frame == "head":
+                cv_preds[test_mask] = cv_model.predict_camera_direction(X[test_mask], rotations[test_mask])
+            else:
+                cv_preds[test_mask] = cv_model.predict(X[test_mask])
+        crossval = _error_metrics(cv_preds, Y, kind, screen_size)
     model.report = {"training":train, "leave_target_out":crossval,
                     "validation_status":"UNVERIFIED: independent held-out session required",
                     "target_count":len(groups), "samples":len(samples), "geometry":geometry,
@@ -395,11 +437,14 @@ def spatial_record(ob: Observation, target_id: str, target_world_m: tuple[float,
     direct = target_cam - ob.eye_origin_camera_m
     if np.linalg.norm(direct) < 0.05:
         raise ValueError("3D target too close to eye origin")
-    return {"features": ob.features.tolist(), "target":(direct/np.linalg.norm(direct)).tolist(),
-            "target_id":target_id, "target_world_m":list(target_world_m),
-            "eye_origin_camera_m": ob.eye_origin_camera_m.tolist(),
-            "eye_origin_source": ob.eye_origin_source,
-            "time_s": ob.timestamp_s, "quality":ob.quality, "context": copy.deepcopy(ob.context)}
+    record = {"features": ob.features.tolist(), "target":(direct/np.linalg.norm(direct)).tolist(),
+              "target_id":target_id, "target_world_m":list(target_world_m),
+              "eye_origin_camera_m": ob.eye_origin_camera_m.tolist(),
+              "eye_origin_source": ob.eye_origin_source,
+              "time_s": ob.timestamp_s, "quality":ob.quality, "context": copy.deepcopy(ob.context)}
+    if ob.head_pose is not None:
+        record["head_rotation"] = np.asarray(ob.head_pose.rotation, dtype=float).tolist()
+    return record
 
 
 def save_json(path: str | Path, data: dict):
@@ -497,49 +542,59 @@ def update_profile(path: str | Path, **changes) -> dict:
                "camera_validation","camera_calibration_evidence","stereo","notes","drift_correction"}
     if set(changes) - allowed:
         raise ValueError("unknown profile keys")
-    changed = {key for key, value in changes.items() if json.dumps(profile.get(key),sort_keys=True) != json.dumps(value,sort_keys=True)}
+    changed = {key for key, value in changes.items()
+               if json.dumps(profile.get(key),sort_keys=True) != json.dumps(value,sort_keys=True)}
+    before = profile.get("context") or {}
+    after = (changes.get("context") or {}) if "context" in changed else before
+    context_keys = {key for key in (set(before)|set(after))
+                    if json.dumps(before.get(key),sort_keys=True) != json.dumps(after.get(key),sort_keys=True)}
+    non_display_changed = bool(context_keys-DISPLAY_CONTEXT_KEYS)
+    display_changed = bool(context_keys&DISPLAY_CONTEXT_KEYS)
     camera_geometry_changed = "camera_id" in changed and profile.get("camera_id") is not None
-    if "context" in changed:
-        before, after = profile.get("context", {}), changes.get("context") or {}
-        for key in ("image_size", "source_identity", "camera_id", "camera_backend", "backend", "mirror"):
-            if key in before and before.get(key) != after.get(key):
-                camera_geometry_changed = True
+    for key in ("image_size","source_identity","camera_id","camera_backend","backend","mirror"):
+        if key in before and before.get(key) != after.get(key):
+            camera_geometry_changed = True
     if camera_geometry_changed:
         profile["intrinsics"] = profile["extrinsics"] = None
         profile["surfaces"] = []
-        profile.pop("stereo", None)
-        profile.pop("camera_validation", None)
-        profile.pop("camera_calibration_evidence", None)
-    if changed & {"intrinsics", "context", "subject_id", "camera_id"}:
-        for key in ("screen_model", "spatial_model", "screen_validation", "spatial_validation", "drift_validation", "drift_correction"):
-            profile.pop(key, None)
+        profile.pop("stereo",None)
+        profile.pop("camera_validation",None)
+        profile.pop("camera_calibration_evidence",None)
+    if changed & {"intrinsics","subject_id","camera_id"} or non_display_changed:
+        for key in ("screen_model","spatial_model","screen_validation","spatial_validation",
+                    "drift_validation","drift_correction"):
+            profile.pop(key,None)
+    elif display_changed:
+        for key in ("screen_model","screen_validation","drift_validation","drift_correction"):
+            profile.pop(key,None)
     if "intrinsics" in changed:
         profile["extrinsics"] = None
         profile["surfaces"] = []
-        profile.pop("stereo", None)
-        profile.pop("camera_validation", None)
-        profile.pop("camera_calibration_evidence", None)
+        profile.pop("stereo",None)
+        profile.pop("camera_validation",None)
+        profile.pop("camera_calibration_evidence",None)
     if "extrinsics" in changed:
-        profile.pop("spatial_model", None)
-        profile.pop("spatial_validation", None)
+        profile.pop("spatial_model",None)
+        profile.pop("spatial_validation",None)
         profile["surfaces"] = []
     if "screen_model" in changed:
-        for key in ("screen_validation", "drift_validation", "drift_correction"):
-            profile.pop(key, None)
-    if changed & {"spatial_model", "surfaces"}:
-        profile.pop("spatial_validation", None)
+        for key in ("screen_validation","drift_validation","drift_correction"):
+            profile.pop(key,None)
+    if changed & {"spatial_model","surfaces"}:
+        profile.pop("spatial_validation",None)
     profile.update(copy.deepcopy(changes))
-    profile.setdefault("screen_model", None)
-    profile.setdefault("spatial_model", None)
+    profile.setdefault("screen_model",None)
+    profile.setdefault("spatial_model",None)
     profile["updated_utc"] = datetime.now(timezone.utc).isoformat()
-    # Stamp newly supplied fits with the context in which they were installed.
-    for key in ("screen_model", "spatial_model"):
+    context_hash = profile_geometry_hash(profile)
+    for key in ("screen_model","spatial_model"):
         if key in changes and profile.get(key):
-            profile[key].setdefault("metadata", {})["calibration_context_hash"] = profile_geometry_hash(profile)
-    # Extrinsic changes do not alter a purely screen mapping; rebind that surviving
-    # fit only if its camera intrinsics, user and feature context were unchanged.
-    if changed <= {"extrinsics", "surfaces", "spatial_model", "spatial_validation"} and profile.get("screen_model"):
-        profile["screen_model"]["metadata"]["calibration_context_hash"] = profile_geometry_hash(profile)
+            profile[key].setdefault("metadata",{})["calibration_context_hash"]=context_hash
+    if changed <= {"extrinsics","surfaces","spatial_model","spatial_validation"} and profile.get("screen_model"):
+        profile["screen_model"]["metadata"]["calibration_context_hash"]=context_hash
+    if (not (changed & {"intrinsics","extrinsics","subject_id","camera_id"})
+            and not non_display_changed and profile.get("spatial_model")):
+        profile["spatial_model"]["metadata"]["calibration_context_hash"]=context_hash
     validate_profile(profile)
     save_json(path, profile)
     return profile

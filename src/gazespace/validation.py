@@ -253,7 +253,13 @@ def validate_gaze_records(model:GazeModel,records:list[dict], *, context:dict,se
         provenance_issues.append('actual_display_dimensions_not_supplied')
     provenance_issues = list(dict.fromkeys(provenance_issues))
 
-    predictions = model.predict(x)
+    if model.kind == "spatial" and model.metadata.get("spatial_frame") == "head":
+        if not all(record.get("head_rotation") is not None for record in records):
+            raise ValueError("Head-frame spatial validation requires head_rotation on every record")
+        rotations = np.asarray([record["head_rotation"] for record in records], dtype=float)
+        predictions = model.predict_camera_direction(x, rotations)
+    else:
+        predictions = model.predict(x)
     errors = _error_metrics(predictions, y, model.kind, model.metadata.get('screen_size'))
     outside = [i for i, row in enumerate(x) if model.outside_envelope(row)]
     synthetic = any(bool(c.get('synthetic') or c.get('simulated'))
