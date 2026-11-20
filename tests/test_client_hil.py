@@ -188,3 +188,13 @@ def test_screen_rejects_incomplete_stationary_target_timing(tmp_path):
     write_csv(path, rows)
     with pytest.raises(hil.EvidenceError, match="increasing target timestamps"):
         hil.score_screen(path)
+
+
+def test_client_acceptance_tools_ship_with_both_windows_distributions():
+    builder=(ROOT/"scripts"/"build_windows.ps1").read_text(encoding="utf-8")
+    assert "foreach ($Executable in $Executables)" in builder
+    for script in ("collect_windows_acceptance.ps1", "evaluate_client_hil.py",
+                   "verify_host_contract.py", "verify_client_signatures.ps1"):
+        assert script in builder
+    assert "Required client-acceptance script missing" in builder
+    assert "Client-acceptance script failed to package" in builder

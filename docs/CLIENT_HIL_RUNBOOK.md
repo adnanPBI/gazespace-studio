@@ -159,3 +159,14 @@ and target IDs, reference technique, calibration and held-out trials, external
 clock mapping, original host build hash, thresholds and signed approval.
 The collected labels and operator declarations are not independently
 authenticated by these tools, so inspect raw evidence before sign-off.
+
+
+## Portable ZIP tool availability
+
+The Windows Studio and CLI onedir packages now include a scripts folder with
+the camera collector, measured-data HIL scorer, original-host verifier, and
+publisher-signature verifier. Keep the complete application directory intact.
+The Python-based HIL/host scripts require a separate compatible Python 3.11 or
+3.12 interpreter to run on the target computer; shipping their source does not
+convert them into stand-alone executables. The camera collector can invoke the
+packaged CLI without a separate Python interpreter.
