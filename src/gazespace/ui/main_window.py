@@ -425,13 +425,23 @@ class MainWindow(QMainWindow):
     def source_context(self,cfg=None):
         cfg=cfg or self.settings
         return {'camera_id':str(cfg['source']),'backend':cfg['backend'],'subject_id':cfg['subject_id'],
-                'exposure_native':cfg.get('exposure_native'),'exposure_us':cfg.get('exposure_us'),
-                'gain':cfg.get('gain'),'ir_bit_depth':cfg.get('ir_bit_depth'),
+                'exposure_native':cfg.get('exposure_native') if cfg['backend']!='realsense' else None,
+                'exposure_us':cfg.get('exposure_us') if cfg['backend']!='realsense' else None,
+                'gain':cfg.get('gain') if cfg['backend']!='realsense' else None,
+                'ir_bit_depth':cfg.get('ir_bit_depth'),
                 **({} if cfg['backend']=='synthetic' else self.display_context())}
 
     def display_context(self):
-        screens=QApplication.screens();monitor=screens[self.monitor_combo.currentIndex()]
-        return {'monitor':monitor.name(),'screen_size':[round(monitor.geometry().width()*monitor.devicePixelRatio()),round(monitor.geometry().height()*monitor.devicePixelRatio())]}
+        screens = QApplication.screens()
+        if not screens:
+            raise ValueError('No connected display is available for gaze calibration')
+        name = self.monitor_combo.currentText()
+        monitor = next((screen for screen in screens if screen.name() == name), None)
+        if monitor is None:
+            raise ValueError('Selected calibration display was disconnected; select a connected display')
+        return {'monitor': monitor.name(), 'screen_size': [
+            round(monitor.geometry().width()*monitor.devicePixelRatio()),
+            round(monitor.geometry().height()*monitor.devicePixelRatio())]}
 
     def apply_and_start(self):
         try:
@@ -757,7 +767,9 @@ class MainWindow(QMainWindow):
             metadata=frame.metadata or {}
             raw=metadata.get('depth_intrinsics')
             if not raw:raise ValueError('The active adapter does not provide calibrated aligned color intrinsics')
-            if metadata.get('depth_aligned_to')!='color' or not metadata.get('depth_deprojection_supported',False):
+            if (metadata.get('depth_aligned_to')!='color'
+                    or not metadata.get('depth_deprojection_supported',False)
+                    or metadata.get('depth_distortion_model', 'brown_conrady') not in ('none','brown_conrady')):
                 raise ValueError('Supported color-aligned depth deprojection is required before importing factory intrinsics')
             intr=CameraIntrinsics.from_dict(raw)
             if intr.source!='factory':raise ValueError('Factory calibration provenance is required')
@@ -908,11 +920,10 @@ class MainWindow(QMainWindow):
             if self._is_demo:raise ValueError('Physical spatial calibration needs measured hardware and targets')
             if not p.get('intrinsics') or not p.get('extrinsics'):raise ValueError('Complete measured intrinsic and world calibration first')
             if validate and not p.get('spatial_model'):raise ValueError('Calibrate spatial gaze before independent validation')
-            from ..workflows import read_spatial_targets
+            from ..workflows import read_spatial_targets, _check_spatial_geometry
             targets=read_spatial_targets(self.targets_edit.text())
-            coordinates=np.array([t['xyz_m'] for t in targets]);camera=CameraExtrinsics.from_dict(p['extrinsics'])
-            camera_points=(camera.rotation_world_to_camera@coordinates.T).T+camera.translation_world_to_camera_m
-            if np.ptp(camera_points[:,2])<.03:raise ValueError('Place physical calibration targets at more than one camera depth, spanning at least 3 cm')
+            camera=CameraExtrinsics.from_dict(p['extrinsics'])
+            _check_spatial_geometry(targets,camera,require_multidepth=True)
             dialog=SpatialSessionDialog(self.snapshot,targets,camera,purpose='spatial validation' if validate else 'spatial calibration',parent=self)
             self._session_dialog=dialog;session_path=self.settings['profile'];baseline=self._profile_stamp(p);context=self.source_context()
             dialog.samples_ready.connect(lambda data:self._submit_acquisition(data,session_path,baseline,context,True));dialog.show()
@@ -925,8 +936,13 @@ class MainWindow(QMainWindow):
             if payload.get('_baseline') and self._profile_stamp(p)!=payload['_baseline']:
                 raise ValueError('Calibration profile changed during acquisition; start a new session')
             if payload['purpose']=='spatial calibration':
+                from ..calibration import DISPLAY_CONTEXT_KEYS
                 model=fit_gaze_model(records,'spatial',context=context,session_id=payload['session_id'])
-                update_profile(path,spatial_model=model.to_dict())
+                merged={**{k:v for k,v in (p.get('context') or {}).items() if k in DISPLAY_CONTEXT_KEYS},
+                        **{k:v for k,v in context.items() if k not in DISPLAY_CONTEXT_KEYS}}
+                update_profile(path,spatial_model=model.to_dict(),context=merged,
+                               camera_id=source_context['camera_id'],
+                               subject_id=source_context['subject_id'])
                 return model.report
             model=GazeModel.from_dict(p['spatial_model'])
             mismatches=model.context_mismatches(context,require_present=True)
@@ -1057,8 +1073,16 @@ class MainWindow(QMainWindow):
             self._replay_index=-1
             self.replay_video._image=None;self.replay_video.result={};self.replay_video.update()
             if self._replay_capture is not None:self._replay_capture.release();self._replay_capture=None
-            videos=list(Path(path).glob('*.avi'))
-            if videos:self._replay_capture=cv2.VideoCapture(str(videos[0]))
+            video_name = data.manifest.get('video_file')
+            if video_name:
+                video_path = Path(video_name)
+                if video_path.is_absolute() or '..' in video_path.parts:
+                    raise ValueError('Session manifest contains an unsafe video path')
+                resolved = (Path(path)/video_path).resolve()
+                if not resolved.is_relative_to(Path(path).resolve()):
+                    raise ValueError('Session video path escapes the session directory')
+                if resolved.exists():
+                    self._replay_capture=cv2.VideoCapture(str(resolved))
             self.analyze_current_session();self._show_replay_record(self.replay.current())
             self._log('Session loaded for offline replay')
         except Exception as exc:self._error(exc)
