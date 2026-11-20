@@ -1230,7 +1230,23 @@ class MainWindow(QMainWindow):
             try:self._session_dialog.close()
             except RuntimeError:pass
         if not self.stop_tracking():
-            self.timer.start();event.ignore();return
+            choice = QMessageBox.warning(
+                self, 'Camera driver not responding',
+                'The camera driver has not stopped within its timeout.\n\n'
+                'Choose Wait to keep the application open, or Force Close to '
+                'exit without waiting for the unresponsive driver. Gaze output '
+                'has already been invalidated; an in-progress hardware operation '
+                'or recording might be incomplete.',
+                QMessageBox.StandardButton.Retry | QMessageBox.StandardButton.Abort,
+                QMessageBox.StandardButton.Retry)
+            if choice != QMessageBox.StandardButton.Abort:
+                self.timer.start();event.ignore();return
+            self._log('Operator confirmed exit while camera driver remained blocked')
+            if self._replay_capture is not None:
+                self._replay_capture.release()
+            self._persist()
+            event.accept()
+            return
         if self._jobs:
             self._log('Waiting for calibration or report generation to finish before closing');self.timer.start();event.ignore();return
         if self._replay_capture is not None:self._replay_capture.release()
