@@ -437,6 +437,8 @@ class MainWindow(QMainWindow):
             raise ValueError('No connected display is available for gaze calibration')
         name = self.monitor_combo.currentText()
         monitor = next((screen for screen in screens if screen.name() == name), None)
+        if monitor is None and len(screens) == 1 and name in ('', 'Display'):
+            monitor = screens[0]
         if monitor is None:
             raise ValueError('Selected calibration display was disconnected; select a connected display')
         return {'monitor': monitor.name(), 'screen_size': [

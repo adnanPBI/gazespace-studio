@@ -238,7 +238,9 @@ class GazeEngine:
             else:
                 try:
                     rotation = ob.head_pose.rotation if ob.head_pose is not None else None
-                    predicted_cam = self.spatial_model.predict_camera_direction(ob.features, rotation)[0]
+                    predicted_cam = (self.spatial_model.predict_camera_direction(ob.features, rotation)[0]
+                                     if hasattr(self.spatial_model, "predict_camera_direction")
+                                     else self.spatial_model.predict(ob.features)[0])
                     origin = camera_to_world_point(ob.eye_origin_camera_m, self.extrinsics)
                     origin = self.origin_filter.update(origin, ob.timestamp_s)
                     direction = camera_to_world_direction(predicted_cam, self.extrinsics)
