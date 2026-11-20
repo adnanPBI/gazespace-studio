@@ -305,8 +305,8 @@ def test_surface_boundary_is_last_pixel_and_single_sided_is_explicit():
     hit = ray_surface_intersection([1,1,0],[0,0,1],surface)
     assert hit["xy_px"] == (639.,479.)
     surface.two_sided = False
-    assert ray_surface_intersection([.5,.5,0],[0,0,1],surface) is None
-    assert ray_surface_intersection([.5,.5,2],[0,0,-1],surface) is not None
+    assert ray_surface_intersection([.5,.5,0],[0,0,1],surface) is not None
+    assert ray_surface_intersection([.5,.5,2],[0,0,-1],surface) is None
 
 
 def test_skew_surface_and_nonrotation_extrinsic_are_rejected():

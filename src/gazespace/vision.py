@@ -45,7 +45,9 @@ def eye_aspect_ratio(lm: dict[int, tuple[float, float]], side: str) -> float:
     indices = (33, 160, 158, 133, 153, 144) if side == "right" else (362, 385, 387, 263, 373, 380)
     if any(i not in lm for i in indices):
         return 0.0
-    p = [np.array(lm[i]) for i in indices]
+    p = [np.asarray(lm[i], dtype=float) for i in indices]
+    if not all(pt.shape == (2,) and np.isfinite(pt).all() for pt in p):
+        return 0.0
     return float((np.linalg.norm(p[1] - p[5]) + np.linalg.norm(p[2] - p[4])) /
                  max(1e-6, 2 * np.linalg.norm(p[0] - p[3])))
 
@@ -72,7 +74,8 @@ def eye_rel_pos(iris, c0, c1, top, bottom) -> tuple[float, float]:
 
 def observation_from_landmarks(lm: dict[int, tuple[float, float]], image_size: tuple[int, int],
                                timestamp_s: float, intrinsics: CameraIntrinsics | None = None,
-                               ir_image: np.ndarray | None = None, pupil_polarity: str = "dark") -> Observation:
+                               ir_image: np.ndarray | None = None, pupil_polarity: str = "dark",
+                               min_quality: float = .30) -> Observation:
     w, h = image_size
     ob = Observation(timestamp_s, image_size, landmarks_px=lm, face_detected=True)
     needed = (RIGHT_IRIS, LEFT_IRIS, *RIGHT_CORNERS, *LEFT_CORNERS,
@@ -147,14 +150,14 @@ def observation_from_landmarks(lm: dict[int, tuple[float, float]], image_size: t
                                lm[1][0] / (w-1), lm[1][1] / (h-1), depth], dtype=float)
     ob.quality = quality
     ob.pupil_method = "iris_landmarks" if ir_image is None else "landmark_roi_ir_ellipse"
-    ob.message = "ok" if ob.quality >= 0.30 else "low_quality_landmarks"
+    ob.message = "ok" if ob.quality >= min_quality else "low_quality_landmarks"
     return ob
 
 
 def observation_from_rois(image: np.ndarray, timestamp_s: float,
                           roi_normalized: dict[str, tuple[float, float, float, float]],
                           polarity: str = "dark", min_radius: float = 3,
-                          max_radius: float = 40) -> Observation:
+                          max_radius: float = 40, min_quality: float = .30) -> Observation:
     h, w = image.shape[:2]
     ob = Observation(timestamp_s, (w, h), pupil_method="ir_manual_roi")
     try:
@@ -182,7 +185,7 @@ def observation_from_rois(image: np.ndarray, timestamp_s: float,
             return ob
         px_rect = (round(x*w), round(y*h), round(rw*w), round(rh*h))
         pupil = detect_pupil(image, px_rect, polarity, min_radius, max_radius)
-        if pupil is None or pupil.confidence < 0.30:
+        if pupil is None or pupil.confidence < min_quality:
             ob.message = f"pupil_missing_{side}"
             return ob
         ob.pupils_px[side] = pupil.xy
@@ -193,7 +196,7 @@ def observation_from_rois(image: np.ndarray, timestamp_s: float,
     ob.eyes_open, ob.blink = True, False
     ob.quality = float(min(scores))
     ob.features = np.array([*vals, 0, 0, 0, 0.5, 0.5, 0], dtype=float)
-    ob.message = "ok" if ob.quality >= 0.30 else "low_quality_pupil"
+    ob.message = "ok" if ob.quality >= min_quality else "low_quality_pupil"
     return ob
 
 
@@ -264,7 +267,9 @@ class GazeTracker:
             intrinsics.validate()
         self.intrinsics, self.mode = intrinsics, mode
         self.roi_normalized, self.pupil_polarity = validate_rois(roi_normalized), pupil_polarity
-        self.face_model_sha256 = hashlib.sha256(Path(face_model).read_bytes()).hexdigest() if face_model else "mediapipe-legacy-0.10.21"
+        self.face_model_sha256 = (None if mode == "ir-roi" else
+                                  hashlib.sha256(Path(face_model).read_bytes()).hexdigest()
+                                  if face_model else "mediapipe-legacy-0.10.21")
         self.min_quality = min_quality
         if mode == "ir-roi" and self.roi_normalized is None:
             raise ValueError("ir-roi mode needs manually specified eye ROIs")
@@ -293,13 +298,15 @@ class GazeTracker:
         if self.intrinsics and (self.intrinsics.width != w or self.intrinsics.height != h):
             return Observation(timestamp_s, (w, h), message="intrinsics_resolution_mismatch")
         if self.mode == "ir-roi":
-            ob = observation_from_rois(image_bgr, timestamp_s, self.roi_normalized, self.pupil_polarity)
+            ob = observation_from_rois(image_bgr, timestamp_s, self.roi_normalized,
+                                       self.pupil_polarity, min_quality=self.min_quality)
         elif self.detector is not None:
             lm = self.detector.detect(image_bgr, timestamp_s, ir_mode=self.mode == "ir")
             if lm:
                 ob = observation_from_landmarks(lm, (w,h), timestamp_s, self.intrinsics,
                                                 ir_image=image_bgr if self.mode == "ir" else None,
-                                                pupil_polarity=self.pupil_polarity)
+                                                pupil_polarity=self.pupil_polarity,
+                                                min_quality=self.min_quality)
             else:
                 ob = Observation(timestamp_s, (w, h), message="face_or_iris_not_detected")
         else:
