@@ -157,3 +157,8 @@ should use the authenticated localhost API or a separate compatible worker.
 The software/SDK-emulator tests do not establish physical IR/global-shutter
 camera performance, measured human gaze error, or client-host integration.
 These remain independent hardware-in-the-loop/client acceptance requirements.
+
+
+### Client hardware acceptance and host integration
+
+Use [the 0.2.2 HIL runbook](docs/CLIENT_HIL_RUNBOOK.md) to collect physical camera, independent human gaze, 3D ray, trigger/photodiode latency, original-host integration and Authenticode signature evidence. These gates are **not completed** by the hosted Windows CI release. The evidence scorer records measured results but does not issue customer sign-off.

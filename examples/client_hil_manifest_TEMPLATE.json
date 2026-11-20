@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "source_commit": "51eb728fc478bd1e0ed860eeb62b91cf8924dd13",
+  "main_merge_commit": "4041a59ef556ea1b4b7450d7d14804db90c1a039",
+  "rig": {
+    "physical_device_confirmed": false,
+    "global_shutter_verified": false,
+    "ir_illumination_safety_reviewed": false,
+    "camera_model": "",
+    "camera_serial": "",
+    "lens_id": "",
+    "fixture_id": ""
+  },
+  "criteria": {
+    "min_participants": null,
+    "min_targets_per_participant": null,
+    "min_valid_fraction": null,
+    "max_screen_p95_error_px": null,
+    "max_stationary_jitter_rms_px": null,
+    "max_drift_px": null,
+    "min_drift_interval_s": null,
+    "max_spatial_p95_angular_deg": null,
+    "max_spatial_p95_miss_mm": null,
+    "max_latency_p95_ms": null
+  },
+  "evidence": {
+    "camera": "",
+    "screen_gaze": "",
+    "spatial_gaze": "",
+    "latency": "",
+    "host": "",
+    "signatures": ""
+  },
+  "notes": "TEMPLATE ONLY: fill with real physical measurements and agreed thresholds. Never claim synthetic data as physical evidence. Acceptance requires a separate client signature."
+}
