@@ -97,9 +97,9 @@ def _text(value):
 def test_real_pypylon_emulator_acquisition_controls_and_buffers(tmp_path):
     root = Path(__file__).resolve().parents[1]
     evidence = tmp_path / 'emulator.json'
-    # The CI diagnostics upload already includes release_evidence/windows*.
-    # Keep the subprocess receipt and both streams outside ephemeral pytest dirs.
-    saved = root / 'release_evidence'
+    # Pytest stays isolated; Windows CI may opt into a dedicated diagnostics path.
+    path_override = os.environ.get('GAZESPACE_PYTEST_EVIDENCE_DIR', '').strip()
+    saved = Path(path_override).resolve() if path_override else tmp_path
     saved.mkdir(parents=True, exist_ok=True)
     stem = ('windows_' if os.name == 'nt' else '') + 'pypylon_pytest'
     env = dict(os.environ, PYLON_CAMEMU='1', PYTHONPATH=str(root/'src'),

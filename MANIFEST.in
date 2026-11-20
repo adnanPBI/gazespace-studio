@@ -1,9 +1,11 @@
 include README.md LICENSE pyproject.toml MANIFEST.in
+recursive-include src/gazespace/assets/fonts *.ttf *.txt *.md
 recursive-include docs *.md
 recursive-include scripts *.py *.ps1 *.bat
 recursive-include examples *.py *.json *.png *.mp4
 recursive-include tests *.py
-recursive-include release_evidence *.json *.xml *.log
+recursive-include release_evidence *.json *.xml *.log *.md *.txt *.png
 include .github/workflows/ci.yml
-global-exclude *.py[cod]
+exclude audit_*.txt
+global-exclude *.py[cod] *.tmp *.partial
 global-exclude __pycache__

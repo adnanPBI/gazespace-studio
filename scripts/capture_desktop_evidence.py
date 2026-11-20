@@ -82,7 +82,7 @@ def capture(output,workspace):
              timeout=8,required=True)
         request=urllib.request.Request(f'http://127.0.0.1:{port}/v1/gaze',
                    headers={'Authorization':'Bearer '+window._api_token})
-        with urllib.request.urlopen(request,timeout=3) as response:
+        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request,timeout=3) as response:
             payload=json.loads(response.read());http_status=response.status
         window.set_page(6);pump(app,timeout=.2)
         assert window.grab().save(str(output/'desktop_integration.png'))
