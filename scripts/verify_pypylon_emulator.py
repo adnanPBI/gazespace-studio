@@ -139,7 +139,9 @@ def verify(output: str | None = None) -> dict:
             raise RuntimeError('Basler camera-emulation transport layer is unavailable')
         serial = str(devices[0].GetSerialNumber())
         report['device'] = {'serial': serial, 'device_class': 'BaslerCamEmu', 'model': devices[0].GetModelName()}
-        for pixel_format, bits in [('Mono8', None), ('Mono12', 12), ('BGR8Packed', None)]:
+        for pixel_format, bits in [('Mono8', None), ('Mono12', 8), ('BGR8Packed', None)]:
+            # Mono12 intentionally requests stale 8-bit UI scaling; active sensor
+            # PixelType must override it, preventing clipped IR frames.
             source, frames = None, []
             record = {'requested_pixel_format': pixel_format, 'ir_bit_depth': bits,
                       'status': 'running', 'frames': [], 'checks': {}, 'read_duration_ms': []}
