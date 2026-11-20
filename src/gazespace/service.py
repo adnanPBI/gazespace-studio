@@ -122,7 +122,7 @@ def create_api(service: GazeService | TrackingRuntime, *, token: str | None = No
             if manage_lifecycle:
                 service.stop()
 
-    app = FastAPI(title="GazeSpace local telemetry", version="0.2.1", lifespan=lifespan,
+    app = FastAPI(title="GazeSpace local telemetry", version="0.2.2", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
 
     @app.middleware("http")

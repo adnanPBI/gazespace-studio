@@ -1,5 +1,25 @@
 # GazeSpace changelog
 
+## 0.2.2 — 20 November 2026 (software release candidate)
+
+### Audit remediation
+- Desktop screen/spatial validation collectors share session identity (C1).
+- Basler 10–16-bit source formatting uses active SDK pixel type and older exposure/gain node fallbacks (C2).
+- RealSense inverse Brown-Conrady aligned-depth deprojection is supported, with OpenCV-incompatible intrinsics excluded from factory imports (C3).
+- Host-app adapter preserves blink/lost-face states (C4).
+- CLI subject, source, and bit-depth contexts agree across calibration and tracking (C5).
+- Sibling screen/spatial models survive display-only changes, geometric 3D target checks are complete, and Tk fullscreen camera reads do not block the UI (C6).
+- IR ROI does not load unused facial-model files; nonfinite eyelid landmarks fail closed; configurable quality threshold is active (C7).
+- Adaptive normalized gaze smoothing and matched filtered ray origin/direction (M1/M4).
+- Head-frame spatial calibration/inference with rotation records, and extended but still finite operating envelope (M2).
+- Front-face single-sided workspace surface geometry and guarded PnP reprojection (M3/M4).
+- Multi-threshold glint-aware candidate segmentation, guarded ellipses, clipped ROI, and less punitive eccentricity (M5).
+- Separate screen/spatial fingerprints, connected-monitor checks, safe replay paths, configurable local WebSocket rate and explicit blocked-driver exit control (S1–S4).
+- Source manifest/font inclusion, isolated SDK pytest receipts, removal of obsolete audit dumps and failed CI fixtures (S5–S8).
+
+**Scope and limitations:** These software changes are not physical IR/global-shutter camera validation, real-subject gaze ground truth, verified sensor-to-screen latency, an optical PCCR model, or integration into the client's original app. Changes in generic head-template calibration require new subject-specific profiles and independent target measurements.
+
+
 ## 0.2.1 — 18 November 2026
 
 ### Acceptance and hardware corrections

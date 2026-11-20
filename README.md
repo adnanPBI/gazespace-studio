@@ -1,6 +1,6 @@
-# GazeSpace Studio 0.2.1
+# GazeSpace Studio 0.2.2 — Software Release Candidate
 
-**A working Python desktop workspace for pupil/iris tracking, calibrated gaze estimation, 3D workspace mapping, camera integration and local session analysis.** Release date: **18 November 2026**.
+**A working Python desktop workspace for pupil/iris tracking, calibrated gaze estimation, 3D workspace mapping, camera integration and local session analysis.** Release candidate: **20 November 2026**. Hardware and client-host acceptance remain pending.
 
 This version completes the operator workflows around the original SDK: a seven-section native desktop interface, threaded capture and inference, stable target acquisition, independent validation, recording and replay, heatmaps, diagnostics and an authenticated local API. The tracking engine can also run inside an existing Windows Python application.
 

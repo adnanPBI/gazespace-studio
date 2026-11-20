@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gazespace"
-version = "0.2.1"
+version = "0.2.2"
 description = "Local-first Windows gaze tracking, eye/pupil detection, calibration and workspace mapping"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"

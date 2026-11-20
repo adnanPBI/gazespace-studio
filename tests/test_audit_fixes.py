@@ -127,3 +127,24 @@ def test_m5_uneven_illumination_and_internal_glint_returns_finite_pupil():
     pupil=detect_pupil(img,(10,10,160,100),min_radius=4,max_radius=25)
     assert pupil is not None and np.hypot(pupil.xy[0]-90,pupil.xy[1]-60)<2.5
     assert pupil.glint_xy is not None
+
+
+def test_m1_normalized_saccade_has_adaptive_step_response():
+    from gazespace.filtering import OneEuro
+    filt=OneEuro(min_cutoff=1.2,beta=2.5)
+    a=filt.update(np.array([.15,.5]),1.)
+    b=filt.update(np.array([.85,.5]),1.+1/30)
+    assert (b[0]-a[0])/.7 > .65
+
+
+def test_c6_simultaneous_display_context_and_screen_fit_preserve_spatial(tmp_path):
+    path=tmp_path/"dual.json"
+    spatial=fit_gaze_model(_sample_spatial(),"spatial")
+    update_profile(path,camera_id="0",subject_id="one",
+                   context={"camera_id":"0","subject_id":"one"},
+                   spatial_model=spatial.to_dict())
+    screen=fit_gaze_model(_sample_screen(),"screen",screen_size=(1920,1080),
+                          context={"camera_id":"0","subject_id":"one","monitor":"D1"})
+    result=update_profile(path,context={"camera_id":"0","subject_id":"one","monitor":"D1"},
+                          screen_model=screen.to_dict())
+    assert result["spatial_model"] is not None and result["screen_model"] is not None
