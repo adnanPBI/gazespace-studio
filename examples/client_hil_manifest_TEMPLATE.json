@@ -21,7 +21,9 @@
     "min_drift_interval_s": null,
     "max_spatial_p95_angular_deg": null,
     "max_spatial_p95_miss_mm": null,
-    "max_latency_p95_ms": null
+    "max_latency_p95_ms": null,
+    "min_latency_trials": null,
+    "min_spatial_samples_per_target": null
   },
   "evidence": {
     "camera": "",

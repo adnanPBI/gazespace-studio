@@ -27,12 +27,18 @@ def digest(path):
 def validate_events(events):
     checks = {key: False for key in CASES}
     last_time = None
+    expected_order = ("valid", "blink", "stale", "disconnect", "stop", "recovery")
+    stage = 0
     for index, record in enumerate(events, 1):
         if not isinstance(record, dict):
             raise ValueError(f"host event {index} must be a JSON object")
         name = str(record.get("case", "")).strip()
         if name not in CASES:
             raise ValueError(f"host event {index} has unknown test case")
+        if stage < len(expected_order) and name == expected_order[stage]:
+            stage += 1
+        elif stage == 0 or name != expected_order[stage - 1]:
+            raise ValueError(f"host event {index}: unexpected lifecycle order")
         time_s = float(record.get("host_event_time_s", float("nan")))
         if not math.isfinite(time_s) or (last_time is not None and time_s <= last_time):
             raise ValueError(f"host event {index} requires increasing host timestamps")
@@ -51,6 +57,8 @@ def validate_events(events):
             if visible or engine_valid or pixels is not None:
                 raise ValueError(f"host event {index}: invalid gaze must be cleared from the host")
         checks[name] = True
+    if stage != len(expected_order):
+        raise ValueError("host event trace is missing required lifecycle stages")
     return checks
 
 

@@ -170,3 +170,21 @@ def test_signature_verifier_is_explicit_publisher_only():
     assert "SignerThumbprint" in ps
     assert "Cert:\\CurrentUser\\My" not in ps  # verifier never selects a private key
     assert "New-SelfSignedCertificate" not in ps
+
+
+def test_host_lifecycle_order_and_missing_recovery_rejected():
+    reordered = events()
+    reordered[2], reordered[3] = reordered[3], reordered[2]
+    with pytest.raises(ValueError, match="lifecycle order"):
+        host.validate_events(reordered)
+    with pytest.raises(ValueError, match="missing required lifecycle"):
+        host.validate_events(events()[:-1])
+
+
+def test_screen_rejects_incomplete_stationary_target_timing(tmp_path):
+    rows=screen_rows()
+    rows[1]["time_s"]=rows[0]["time_s"]
+    path=tmp_path/"nonmonotonic.csv"
+    write_csv(path, rows)
+    with pytest.raises(hil.EvidenceError, match="increasing target timestamps"):
+        hil.score_screen(path)

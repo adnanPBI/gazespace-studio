@@ -21,6 +21,7 @@ REQUIRED_CRITERIA = {
     "max_screen_p95_error_px", "max_stationary_jitter_rms_px", "max_drift_px",
     "min_drift_interval_s", "max_spatial_p95_angular_deg",
     "max_spatial_p95_miss_mm", "max_latency_p95_ms",
+    "min_latency_trials", "min_spatial_samples_per_target",
 }
 
 SCREEN_COLUMNS = {
@@ -130,6 +131,10 @@ def score_screen(path):
         group = groups.setdefault(key, {"values": [], "times": [], "reference": target_xy})
         if group["reference"] != target_xy:
             raise EvidenceError(f"screen row {n}: reference moved within a stationary target group")
+        if group["times"] and time_s <= group["times"][-1]:
+            raise EvidenceError(f"screen row {n}: repeated observations need increasing target timestamps")
+        if key[-1] not in ("", "initial", "repeat"):
+            raise EvidenceError(f"screen row {n}: unsupported anchor phase")
         subject = by_subject.setdefault(participant, {"targets": set(), "errors": [], "valid": 0, "total": 0})
         subject["targets"].add(target)
         subject["total"] += 1
@@ -159,7 +164,7 @@ def score_screen(path):
         if phase in ("initial", "repeat") and group["values"]:
             skey = (key[0], key[2], key[3])
             phases.setdefault(skey, {})[phase] = group
-    for group in phases.values():
+    for group_key, group in phases.items():
         if not {"initial", "repeat"}.issubset(group):
             continue
         before, after = group["initial"], group["repeat"]
@@ -170,7 +175,7 @@ def score_screen(path):
         interval = statistics.median(after["times"]) - statistics.median(before["times"])
         if interval <= 0:
             raise EvidenceError("repeated anchor must occur after initial fixation")
-        drifts.append({"drift_px": math.dist(a, b), "interval_s": interval})
+        drifts.append({"participant_id": group_key[0], "drift_px": math.dist(a, b), "interval_s": interval})
     if not jitters:
         raise EvidenceError("need at least one stationary target with four valid measurements")
     participants = {
@@ -184,6 +189,9 @@ def score_screen(path):
         "overall_error_px": _metrics([error for v in by_subject.values() for error in v["errors"]]),
         "worst_participant_p95_px": max(v["error_px"]["p95"] for v in participants.values() if v["error_px"]),
         "worst_stationary_jitter_rms_px": max(jitters),
+        "stationary_group_count": len(groups),
+        "stationary_groups_with_four_valid_samples": len(jitters),
+        "drift_participants": sorted({d["participant_id"] for d in drifts}),
         "drift": drifts,
         "worst_drift_px": max([d["drift_px"] for d in drifts], default=None),
         "minimum_drift_interval_s": min([d["interval_s"] for d in drifts], default=None),
@@ -193,7 +201,7 @@ def score_screen(path):
 
 def score_spatial(path):
     rows = _read_csv(path, SPATIAL_COLUMNS)
-    angles, misses, participants = [], [], {}
+    angles, misses, participants, group_counts = [], [], {}, {}
     for n, row in enumerate(rows, 2):
         subject, session, target = _independent(row, f"spatial row {n}")
         destination = [_number(row[f"target_{a}_m"], f"spatial target {a}") for a in "xyz"]
@@ -211,10 +219,12 @@ def score_spatial(path):
         misses.append(math.sqrt(max(0, distance**2-along**2))*1000.0)
         angles.append(math.degrees(math.acos(max(-1, min(1, along/distance)))))
         participants.setdefault(subject, set()).add(target)
+        group_counts[(subject, session, target)] = group_counts.get((subject, session, target), 0) + 1
     return {
         "rows": len(rows), "angular_error_deg": _metrics(angles),
         "target_miss_mm": _metrics(misses),
         "participants": {s: len(v) for s, v in participants.items()},
+        "min_samples_per_target": min(group_counts.values()),
     }
 
 
@@ -341,6 +351,17 @@ def evaluate(manifest_path):
             screen = report["measurements"]["screen_gaze"]
             spatial = report["measurements"]["spatial_gaze"]
             latency = report["measurements"]["latency"]
+            gate("criteria_values_valid",
+                 int(criteria["min_participants"]) >= 1
+                 and int(criteria["min_targets_per_participant"]) >= 1
+                 and int(criteria["min_spatial_samples_per_target"]) >= 1
+                 and int(criteria["min_latency_trials"]) >= 1
+                 and 0 < _number(criteria["min_valid_fraction"], "minimum valid fraction") <= 1
+                 and all(_number(criteria[k], k) >= 0 for k in
+                         ("max_screen_p95_error_px", "max_stationary_jitter_rms_px",
+                          "max_drift_px", "min_drift_interval_s",
+                          "max_spatial_p95_angular_deg", "max_spatial_p95_miss_mm",
+                          "max_latency_p95_ms")))
             gate("participant_and_target_coverage",
                  len(screen["participants"]) >= int(criteria["min_participants"])
                  and all(p["distinct_targets"] >= int(criteria["min_targets_per_participant"])
@@ -348,6 +369,14 @@ def evaluate(manifest_path):
                  and len(spatial["participants"]) >= int(criteria["min_participants"])
                  and all(p >= int(criteria["min_targets_per_participant"])
                          for p in spatial["participants"].values()))
+            gate("every_stationary_target_sampled",
+                 screen["stationary_group_count"] == screen["stationary_groups_with_four_valid_samples"])
+            gate("drift_each_participant",
+                 set(screen["participants"]).issubset(set(screen["drift_participants"])))
+            gate("spatial_samples_per_target",
+                 spatial["min_samples_per_target"] >= int(criteria["min_spatial_samples_per_target"]))
+            gate("latency_trial_coverage",
+                 latency["trials"] >= int(criteria["min_latency_trials"]))
             gate("valid_frame_fraction", min(p["valid_fraction"] for p in
                  screen["participants"].values()) >= _number(criteria["min_valid_fraction"], "minimum valid fraction"))
             gate("screen_p95_px", screen["worst_participant_p95_px"] <= _number(criteria["max_screen_p95_error_px"], "screen p95"))
