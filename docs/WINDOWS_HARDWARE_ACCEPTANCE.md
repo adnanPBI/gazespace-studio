@@ -1,6 +1,6 @@
 # Windows and physical-hardware acceptance
 
-**GazeSpace Studio 0.2.1 · 18 November 2026**
+**GazeSpace Studio 0.2.2 · 20 November 2026**
 
 The software now includes complete operator workflows and reproducible integration tests. Physical performance remains a measured property of a specific user, camera, optics, lighting and workspace. The source release does not substitute synthetic or emulator results for those measurements.
 
@@ -16,6 +16,8 @@ The software now includes complete operator workflows and reproducible integrati
 | Depth/stereo geometric fixtures | Coordinate conversion, rejection and triangulation algorithms under known data | A deployed, synchronized multi-camera/RealSense rig |
 
 Review the actual JSON reports in `release_evidence` and the final test results shipped with the release. Do not promote an emulator/source test into a hardware acceptance claim.
+
+See [CLIENT_HIL_RUNBOOK.md](CLIENT_HIL_RUNBOOK.md) for the execution commands, measurement schemas, signed-build verification and fail-closed evidence scoring.
 
 ## Client inputs needed for final acceptance
 

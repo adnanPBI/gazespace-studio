@@ -104,7 +104,22 @@ foreach ($Executable in $Executables) {
     Copy-Item -LiteralPath (Join-Path $ProjectRoot 'docs') -Destination (Join-Path $AppDirectory 'docs') -Recurse -Force
     $AcceptanceScripts = Join-Path $AppDirectory 'scripts'
     New-Item -ItemType Directory -Path $AcceptanceScripts -Force | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'collect_windows_acceptance.ps1') -Destination $AcceptanceScripts -Force
+    # These acceptance tools ship with each portable application. Their Python
+    # scripts require a compatible separate Python environment when used onsite.
+    $ClientAcceptanceScripts = @('collect_windows_acceptance.ps1',
+                                 'verify_client_signatures.ps1',
+                                 'evaluate_client_hil.py',
+                                 'verify_host_contract.py')
+    foreach ($ScriptName in $ClientAcceptanceScripts) {
+        $ScriptPath = Join-Path $PSScriptRoot $ScriptName
+        if (-not (Test-Path -LiteralPath $ScriptPath -PathType Leaf)) {
+            throw "Required client-acceptance script missing: $ScriptName"
+        }
+        Copy-Item -LiteralPath $ScriptPath -Destination $AcceptanceScripts -Force
+        if (-not (Test-Path -LiteralPath (Join-Path $AcceptanceScripts $ScriptName))) {
+            throw "Client-acceptance script failed to package: $ScriptName"
+        }
+    }
     if (Test-Path -LiteralPath (Join-Path $ProjectRoot 'examples')) {
         Copy-Item -LiteralPath (Join-Path $ProjectRoot 'examples') -Destination (Join-Path $AppDirectory 'examples') -Recurse -Force
     }
